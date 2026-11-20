@@ -20,6 +20,7 @@ import type { Messages } from '../i18n/messages.ts';
 import { createMockProvider } from '../providers/mock.ts';
 import { createOpenAICompatibleProvider } from '../providers/openai-compatible.ts';
 import { clearSavedState, loadState, saveState } from './persistence.ts';
+import { createProjectFiles, ProjectFsError } from './projectFiles.ts';
 import { accountFor, createSecretStore, isDesktop } from './secrets.ts';
 import { appReducer, type View } from './state.ts';
 
@@ -40,6 +41,7 @@ export interface ProviderStatus {
 }
 
 function errorText(e: unknown, t?: Messages): string {
+  if (t && e instanceof ProjectFsError) return t.files.errors[e.code](e.message);
   if (t && e instanceof WorkflowError && e.reason) {
     if (e.reason === 'empty_project_name') return t.errors.emptyProjectName;
     if (e.reason === 'empty_request') return t.errors.emptyRequest;
@@ -60,6 +62,7 @@ export function useOrchestra(locale: Locale, t: Messages) {
   const [busyAgents, setBusyAgents] = useState<ReadonlySet<AgentId>>(new Set());
   const controllers = useRef(new Map<string, AbortController>());
   const secretStore = useMemo(() => createSecretStore(), []);
+  const projectFiles = useMemo(() => createProjectFiles(), []);
   const desktop = useMemo(() => isDesktop(), []);
   const [vault, setVault] = useState<VaultState>({
     available: desktop,
@@ -154,13 +157,40 @@ export function useOrchestra(locale: Locale, t: Messages) {
 
   const setView = useCallback((view: View) => dispatch({ type: 'setView', view }), []);
 
+  /**
+   * On desktop, a folder makes the project "authorized": Rust validates it and
+   * returns the canonical path, which becomes the only place files are read from.
+   */
   const addProject = useCallback(
-    (name: string, root: string): string | null => {
+    async (name: string, root: string): Promise<string | null> => {
       try {
-        dispatch({ type: 'addProject', project: createProject(name, root) });
+        const folder =
+          projectFiles.available && root.trim() ? await projectFiles.checkRoot(root) : root;
+        dispatch({ type: 'addProject', project: createProject(name, folder) });
         return null;
       } catch (e) {
         return errorText(e, t);
+      }
+    },
+    [t, projectFiles],
+  );
+
+  const projectRoot = useCallback(
+    (projectId: string): string | null => {
+      if (!projectFiles.available) return null;
+      const root = state.projects.find((p) => p.id === projectId)?.rootLabel.trim();
+      return root ? root : null;
+    },
+    [state.projects, projectFiles],
+  );
+
+  /** Rust errors become messages in the user's language before reaching the session. */
+  const localized = useCallback(
+    async <T>(work: () => Promise<T>): Promise<T> => {
+      try {
+        return await work();
+      } catch (e) {
+        throw new Error(errorText(e, t), { cause: e });
       }
     },
     [t],
@@ -178,22 +208,43 @@ export function useOrchestra(locale: Locale, t: Messages) {
       }
       save(draft);
       setView({ name: 'session', id: draft.id });
-      void runSteps(draft, [(s, signal) => runPlanning(s, provider, { signal })]);
+      const root = projectRoot(project.id);
+      const loadTree = root
+        ? () => localized(async () => (await projectFiles.list(root)).files)
+        : undefined;
+      void runSteps(draft, [
+        (s, signal) => runPlanning(s, provider, { signal, ...(loadTree ? { loadTree } : {}) }),
+      ]);
       return null;
     },
-    [state.projects, state.activeProjectId, save, setView, runSteps, provider, t],
+    [
+      state.projects,
+      state.activeProjectId,
+      save,
+      setView,
+      runSteps,
+      provider,
+      t,
+      projectRoot,
+      projectFiles,
+      localized,
+    ],
   );
 
   const approve = useCallback(
     (session: Session) => {
       const approved = approvePlan(session);
       save(approved);
+      const root = projectRoot(session.projectId);
+      const loadFiles = root
+        ? (paths: string[]) => localized(() => projectFiles.read(root, paths))
+        : undefined;
       void runSteps(approved, [
-        (s, signal) => runExecution(s, provider, { signal }),
+        (s, signal) => runExecution(s, provider, { signal, ...(loadFiles ? { loadFiles } : {}) }),
         (s, signal) => runReview(s, provider, { signal }),
       ]);
     },
-    [save, runSteps, provider],
+    [save, runSteps, provider, projectRoot, projectFiles, localized],
   );
 
   const reject = useCallback(
@@ -335,6 +386,7 @@ export function useOrchestra(locale: Locale, t: Messages) {
     vault,
     saveKeyToVault,
     removeKeyFromVault,
+    filesAvailable: projectFiles.available,
   };
 }
 
