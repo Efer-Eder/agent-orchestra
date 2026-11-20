@@ -1,0 +1,31 @@
+# dependencies
+node_modules/
+
+# build output
+dist/
+coverage/
+*.tsbuildinfo
+
+# future Tauri / Rust build output
+src-tauri/target/
+src-tauri/gen/
+
+# env and secrets (never commit)
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# local data
+*.sqlite
+*.sqlite3
+*.db
+
+# editors / OS
+.vscode/*
+!.vscode/extensions.json
+.idea/
+.DS_Store
+Thumbs.db
+*.log
