@@ -1,6 +1,7 @@
 import {
   CircleCheck,
   KeyRound,
+  LockKeyhole,
   Monitor,
   Moon,
   PlugZap,
@@ -10,6 +11,7 @@ import {
 } from 'lucide-react';
 import { useState } from 'react';
 import type { ProviderSettings } from '../app/state.ts';
+import type { VaultState } from '../app/useOrchestra.ts';
 import type { ThemePreference } from '../app/theme.ts';
 import { createOpenAICompatibleProvider } from '../providers/openai-compatible.ts';
 import { Button, Field, Segmented, TextInput } from './primitives.tsx';
@@ -32,6 +34,9 @@ export function SettingsView({
   onApiKey,
   providerProblem,
   onResetAll,
+  vault,
+  onSaveToVault,
+  onRemoveFromVault,
 }: {
   theme: ThemePreference;
   onTheme: (t: ThemePreference) => void;
@@ -41,6 +46,9 @@ export function SettingsView({
   onApiKey: (k: string) => void;
   providerProblem: string | null;
   onResetAll: () => void;
+  vault: VaultState;
+  onSaveToVault: () => void;
+  onRemoveFromVault: () => void;
 }) {
   const [test, setTest] = useState<{ ok: boolean; text: string } | null>(null);
   const [testing, setTesting] = useState(false);
@@ -139,7 +147,7 @@ export function SettingsView({
                 </Field>
                 <Field
                   label="Chave de API"
-                  hint="Fica só na memória: nunca é salva em disco e some ao fechar o app. É enviada apenas ao endereço acima. O uso é cobrado pelo provedor, separado de qualquer assinatura de chat."
+                  hint="Nunca vai para os arquivos do app. Sem salvar no Windows, fica só na memória e some ao fechar. É enviada apenas ao endereço acima. O uso é cobrado pelo provedor, separado de qualquer assinatura de chat."
                 >
                   <div className="relative">
                     <KeyRound
@@ -156,6 +164,42 @@ export function SettingsView({
                     />
                   </div>
                 </Field>
+                <div className="rounded-xl border border-line bg-surface-2 px-3.5 py-3">
+                  <div className="flex flex-wrap items-center gap-3">
+                    <LockKeyhole size={16} className="shrink-0 text-ink-3" />
+                    <span className="min-w-0 flex-1 text-[12.5px] leading-relaxed text-ink-2">
+                      {!vault.available
+                        ? 'Para lembrar a chave com segurança, use o app desktop: ela fica no Gerenciador de Credenciais do Windows.'
+                        : vault.saved
+                          ? 'Chave guardada no Gerenciador de Credenciais do Windows para este endereço. Ela é carregada ao abrir o app.'
+                          : 'Guarde a chave no Gerenciador de Credenciais do Windows para não precisar digitá-la de novo.'}
+                    </span>
+                    {vault.available &&
+                      (vault.saved ? (
+                        <Button
+                          size="sm"
+                          variant="danger"
+                          disabled={vault.busy}
+                          onClick={onRemoveFromVault}
+                        >
+                          Remover do Windows
+                        </Button>
+                      ) : (
+                        <Button
+                          size="sm"
+                          disabled={vault.busy || !apiKey.trim()}
+                          onClick={onSaveToVault}
+                        >
+                          Salvar no Windows
+                        </Button>
+                      ))}
+                  </div>
+                  {vault.message && (
+                    <p role="alert" className="mt-2 text-[12.5px] text-bad">
+                      {vault.message}
+                    </p>
+                  )}
+                </div>
                 <div className="flex flex-wrap items-center gap-3">
                   <Button onClick={runTest} disabled={testing || !settings.baseUrl}>
                     <PlugZap size={15} />

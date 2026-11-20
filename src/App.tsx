@@ -140,6 +140,9 @@ export default function App() {
         onApiKey={o.setApiKey}
         providerProblem={o.providerProblem}
         onResetAll={o.resetAll}
+        vault={o.vault}
+        onSaveToVault={() => void o.saveKeyToVault()}
+        onRemoveFromVault={() => void o.removeKeyFromVault()}
       />
     );
   } else {
