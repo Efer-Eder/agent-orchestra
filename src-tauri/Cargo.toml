@@ -1,0 +1,20 @@
+[package]
+name = "agent-orchestra"
+version = "0.0.0"
+description = "Agent Orchestra desktop shell (in development)"
+authors = ["Efer Eder"]
+license = "MIT"
+repository = "https://github.com/Efer-Eder/agent-orchestra"
+edition = "2024"
+rust-version = "1.90"
+publish = false
+
+[lib]
+name = "agent_orchestra_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[build-dependencies]
+tauri-build = { version = "2.7.6", features = [] }
+
+[dependencies]
+tauri = { version = "2.12.7", features = [] }
