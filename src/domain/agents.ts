@@ -15,8 +15,8 @@ export interface AgentProfile {
   /** Accent color for the agent (avatar ring, highlights). */
   hue: string;
   /**
-   * Path to the mascot image under `public/mascots/`. Mascots are not designed
-   * yet, so this is undefined and the UI shows a placeholder.
+   * Optional raster mascot under `public/mascots/`. When unset, the animated
+   * SVG mascots in `src/components/octo/` are used (Octo for the Orchestra).
    */
   mascot?: string;
 }

@@ -17,11 +17,6 @@ function Stage({ agent, lead }: { agent: AgentProfile; lead?: boolean }) {
       }
     >
       <AgentAvatar agent={agent} size={lead ? 108 : 88} className="animate-breathe" />
-      {!agent.mascot && (
-        <span className="absolute top-2 right-2 rounded-full border border-line bg-surface px-2 py-0.5 text-[10.5px] text-ink-3">
-          mascote em breve
-        </span>
-      )}
     </div>
   );
 }
