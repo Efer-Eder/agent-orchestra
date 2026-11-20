@@ -21,6 +21,7 @@ Fontes conferidas em 20/11/2026: <https://v2.tauri.app/start/prerequisites/> e <
    ```
 
    Reabra o terminal depois da instalação.
+
 4. **VBSCRIPT** só é necessário para gerar instalador MSI (`"targets": "msi"` ou `"all"`). Se o `light.exe` falhar, habilite em Configurações › Aplicativos › Recursos opcionais › Mais recursos do Windows.
 
 ## Pré-requisitos no Ubuntu/Debian (CI)
@@ -39,14 +40,14 @@ npx tauri init
 
 Respostas sugeridas para o `tauri init`:
 
-| Pergunta | Resposta |
-| --- | --- |
-| App name | `agent-orchestra` |
-| Window title | `Agent Orchestra` |
-| Web assets location | `../dist` |
-| Dev server URL | `http://localhost:5173` |
-| Frontend dev command | `npm run dev` |
-| Frontend build command | `npm run build` |
+| Pergunta               | Resposta                |
+| ---------------------- | ----------------------- |
+| App name               | `agent-orchestra`       |
+| Window title           | `Agent Orchestra`       |
+| Web assets location    | `../dist`               |
+| Dev server URL         | `http://localhost:5173` |
+| Frontend dev command   | `npm run dev`           |
+| Frontend build command | `npm run build`         |
 
 O `vite.config.ts` já ignora `src-tauri/` no watcher, como a documentação recomenda. Depois:
 
