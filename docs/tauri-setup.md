@@ -1,13 +1,13 @@
-# Próximo passo: shell desktop Tauri 2
+# Shell desktop (Tauri 2)
 
-> **Ainda não existe `src-tauri/` neste repositório.** A máquina onde a fundação foi criada não tinha Rust/cargo, e preferimos não gerar código Rust que não pudemos compilar. Este guia descreve como adicioná-lo.
+O diretório `src-tauri/` contém um shell Tauri 2 **mínimo**: ele apenas hospeda a UI web. Não há comandos Rust próprios nem plugins (sem acesso a arquivos, shell ou rede a partir da interface). Versões usadas: Tauri CLI 2.12.6, crate `tauri` 2.12.x, Rust 1.100 (MSVC).
 
 Fontes conferidas em 20/11/2026: <https://v2.tauri.app/start/prerequisites/> e <https://v2.tauri.app/start/create-project/>.
 
 ## Pré-requisitos no Windows
 
 1. **Microsoft C++ Build Tools**, marcando a carga de trabalho **"Desktop development with C++"**.
-2. **WebView2**: já vem no Windows 10 (1803+) e no Windows 11. Caso falte, instalar o "Evergreen Bootstrapper" da página do WebView2 Runtime.
+2. **WebView2**: já vem no Windows 10 (1803+) e no Windows 11. Caso falte, instale o "Evergreen Bootstrapper" da página do WebView2 Runtime.
 3. **Rust** via rustup (no PowerShell):
 
    ```powershell
@@ -22,42 +22,36 @@ Fontes conferidas em 20/11/2026: <https://v2.tauri.app/start/prerequisites/> e <
 
    Reabra o terminal depois da instalação.
 
-4. **VBSCRIPT** só é necessário para gerar instalador MSI (`"targets": "msi"` ou `"all"`). Se o `light.exe` falhar, habilite em Configurações › Aplicativos › Recursos opcionais › Mais recursos do Windows.
+4. **VBSCRIPT** só é necessário para gerar instalador MSI. O projeto está configurado para gerar apenas NSIS (`"targets": ["nsis"]`).
 
-## Pré-requisitos no Ubuntu/Debian (CI)
+## Rodar o app desktop
+
+```powershell
+npm install
+npm run tauri dev
+```
+
+A primeira compilação Rust leva alguns minutos. A janela abre com a mesma UI de `npm run dev`.
+
+## Gerar instalador (não testado ainda)
+
+```powershell
+npm run tauri build
+```
+
+Ainda não foi validado nem publicado nenhum instalador. **Não há assinatura de código**: o Windows SmartScreen deve alertar ao executar um instalador gerado localmente.
+
+## Segurança do shell
+
+- CSP em `src-tauri/tauri.conf.json`: `default-src 'self'`, scripts e estilos só do próprio app, `object-src 'none'`, `frame-ancestors 'none'`, `connect-src` limitado ao IPC do Tauri.
+- Capability única (`src-tauri/capabilities/default.json`) com `core:default` apenas, para a janela `main`.
+- Nenhum plugin instalado (`fs`, `shell`, `http` etc. ausentes de propósito).
+
+## Pré-requisitos no Ubuntu/Debian
+
+Ainda não testado no Linux. Pela documentação oficial:
 
 ```bash
 sudo apt update
 sudo apt install libwebkit2gtk-4.1-dev build-essential curl wget file libxdo-dev libssl-dev libayatana-appindicator3-dev librsvg2-dev
 ```
-
-## Adicionar o Tauri ao frontend existente
-
-```powershell
-npm install -D @tauri-apps/cli@latest
-npx tauri init
-```
-
-Respostas sugeridas para o `tauri init`:
-
-| Pergunta               | Resposta                |
-| ---------------------- | ----------------------- |
-| App name               | `agent-orchestra`       |
-| Window title           | `Agent Orchestra`       |
-| Web assets location    | `../dist`               |
-| Dev server URL         | `http://localhost:5173` |
-| Frontend dev command   | `npm run dev`           |
-| Frontend build command | `npm run build`         |
-
-O `vite.config.ts` já ignora `src-tauri/` no watcher, como a documentação recomenda. Depois:
-
-```powershell
-npx tauri dev
-```
-
-## Critérios para considerar o passo concluído
-
-- `npx tauri dev` abre a janela no Windows com a UI atual.
-- CSP restritiva em `tauri.conf.json` e nenhuma permissão (capability) além do necessário.
-- CI compila o shell em `windows-latest` (Rust instalado no runner).
-- `PROGRESS.md` e este documento atualizados com versões reais usadas.
