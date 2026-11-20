@@ -5,17 +5,22 @@
 
 [🇧🇷 Português](README.md) · 🇺🇸 English
 
-> **In development.** This is a foundation, not a finished product. It runs in the browser or in a desktop window (Tauri 2) on Windows, always with an **offline mock provider**. There are no real providers, no persistence, no published installer and no file access yet.
+> **In development.** Not a finished product yet. It runs in the browser or in a desktop window (Tauri 2) on Windows, either in **offline demo mode** or with an **OpenAI-compatible provider** using your own key. There is no published installer, no access to project files and no command execution.
 
 Agent Orchestra aims to be a **local-first** desktop app (Tauri 2 + React) for coordinating AI agents in a development workflow with three roles — **Planner**, **Builder** and **Reviewer** — and **human approval** before anything runs.
 
+![Agents section in the desktop app, dark theme](docs/screenshots/agentes-desktop-escuro.png)
+
 ## What works now
 
-- Three-panel layout (projects/sessions/agents · timeline and approval · diffs/usage/context) with collapsible side panels, light/dark/system theme and empty states.
-- Full flow with the mock provider: **request → plan → approval → execution → review**, including rejection and cancellation.
-- The Builder only **proposes** diffs; nothing is written to disk.
-- Token usage is shown as **synthetic** (it comes from the mock); no cost is estimated.
-- TypeScript domain layer covered by tests (Vitest).
+- Desktop-chat-style interface ([DESIGN.md](DESIGN.md), **Grafite** theme): sidebar with sessions grouped by date and search, conversation with the agents, details panel and light/dark/system theme.
+- **request → plan → approval → execution → review** flow, with rejection, adjustment requests and cancellation at any time.
+- **Real OpenAI-compatible provider** (OpenAI, OpenRouter, Groq, Ollama, LM Studio…): base URL, model and key in Settings, with a connection test and clear messages for 401, 429, timeouts and network failures.
+- **Offline demo mode**, no network and no key, with clearly labelled replies.
+- **Agents** section: chat directly with Orchestra, Planner, Builder and Reviewer. Mascots are still to be designed; placeholders for now.
+- The Builder only **proposes** diffs, shown in the side panel; nothing is written to disk. Paths outside the project are rejected.
+- Projects, sessions and chats are saved on this device. **The API key is never saved**: it lives in memory only.
+- Token usage as reported by the provider (synthetic in demo mode). Cost is not estimated until a configurable price table exists.
 
 The UI is currently in Brazilian Portuguese.
 
@@ -51,11 +56,12 @@ No installer is published and there is no code signing.
 
 ## Not built yet
 
-Published installer, real providers (OpenAI-compatible), SQLite persistence, applying diffs to disk, command execution, session export. See the [ROADMAP](ROADMAP.md) and [progress log](PROGRESS.md) (in Portuguese).
+Published installer, reading project files as context, applying diffs to disk, command execution, Windows Credential Manager for the key, SQLite persistence, session export and the mascots. See the [ROADMAP](ROADMAP.md) and [progress log](PROGRESS.md) (in Portuguese).
 
 ## Security
 
-- No telemetry. No network calls to AI providers in this version.
+- No telemetry. Network is used only when you configure a real provider, and only to that address.
+- The API key stays in memory and is sent only to the configured provider.
 - The project **does not provide a sandbox**; command execution is out of scope until isolation is demonstrated.
 - See the [threat model](docs/threat-model.md) and [security policy](SECURITY.md).
 
