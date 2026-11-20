@@ -29,6 +29,7 @@ Nada aqui está pronto, exceto o que estiver marcado. Itens podem mudar de ordem
 - [ ] Fazer as chamadas HTTP pelo lado Rust para a chave não passar pelo JS
 - [ ] Ler arquivos do projeto autorizado como contexto do Builder (allowlist + negação de `.env`, chaves etc.)
 - [x] Mascotes dos agentes e do Orchestra (Octo)
+- [x] Interface em português e inglês
 - [ ] Barra de título própria no desktop
 - [ ] SQLite no lado Rust, importando os dados do `localStorage`
 

@@ -2,6 +2,18 @@
 
 Registro das etapas de desenvolvimento, da mais recente para a mais antiga.
 
+## 2026-11-20 — Etapa 6: português e inglês, README com GIFs
+
+**Status:** concluída.
+
+- i18n sem biblioteca: `src/i18n/messages.ts` (pt-BR é a fonte; o tipo obriga o en-US a ter as mesmas chaves), provider React e detecção por `?lang=`, escolha salva ou idioma do sistema. Seletor de idioma em Configurações.
+- Eventos da sessão guardam dados (`detail`, `code`) em vez de frases prontas, para a interface traduzir. Erros de validação têm motivo (`reason`).
+- Perfis dos agentes, modo demonstração e provedor OpenAI-compatível falam o idioma escolhido (as instruções ao modelo pedem a resposta nesse idioma).
+- Corrigido: durante o primeiro passo, a sessão aparecia como "Rascunho" sem indicador de trabalho.
+- GIFs do README gravados do app real com Playwright + Chrome, estilizados com Pillow e convertidos com ffmpeg (`scripts/readme-media/`): banner, fluxo, agentes, temas e idiomas, em pt-BR e en-US.
+- READMEs reescritos (hero, badges, GIFs, diagrama Mermaid da máquina de estados, tabelas, seções recolhíveis).
+- `npm test` (78 testes), lint, typecheck e build: OK. Conferido no navegador nas duas línguas.
+
 ## 2026-11-20 — Etapa 5: mascotes
 
 **Status:** concluída.

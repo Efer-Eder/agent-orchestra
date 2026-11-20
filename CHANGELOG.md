@@ -6,6 +6,8 @@ Todas as mudanças relevantes serão registradas aqui. O formato segue [Keep a C
 
 ### Adicionado
 
+- Interface em **português (Brasil)** e **inglês (EUA)**, com detecção pelo idioma do sistema, escolha salva em Configurações e `?lang=` na URL. Modo demonstração e respostas dos modelos seguem o idioma.
+- READMEs novos em pt-BR e en-US com GIFs gravados do app real (`scripts/readme-media/`).
 - Mascotes animados: **Octo**, o polvo do Orchestra, com humores que acompanham a sessão, e mascotes para Planner, Builder e Reviewer.
 - Chave de API guardada no **Gerenciador de Credenciais do Windows** no app desktop (comandos Rust `secret_save`, `secret_load`, `secret_delete`, com permissão explícita por comando); carregada ao abrir o app.
 - Novo visual **Grafite** ([DESIGN.md](DESIGN.md)): barra lateral com sessões por data e busca, conversa com turnos dos agentes, composer arredondado, painel de detalhes com diff, tema claro/escuro/sistema, fonte Inter local e ícones lucide.
