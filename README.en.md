@@ -3,7 +3,7 @@
 [![CI](https://github.com/Efer-Eder/agent-orchestra/actions/workflows/ci.yml/badge.svg)](https://github.com/Efer-Eder/agent-orchestra/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
-[🇧🇷 Português](README.md) · 🇺🇸 English
+[🇧🇷 Português](README.md) · 🇺🇸 English · **[Project page and live demo](https://efer.online/projeto/agent-orchestra/)**
 
 > **In development.** Not a finished product yet. It runs in the browser or in a desktop window (Tauri 2) on Windows, either in **offline demo mode** or with an **OpenAI-compatible provider** using your own key. There is no published installer, no access to project files and no command execution.
 
@@ -35,7 +35,7 @@ npm install
 npm run dev
 ```
 
-Open <http://localhost:5173>, create a project, describe a request and approve the plan.
+Open <http://localhost:5173>, create a project, describe a request and approve the plan. To just look around, the same build runs in demo mode at <https://efer.online/projeto/agent-orchestra/demo/>.
 
 | Command             | What it does                  |
 | ------------------- | ----------------------------- |

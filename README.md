@@ -3,7 +3,7 @@
 [![CI](https://github.com/Efer-Eder/agent-orchestra/actions/workflows/ci.yml/badge.svg)](https://github.com/Efer-Eder/agent-orchestra/actions/workflows/ci.yml)
 [![Licença: MIT](https://img.shields.io/badge/licen%C3%A7a-MIT-blue.svg)](LICENSE)
 
-🇧🇷 Português · [🇺🇸 English](README.en.md)
+🇧🇷 Português · [🇺🇸 English](README.en.md) · **[Página do projeto e demo online](https://efer.online/projeto/agent-orchestra/)**
 
 > **Em desenvolvimento.** Ainda não é um produto pronto. Roda no navegador ou em uma janela desktop (Tauri 2) no Windows, em **modo demonstração offline** ou com um **provedor OpenAI-compatível** usando a sua chave. Não há instalador publicado, acesso a arquivos do projeto nem execução de comandos.
 
@@ -33,7 +33,7 @@ npm install
 npm run dev
 ```
 
-Abra <http://localhost:5173>. Crie um projeto, descreva uma solicitação e aprove o plano.
+Abra <http://localhost:5173>. Crie um projeto, descreva uma solicitação e aprove o plano. Se quiser só ver, a mesma build roda em modo demonstração em <https://efer.online/projeto/agent-orchestra/demo/>.
 
 Outros comandos:
 
