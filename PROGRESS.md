@@ -2,6 +2,24 @@
 
 Registro das etapas de desenvolvimento, da mais recente para a mais antiga.
 
+## 2026-11-20 — Etapa 5: mascotes
+
+**Status:** concluída.
+
+- **Octo**, o polvo, virou o mascote oficial do Orchestra: aparece na tela inicial, no cabeçalho da sessão e nos turnos, com humores que seguem o estado da sessão.
+- Planner, Builder e Reviewer ganharam mascotes mais simples na cor de cada um, que se animam enquanto trabalham e sorriem quando terminam.
+- Tudo em SVG e CSS, sem imagem externa, respeitando `prefers-reduced-motion`. Laboratório em `design-lab/octo/` e `octo.html`.
+- O selo "mascote em breve" saiu da seção Agentes; README, DESIGN.md e a página do projeto foram atualizados.
+- `npm test` (70 testes), lint, typecheck e build: OK. Conferido no navegador: Home, Agentes e uma sessão completa, sem erro no console.
+
+## 2026-11-20 — Etapa 4: página do projeto no efer.online
+
+**Status:** concluída.
+
+- Página para devs em <https://efer.online/projeto/agent-orchestra/> (fonte em `site/index.html`) com a demo web em `/demo/`, gerada por `npm run build:site`.
+- Card "Atividade no GitHub" lido ao vivo da API pública do GitHub no navegador de quem visita (estrelas, forks, commits, issues, PRs, CI, contribuidores, linguagens), com cache de 10 minutos. Não precisa de deploy para atualizar.
+- Deploy estático com `deploy/deploy-site.ps1` (endereço do servidor só em variável de ambiente), snippet Nginx versionado em `deploy/nginx-agent-orchestra.conf`, backup e rollback automáticos.
+
 ## 2026-11-20 — Etapa 3: chave de API no Gerenciador de Credenciais do Windows
 
 **Status:** concluída no desktop Windows.
