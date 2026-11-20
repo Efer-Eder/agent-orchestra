@@ -82,3 +82,47 @@ describe('mock provider in English', () => {
     expect(reply).toContain('Demo mode reply');
   });
 });
+
+describe('mock provider with project files', () => {
+  it('picks files mentioned by the request, with README/package.json as fallback', async () => {
+    const { pickFiles } = await import('./mock.ts');
+    const tree = ['README.md', 'package.json', 'src/auth/login.ts', 'src/payments/api.ts'];
+    expect(pickFiles('Melhorar o login', tree)).toEqual([
+      'src/auth/login.ts',
+      'README.md',
+      'package.json',
+    ]);
+    expect(pickFiles('algo sem relação', ['src/a.ts'])).toEqual([]);
+  });
+
+  it('proposes modify diffs for the files it received', async () => {
+    const p = createMockProvider({ locale: 'en-US' });
+    const { output: plan } = await p.plan('Improve the login. Add tests.', undefined, [
+      'src/auth/login.ts',
+      'package.json',
+    ]);
+    expect(plan.files).toEqual(['src/auth/login.ts', 'package.json']);
+    const { output } = await p.build(plan, undefined, [
+      {
+        path: 'src/auth/login.ts',
+        content: 'export {}',
+        bytes: 9,
+        truncated: false,
+        redactions: 0,
+        skipped: null,
+      },
+      {
+        path: 'package.json',
+        content: '{}',
+        bytes: 2,
+        truncated: false,
+        redactions: 0,
+        skipped: null,
+      },
+    ]);
+    expect(output).toHaveLength(1); // JSON has no comments, so it is left alone
+    expect(output[0]?.kind).toBe('modify');
+    expect(output[0]?.diff).toContain('+// Agent Orchestra (demo): Improve the login.');
+    expect(output[0]?.diff).toContain(' export {}');
+  });
+});

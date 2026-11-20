@@ -1,7 +1,14 @@
 import type { AgentProfile } from '../domain/agents.ts';
 import type { Locale } from '../domain/locale.ts';
 import type { AgentProvider, ProviderResult } from '../domain/provider.ts';
-import type { Plan, PlanTask, ProposedChange, Review, Usage } from '../domain/types.ts';
+import type {
+  FileContent,
+  Plan,
+  PlanTask,
+  ProposedChange,
+  Review,
+  Usage,
+} from '../domain/types.ts';
 
 export interface MockProviderOptions {
   /** Artificial latency per call, to exercise loading and cancel states in the UI. */
@@ -28,6 +35,7 @@ const TEXT = {
         : `${n} alterações conferidas pelo revisor mock.`,
     nothing: 'Nenhuma alteração para revisar.',
     fallbackSlug: 'tarefa',
+    fileNote: (task: string) => `Agent Orchestra (demonstração): ${task}`,
     replies: {
       orchestra:
         'Sou o Orchestra, o maestro. Quando você abrir uma sessão, eu chamo o Planner, espero a sua aprovação e só então passo a vez ao Builder e ao Reviewer.',
@@ -53,6 +61,7 @@ const TEXT = {
         : `${n} changes checked by the mock reviewer.`,
     nothing: 'No changes to review.',
     fallbackSlug: 'task',
+    fileNote: (task: string) => `Agent Orchestra (demo): ${task}`,
     replies: {
       orchestra:
         "I'm the Orchestra, the conductor. When you open a session, I call the Planner, wait for your approval and only then hand over to the Builder and the Reviewer.",
@@ -102,7 +111,7 @@ function delay(ms: number, message: string, signal?: AbortSignal): Promise<void>
 export function slug(text: string, fallback = 'tarefa'): string {
   const s = text
     .normalize('NFD')
-    .replace(/[̀-ͯ]/g, '')
+    .replace(/[\u0300-\u036f]/g, '')
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/^-+|-+$/g, '')
@@ -124,6 +133,69 @@ export function splitIntoTasks(request: string, locale: Locale = 'pt-BR'): PlanT
   }));
 }
 
+const MAX_PICK = 3;
+const FALLBACK_FILES = ['README.md', 'readme.md', 'package.json', 'Cargo.toml', 'pyproject.toml'];
+
+function words(text: string): string[] {
+  return text
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .split(/[^a-z0-9]+/)
+    .filter((w) => w.length >= 4);
+}
+
+/** Picks up to three files whose path mentions words from the request. */
+export function pickFiles(request: string, tree: string[]): string[] {
+  const wanted = words(request);
+  const scored = tree
+    .map((path) => {
+      const haystack = path.toLowerCase();
+      const score = wanted.filter((w) => haystack.includes(w)).length;
+      return { path, score };
+    })
+    .filter((f) => f.score > 0)
+    .sort((a, b) => b.score - a.score || a.path.length - b.path.length)
+    .map((f) => f.path);
+  const fallback = FALLBACK_FILES.filter((f) => tree.includes(f));
+  return [...new Set([...scored, ...fallback])].slice(0, MAX_PICK);
+}
+
+function commentFor(path: string, text: string): string | null {
+  const ext = path.toLowerCase().split('.').pop() ?? '';
+  if (['md', 'markdown', 'html', 'xml', 'svg', 'vue'].includes(ext)) return `<!-- ${text} -->`;
+  if (['css', 'scss', 'less'].includes(ext)) return `/* ${text} */`;
+  if (
+    ['py', 'yml', 'yaml', 'toml', 'sh', 'rb', 'r', 'ps1', 'dockerfile', 'ini', 'cfg'].includes(ext)
+  ) {
+    return `# ${text}`;
+  }
+  if (
+    [
+      'ts',
+      'tsx',
+      'js',
+      'jsx',
+      'mjs',
+      'cjs',
+      'rs',
+      'go',
+      'java',
+      'kt',
+      'c',
+      'h',
+      'cpp',
+      'cs',
+      'swift',
+      'php',
+      'dart',
+    ].includes(ext)
+  ) {
+    return `// ${text}`;
+  }
+  return null; // e.g. JSON has no comments: leave it alone
+}
+
 /** Canned, clearly-labelled reply used by the offline mock. */
 export function mockReply(
   agent: AgentProfile,
@@ -132,6 +204,20 @@ export function mockReply(
 ): string {
   const quote = lastUserMessage.trim().slice(0, 120);
   return [TEXT[locale].replies[agent.id], '', TEXT[locale].demoNote(quote)].join('\n');
+}
+
+function modifyFor(file: FileContent, task: PlanTask, locale: Locale): ProposedChange | null {
+  const note = commentFor(file.path, TEXT[locale].fileNote(task.title));
+  if (!note) return null;
+  const first = file.content.split('\n')[0] ?? '';
+  const diff = [
+    `--- a/${file.path}`,
+    `+++ b/${file.path}`,
+    '@@ -1,1 +1,2 @@',
+    `+${note}`,
+    ` ${first}`,
+  ].join('\n');
+  return { path: file.path, kind: 'modify', diff };
 }
 
 function changeFor(task: PlanTask, index: number, locale: Locale): ProposedChange {
@@ -172,14 +258,25 @@ export function createMockProvider(options: MockProviderOptions = {}): AgentProv
     id: 'mock',
     label: 'Mock (offline)',
     offline: true,
-    plan: (request, signal) =>
+    plan: (request, signal, tree) =>
       step<Plan>('plan', signal, () => {
-        const plan: Plan = { summary: t.planSummary, tasks: splitIntoTasks(request, locale) };
+        const files = tree?.length ? pickFiles(request, tree) : [];
+        const plan: Plan = {
+          summary: t.planSummary,
+          tasks: splitIntoTasks(request, locale),
+          ...(files.length ? { files } : {}),
+        };
         return { output: plan, input: request, text: JSON.stringify(plan) };
       }),
-    build: (plan, signal) =>
+    build: (plan, signal, files) =>
       step<ProposedChange[]>('build', signal, () => {
-        const changes = plan.tasks.map((task, i) => changeFor(task, i, locale));
+        const readable = files ?? [];
+        const edits = readable
+          .map((file, i) => modifyFor(file, plan.tasks[i % plan.tasks.length]!, locale))
+          .filter((c): c is ProposedChange => c !== null);
+        const changes = edits.length
+          ? edits
+          : plan.tasks.map((task, i) => changeFor(task, i, locale));
         return { output: changes, input: JSON.stringify(plan), text: JSON.stringify(changes) };
       }),
     review: (changes, signal) =>
