@@ -43,7 +43,7 @@ Ainda não foi validado nem publicado nenhum instalador. **Não há assinatura d
 
 ## Segurança do shell
 
-- CSP em `src-tauri/tauri.conf.json`: `default-src 'self'`, scripts e estilos só do próprio app, `object-src 'none'`, `frame-ancestors 'none'`, `connect-src` limitado ao IPC do Tauri.
+- CSP em `src-tauri/tauri.conf.json`: `default-src 'self'`, scripts e estilos só do próprio app, `object-src 'none'`, `frame-ancestors 'none'`, `connect-src` limitado ao IPC do Tauri, a `https:` e a `localhost` (para o provedor de IA configurado pelo usuário, ver [ADR 0006](adr/0006-provedor-openai-compativel-com-chave-em-memoria.md)).
 - Capability única (`src-tauri/capabilities/default.json`) com `core:default` apenas, para a janela `main`.
 - Nenhum plugin instalado (`fs`, `shell`, `http` etc. ausentes de propósito).
 

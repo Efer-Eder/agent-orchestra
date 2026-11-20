@@ -37,6 +37,17 @@ Agent Orchestra será um app desktop local-first (Tauri 2 + React) que coordena 
 | UI                   | `src/App.tsx`, `src/components/*` | Três painéis, tema claro/escuro/sistema, estados vazios, painéis laterais ocultáveis.  |
 | Estado da UI         | `src/app/state.ts`                | Somente memória; recarregar a página apaga tudo.                                       |
 
+## Atualização 2026-11-20 — Grafite e provedor real
+
+| Camada                | Arquivos                                     | Notas                                                                                                                          |
+| --------------------- | -------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
+| Perfis de agentes     | `src/domain/agents.ts`                       | Orchestra, Planner, Builder, Reviewer: cor, persona, slot de mascote.                                                          |
+| Provedor real         | `src/providers/openai-compatible.ts`         | Chat Completions; erros tipados (`ProviderError`); chave só em memória.                                                        |
+| Validação             | `src/providers/parse.ts`                     | JSON da resposta, plano, diffs (caminhos seguros), revisão, contagem de linhas do diff.                                        |
+| Estado e persistência | `src/app/state.ts`, `src/app/persistence.ts` | Reducer + snapshot versionado no `localStorage`, sem a chave.                                                                  |
+| Orquestração          | `src/app/useOrchestra.ts`                    | Escolhe o provedor, roda as etapas com `AbortController` por sessão, chats por agente.                                         |
+| UI                    | `src/components/*`, `src/App.tsx`            | Sidebar, Home, Sessão, Painel de detalhes/diff, Agentes, Projetos, Configurações. Regras visuais em [DESIGN.md](../DESIGN.md). |
+
 ## Máquina de estados da sessão
 
 ```text
@@ -57,9 +68,8 @@ draft ──► planning ──► awaiting_approval ──► executing ──�
 ## Planejado (ainda não existe)
 
 - Comandos Rust no shell (hoje ele só hospeda a UI).
-- Persistência em SQLite (projetos, sessões, eventos).
+- Persistência em SQLite (hoje: `localStorage`, ver [ADR 0007](adr/0007-persistencia-local-antes-do-sqlite.md)).
 - Segredos no Windows Credential Manager / keychain, nunca em SQLite.
-- Provedor OpenAI-compatible com tratamento de 401, 429, timeout e rede.
 - Aplicação de diffs aprovados, restrita ao diretório autorizado.
 - Exportação de sessão (JSON/Markdown) com remoção de segredos.
 
