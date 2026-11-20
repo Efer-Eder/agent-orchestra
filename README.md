@@ -5,7 +5,7 @@
 
 🇧🇷 Português · [🇺🇸 English](README.en.md)
 
-> **Em desenvolvimento.** Isto ainda é uma fundação, não um produto pronto. Hoje roda **só no navegador**, com um **provedor mock offline**. Não há app desktop, provedores reais, persistência nem acesso a arquivos.
+> **Em desenvolvimento.** Isto ainda é uma fundação, não um produto pronto. Roda no navegador ou em uma janela desktop (Tauri 2) no Windows, sempre com um **provedor mock offline**. Não há provedores reais, persistência, instalador publicado nem acesso a arquivos.
 
 Agent Orchestra será um app desktop **local-first** (Tauri 2 + React) para coordenar agentes de IA em um fluxo de desenvolvimento com três papéis — **Planner**, **Builder** e **Reviewer** — e **aprovação humana** antes de qualquer execução.
 
@@ -39,9 +39,19 @@ Outros comandos:
 | `npm run typecheck` | Checagem de tipos            |
 | `npm run build`     | Build de produção em `dist/` |
 
+## App desktop (Windows)
+
+Requer Rust (MSVC) e Microsoft C++ Build Tools — veja [docs/tauri-setup.md](docs/tauri-setup.md).
+
+```powershell
+npm run tauri dev
+```
+
+Não há instalador publicado nem assinatura de código.
+
 ## Ainda não existe
 
-App desktop (Tauri), provedores reais (OpenAI-compatible), persistência SQLite, aplicação de diffs no disco, execução de comandos, exportação de sessões. Veja o [ROADMAP](ROADMAP.md) e o [progresso](PROGRESS.md).
+Instalador publicado, provedores reais (OpenAI-compatible), persistência SQLite, aplicação de diffs no disco, execução de comandos, exportação de sessões. Veja o [ROADMAP](ROADMAP.md) e o [progresso](PROGRESS.md).
 
 ## Segurança
 
@@ -53,7 +63,7 @@ App desktop (Tauri), provedores reais (OpenAI-compatible), persistência SQLite,
 
 - [Arquitetura](docs/architecture.md)
 - [Decisões (ADRs)](docs/adr/)
-- [Próximo passo: shell Tauri 2](docs/tauri-setup.md)
+- [Shell desktop Tauri 2](docs/tauri-setup.md)
 - [Como contribuir](CONTRIBUTING.md)
 
 ## Licença

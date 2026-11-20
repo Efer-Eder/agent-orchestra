@@ -5,7 +5,7 @@
 
 [🇧🇷 Português](README.md) · 🇺🇸 English
 
-> **In development.** This is a foundation, not a finished product. Today it runs **in the browser only**, with an **offline mock provider**. There is no desktop app, no real providers, no persistence and no file access yet.
+> **In development.** This is a foundation, not a finished product. It runs in the browser or in a desktop window (Tauri 2) on Windows, always with an **offline mock provider**. There are no real providers, no persistence, no published installer and no file access yet.
 
 Agent Orchestra aims to be a **local-first** desktop app (Tauri 2 + React) for coordinating AI agents in a development workflow with three roles — **Planner**, **Builder** and **Reviewer** — and **human approval** before anything runs.
 
@@ -39,9 +39,19 @@ Open <http://localhost:5173>, create a project, describe a request and approve t
 | `npm run typecheck` | Type checking                 |
 | `npm run build`     | Production build into `dist/` |
 
+## Desktop app (Windows)
+
+Requires Rust (MSVC) and Microsoft C++ Build Tools — see [docs/tauri-setup.md](docs/tauri-setup.md) (in Portuguese).
+
+```powershell
+npm run tauri dev
+```
+
+No installer is published and there is no code signing.
+
 ## Not built yet
 
-Desktop app (Tauri), real providers (OpenAI-compatible), SQLite persistence, applying diffs to disk, command execution, session export. See the [ROADMAP](ROADMAP.md) and [progress log](PROGRESS.md) (in Portuguese).
+Published installer, real providers (OpenAI-compatible), SQLite persistence, applying diffs to disk, command execution, session export. See the [ROADMAP](ROADMAP.md) and [progress log](PROGRESS.md) (in Portuguese).
 
 ## Security
 

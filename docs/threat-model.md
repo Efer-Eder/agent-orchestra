@@ -5,13 +5,14 @@
 
 ## Escopo atual
 
-Hoje o projeto é um frontend web que roda no navegador com um provedor **mock** em memória:
+Hoje o projeto é um frontend web (no navegador ou dentro de um shell Tauri 2 mínimo) com um provedor **mock** em memória:
 
 - não faz chamadas de rede para provedores de IA;
 - não lê nem grava arquivos;
 - não executa comandos;
 - não armazena segredos;
-- guarda apenas a preferência de tema no `localStorage`.
+- guarda apenas a preferência de tema no `localStorage`;
+- no shell desktop: CSP restritiva, capability `core:default` apenas, nenhum comando Rust customizado e nenhum plugin (`fs`, `shell`, `http`).
 
 A superfície de ataque real hoje é pequena. Os riscos abaixo descrevem o que **passará a existir** com o shell Tauri e provedores reais, e as mitigações planejadas.
 
