@@ -1,4 +1,5 @@
-import type { Plan, ProposedChange, Review, Usage } from './types.ts';
+import type { AgentProfile } from './agents.ts';
+import type { ChatMessage, Plan, ProposedChange, Review, Usage } from './types.ts';
 
 export interface ProviderResult<T> {
   output: T;
@@ -20,4 +21,10 @@ export interface AgentProvider {
   plan(request: string, signal?: AbortSignal): Promise<ProviderResult<Plan>>;
   build(plan: Plan, signal?: AbortSignal): Promise<ProviderResult<ProposedChange[]>>;
   review(changes: ProposedChange[], signal?: AbortSignal): Promise<ProviderResult<Review>>;
+  /** Direct conversation with one agent, using its persona. */
+  chat(
+    agent: AgentProfile,
+    history: ChatMessage[],
+    signal?: AbortSignal,
+  ): Promise<ProviderResult<string>>;
 }

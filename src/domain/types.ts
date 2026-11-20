@@ -95,3 +95,13 @@ export interface Session {
   events: TimelineEvent[];
   error?: string;
 }
+
+/** A message in a direct chat with one agent (Agents section). */
+export interface ChatMessage {
+  id: string;
+  from: 'user' | 'agent';
+  content: string;
+  at: string;
+  usage?: Usage;
+  error?: boolean;
+}
