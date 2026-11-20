@@ -30,5 +30,3 @@ src-tauri/gen/
 Thumbs.db
 *.log
 
-# local agent tooling
-.claude/
