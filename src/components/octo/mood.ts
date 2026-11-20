@@ -40,3 +40,8 @@ export function octoMoodFor(status: SessionStatus, busy: boolean): OctoMood {
       return 'idle';
   }
 }
+
+/** Os agentes que o Octo coordena e os três humores deles. */
+export type WorkerId = 'planner' | 'builder' | 'reviewer';
+export const AGENT_MOODS = ['idle', 'working', 'done'] as const;
+export type AgentMood = (typeof AGENT_MOODS)[number];

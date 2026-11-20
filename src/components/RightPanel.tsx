@@ -180,7 +180,12 @@ export function RightPanel({
               const st = agentState(session, a.id);
               return (
                 <li key={a.id} className="flex items-center gap-2.5 text-[13px]">
-                  <AgentAvatar agent={a} size={26} working={st === 'trabalhando'} />
+                  <AgentAvatar
+                    agent={a}
+                    size={26}
+                    working={st === 'trabalhando'}
+                    done={st === 'concluiu'}
+                  />
                   {a.name}
                   <span className="ml-auto text-[12px] text-ink-3">{st}</span>
                 </li>

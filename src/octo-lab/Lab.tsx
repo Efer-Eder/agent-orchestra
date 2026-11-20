@@ -1,5 +1,16 @@
 import { useEffect, useState } from 'react';
-import { OCTO_MOODS, OCTO_MOOD_LABEL, OctoMascot } from '../components/octo/index.ts';
+import { AGENTS } from '../domain/agents.ts';
+import {
+  AGENT_MOODS,
+  AgentMascot,
+  OCTO_MOODS,
+  OCTO_MOOD_LABEL,
+  OctoMascot,
+  type WorkerId,
+} from '../components/octo/index.ts';
+
+const WORKERS: WorkerId[] = ['planner', 'builder', 'reviewer'];
+const AGENT_MOOD_LABEL = { idle: 'aguardando', working: 'trabalhando', done: 'concluiu' } as const;
 
 /** Laboratório do Octo: o mascote nos lugares onde ele vai morar no app. */
 export function Lab() {
@@ -51,6 +62,39 @@ export function Lab() {
                 <span className="block text-ink-3">{OCTO_MOOD_LABEL[m]}</span>
               </figcaption>
             </figure>
+          ))}
+        </div>
+
+        <h2 className="mt-10 text-[15px] font-semibold">Os agentes que ele coordena</h2>
+        <p className="mt-1 text-[13.5px] text-ink-2">
+          Mais simples que o Octo: corpo redondo na cor do agente, um acessório e três humores.
+        </p>
+        <div className="mt-3 grid gap-3 md:grid-cols-3">
+          {WORKERS.map((id) => (
+            <article key={id} className="rounded-xl border border-line bg-surface p-4">
+              <h3 className="text-[14px] font-semibold">{AGENTS[id].name}</h3>
+              <p className="text-[12.5px] text-ink-3">{AGENTS[id].tagline}</p>
+              <div className="mt-3 grid grid-cols-3 gap-2">
+                {AGENT_MOODS.map((m) => (
+                  <figure
+                    key={m}
+                    className="flex flex-col items-center gap-1 rounded-lg bg-app py-2"
+                  >
+                    <AgentMascot
+                      agent={id}
+                      hue={AGENTS[id].hue}
+                      size={84}
+                      mood={m}
+                      animated={animated}
+                      motion="always"
+                    />
+                    <figcaption className="text-[12px] text-ink-3">
+                      {AGENT_MOOD_LABEL[m]}
+                    </figcaption>
+                  </figure>
+                ))}
+              </div>
+            </article>
           ))}
         </div>
 

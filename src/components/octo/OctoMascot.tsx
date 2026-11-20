@@ -1,12 +1,6 @@
 import './octo.css';
 import { OCTO_MOOD_LABEL, type OctoMood } from './mood.ts';
-
-/**
- * `?octo-anim` na URL força a animação mesmo com "reduzir movimento" ligado no
- * sistema. Serve para demonstrar o Octo em máquinas com animações desligadas.
- */
-const FORCE_FROM_URL =
-  typeof location !== 'undefined' && new URLSearchParams(location.search).has('octo-anim');
+import { FORCE_FROM_URL } from './motion.ts';
 
 export interface OctoMascotProps {
   /** Largura e altura em pixels. */
