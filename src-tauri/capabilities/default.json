@@ -1,7 +1,15 @@
 {
   "$schema": "../gen/schemas/desktop-schema.json",
   "identifier": "default",
-  "description": "Core window permissions plus the three API-key commands. No fs, shell, http or other plugins.",
+  "description": "Core window permissions, the three API-key commands and read-only access to the authorized project folder. No fs, shell, http or other plugins.",
   "windows": ["main"],
-  "permissions": ["core:default", "allow-secret-save", "allow-secret-load", "allow-secret-delete"]
+  "permissions": [
+    "core:default",
+    "allow-secret-save",
+    "allow-secret-load",
+    "allow-secret-delete",
+    "allow-project-check-root",
+    "allow-project-list-files",
+    "allow-project-read-files"
+  ]
 }
