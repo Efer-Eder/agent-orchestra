@@ -28,14 +28,14 @@ Agent Orchestra será um app desktop local-first (Tauri 2 + React) que coordena 
 
 ## O que existe hoje
 
-| Camada | Arquivos | Notas |
-| --- | --- | --- |
-| Tipos de domínio | `src/domain/types.ts` | Projeto, sessão, papéis, plano, alterações propostas, revisão, uso. Tudo serializável. |
-| Fluxo | `src/domain/workflow.ts` | Máquina de estados explícita; funções puras/imutáveis; cancelamento via `AbortSignal`. |
-| Contrato de provedor | `src/domain/provider.ts` | `plan`, `build`, `review`, cada um com `AbortSignal`. |
-| Provedor mock | `src/providers/mock.ts` | Determinístico, offline, sem rede e sem disco. Uso de tokens marcado como `synthetic`. |
-| UI | `src/App.tsx`, `src/components/*` | Três painéis, tema claro/escuro/sistema, estados vazios, painéis laterais ocultáveis. |
-| Estado da UI | `src/app/state.ts` | Somente memória; recarregar a página apaga tudo. |
+| Camada               | Arquivos                          | Notas                                                                                  |
+| -------------------- | --------------------------------- | -------------------------------------------------------------------------------------- |
+| Tipos de domínio     | `src/domain/types.ts`             | Projeto, sessão, papéis, plano, alterações propostas, revisão, uso. Tudo serializável. |
+| Fluxo                | `src/domain/workflow.ts`          | Máquina de estados explícita; funções puras/imutáveis; cancelamento via `AbortSignal`. |
+| Contrato de provedor | `src/domain/provider.ts`          | `plan`, `build`, `review`, cada um com `AbortSignal`.                                  |
+| Provedor mock        | `src/providers/mock.ts`           | Determinístico, offline, sem rede e sem disco. Uso de tokens marcado como `synthetic`. |
+| UI                   | `src/App.tsx`, `src/components/*` | Três painéis, tema claro/escuro/sistema, estados vazios, painéis laterais ocultáveis.  |
+| Estado da UI         | `src/app/state.ts`                | Somente memória; recarregar a página apaga tudo.                                       |
 
 ## Máquina de estados da sessão
 
