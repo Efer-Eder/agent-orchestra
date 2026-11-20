@@ -28,7 +28,7 @@ Nada aqui está pronto, exceto o que estiver marcado. Itens podem mudar de ordem
 - [x] Chave de API no Gerenciador de Credenciais do Windows (comando Rust)
 - [ ] Fazer as chamadas HTTP pelo lado Rust para a chave não passar pelo JS
 - [ ] Ler arquivos do projeto autorizado como contexto do Builder (allowlist + negação de `.env`, chaves etc.)
-- [ ] Mascotes dos agentes e do Orchestra
+- [x] Mascotes dos agentes e do Orchestra (Octo)
 - [ ] Barra de título própria no desktop
 - [ ] SQLite no lado Rust, importando os dados do `localStorage`
 

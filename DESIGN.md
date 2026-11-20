@@ -90,8 +90,10 @@ Os componentes usam apenas nomes semânticos (`bg-surface`, `text-ink-2`…), de
 
 - Seção **Agentes** no estilo "companions": cards com palco (fundo com brilho na cor do agente), mascote grande, nome, uma frase e **Conversar**.
 - O **Orchestra** tem o card maior e é o agente padrão do composer.
-- Enquanto os mascotes não existem, o avatar é um círculo com gradiente da cor do agente e o ícone provisório, com o selo "mascote em breve".
-- Mascotes finais ficarão em `public/mascots/<agente>.webp` (fundo transparente, 512×512, com versão para fundo claro e escuro se necessário) e serão referenciados no perfil do agente (`src/domain/agents.ts`).
+- **Octo**, o polvo, é o mascote oficial do Orchestra (`src/components/octo/OctoMascot.tsx`). Tem humores (`mood.ts`) que acompanham a sessão: ocioso, pensando, esperando aprovação, feliz, preocupado.
+- Planner, Builder e Reviewer têm mascotes mais simples na cor de cada um (`AgentMascot.tsx`), que se animam enquanto trabalham e sorriem quando terminam.
+- Tudo em SVG e CSS, sem imagem externa; animações respeitam `prefers-reduced-motion`. Laboratório em `design-lab/octo/` e `octo.html`.
+- Um mascote em imagem (`public/mascots/<agente>.webp`, campo `mascot` do perfil) ainda tem prioridade, se um dia for usado.
 
 ## Temas
 

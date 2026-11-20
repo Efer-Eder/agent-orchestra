@@ -17,7 +17,7 @@ Agent Orchestra será um app desktop **local-first** (Tauri 2 + React) para coor
 - Fluxo **solicitação → plano → aprovação → execução → revisão**, com rejeição, pedido de ajuste e cancelamento a qualquer momento.
 - **Provedor real OpenAI-compatível** (OpenAI, OpenRouter, Groq, Ollama, LM Studio…): endereço, modelo e chave em Configurações, com teste de conexão e mensagens claras para 401, 429, timeout e falha de rede.
 - **Modo demonstração offline**, sem rede e sem chave, com respostas rotuladas.
-- Seção **Agentes**: converse direto com Orchestra, Planner, Builder e Reviewer. Os mascotes ainda serão desenhados; por enquanto há marcadores.
+- Seção **Agentes**: converse direto com Orchestra, Planner, Builder e Reviewer. Cada um tem mascote animado; o **Octo**, um polvo, é o mascote oficial do Orchestra e muda de humor conforme a sessão.
 - O Builder apenas **propõe** diffs, que você vê no painel; nada é gravado no disco. Caminhos fora do projeto são recusados.
 - Projetos, sessões e conversas ficam salvos neste dispositivo. **A chave de API nunca vai para os arquivos do app**: no app desktop você pode guardá-la no **Gerenciador de Credenciais do Windows**; no navegador ela fica só na memória.
 - Uso de tokens reportado pelo provedor (ou sintético no modo demonstração). Custo não é estimado enquanto não houver tabela de preços configurável.
@@ -56,7 +56,7 @@ Não há instalador publicado nem assinatura de código.
 
 ## Ainda não existe
 
-Instalador publicado, leitura dos arquivos do projeto como contexto, aplicação de diffs no disco, execução de comandos, persistência SQLite, exportação de sessões e os mascotes. Veja o [ROADMAP](ROADMAP.md) e o [progresso](PROGRESS.md).
+Instalador publicado, leitura dos arquivos do projeto como contexto, aplicação de diffs no disco, execução de comandos, persistência SQLite e exportação de sessões. Veja o [ROADMAP](ROADMAP.md) e o [progresso](PROGRESS.md).
 
 ## Segurança
 

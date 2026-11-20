@@ -6,6 +6,7 @@ Todas as mudanças relevantes serão registradas aqui. O formato segue [Keep a C
 
 ### Adicionado
 
+- Mascotes animados: **Octo**, o polvo do Orchestra, com humores que acompanham a sessão, e mascotes para Planner, Builder e Reviewer.
 - Chave de API guardada no **Gerenciador de Credenciais do Windows** no app desktop (comandos Rust `secret_save`, `secret_load`, `secret_delete`, com permissão explícita por comando); carregada ao abrir o app.
 - Novo visual **Grafite** ([DESIGN.md](DESIGN.md)): barra lateral com sessões por data e busca, conversa com turnos dos agentes, composer arredondado, painel de detalhes com diff, tema claro/escuro/sistema, fonte Inter local e ícones lucide.
 - Provedor **OpenAI-compatível** real com teste de conexão, tratamento de 401, 429, timeout e rede, e validação da saída do modelo (caminhos fora do projeto recusados).
