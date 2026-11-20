@@ -41,7 +41,7 @@ Agent Orchestra será um app desktop local-first (Tauri 2 + React) que coordena 
 
 | Camada                | Arquivos                                     | Notas                                                                                                                          |
 | --------------------- | -------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
-| Perfis de agentes     | `src/domain/agents.ts`                       | Orchestra, Planner, Builder, Reviewer: cor, persona e mascote (Octo e os outros em `src/components/octo/`).                                                          |
+| Perfis de agentes     | `src/domain/agents.ts`                       | Orchestra, Planner, Builder, Reviewer: cor, persona e mascote (Octo e os outros em `src/components/octo/`).                    |
 | Provedor real         | `src/providers/openai-compatible.ts`         | Chat Completions; erros tipados (`ProviderError`); chave só em memória.                                                        |
 | Validação             | `src/providers/parse.ts`                     | JSON da resposta, plano, diffs (caminhos seguros), revisão, contagem de linhas do diff.                                        |
 | Estado e persistência | `src/app/state.ts`, `src/app/persistence.ts` | Reducer + snapshot versionado no `localStorage`, sem a chave.                                                                  |
