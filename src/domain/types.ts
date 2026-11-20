@@ -72,14 +72,7 @@ export interface Usage {
 }
 
 export type TimelineEventKind =
-  | 'request'
-  | 'plan'
-  | 'approval'
-  | 'rejection'
-  | 'execution'
-  | 'review'
-  | 'cancelled'
-  | 'error';
+  'request' | 'plan' | 'approval' | 'rejection' | 'execution' | 'review' | 'cancelled' | 'error';
 
 export interface TimelineEvent {
   id: string;
