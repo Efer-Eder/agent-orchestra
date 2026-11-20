@@ -80,6 +80,10 @@ export interface TimelineEvent {
   kind: TimelineEventKind;
   role?: AgentRole;
   message: string;
+  /** Free text attached to the event (e.g. the rejection reason). */
+  detail?: string;
+  /** Stable code the UI can translate (e.g. `interrupted`, `cancelled`). */
+  code?: 'interrupted' | 'cancelled';
 }
 
 export interface Session {

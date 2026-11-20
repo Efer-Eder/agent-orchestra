@@ -15,12 +15,17 @@ export const MAX_ERROR_LENGTH = 500;
 
 export type WorkflowErrorCode = 'invalid_input' | 'invalid_transition';
 
+/** Why an input was refused, so the UI can show it in the user's language. */
+export type WorkflowErrorReason = 'empty_project_name' | 'empty_request' | 'request_too_long';
+
 export class WorkflowError extends Error {
   readonly code: WorkflowErrorCode;
-  constructor(code: WorkflowErrorCode, message: string) {
+  readonly reason: WorkflowErrorReason | undefined;
+  constructor(code: WorkflowErrorCode, message: string, reason?: WorkflowErrorReason) {
     super(message);
     this.name = 'WorkflowError';
     this.code = code;
+    this.reason = reason;
   }
 }
 
@@ -67,6 +72,7 @@ function event(
   kind: TimelineEventKind,
   message: string,
   role?: AgentRole,
+  extra: Pick<TimelineEvent, 'detail' | 'code'> = {},
 ): TimelineEvent {
   return {
     id: d.ids(),
@@ -74,6 +80,7 @@ function event(
     kind,
     message,
     ...(role ? { role } : {}),
+    ...extra,
   };
 }
 
@@ -115,7 +122,9 @@ function fail(
   d: ResolvedDeps,
 ): Session {
   if (isAbort(error, signal)) {
-    return moveTo(session, 'cancelled', {}, [event(d, 'cancelled', 'Execução cancelada.')]);
+    return moveTo(session, 'cancelled', {}, [
+      event(d, 'cancelled', 'Execução cancelada.', undefined, { code: 'cancelled' }),
+    ]);
   }
   const message = errorMessage(error);
   return moveTo(session, 'failed', { error: message }, [event(d, 'error', message)]);
@@ -124,7 +133,13 @@ function fail(
 export function createProject(name: string, rootLabel: string, deps?: WorkflowDeps): Project {
   const d = resolve(deps);
   const trimmed = name.trim();
-  if (!trimmed) throw new WorkflowError('invalid_input', 'O nome do projeto é obrigatório.');
+  if (!trimmed) {
+    throw new WorkflowError(
+      'invalid_input',
+      'O nome do projeto é obrigatório.',
+      'empty_project_name',
+    );
+  }
   return {
     id: d.ids(),
     name: trimmed,
@@ -136,11 +151,18 @@ export function createProject(name: string, rootLabel: string, deps?: WorkflowDe
 export function createSession(project: Project, request: string, deps?: WorkflowDeps): Session {
   const d = resolve(deps);
   const trimmed = request.trim();
-  if (!trimmed) throw new WorkflowError('invalid_input', 'A solicitação não pode ficar vazia.');
+  if (!trimmed) {
+    throw new WorkflowError(
+      'invalid_input',
+      'A solicitação não pode ficar vazia.',
+      'empty_request',
+    );
+  }
   if (trimmed.length > MAX_REQUEST_LENGTH) {
     throw new WorkflowError(
       'invalid_input',
       `A solicitação excede ${MAX_REQUEST_LENGTH} caracteres.`,
+      'request_too_long',
     );
   }
   const firstLine = trimmed.split('\n')[0] ?? trimmed;
@@ -189,9 +211,10 @@ export function approvePlan(session: Session, deps?: WorkflowDeps): Session {
 
 export function rejectPlan(session: Session, reason: string, deps?: WorkflowDeps): Session {
   const d = resolve(deps);
-  const why = reason.trim() || 'sem motivo informado';
+  const detail = reason.trim();
+  const why = detail || 'sem motivo informado';
   return moveTo(session, 'rejected', {}, [
-    event(d, 'rejection', `Plano rejeitado pelo usuário: ${why}.`),
+    event(d, 'rejection', `Plano rejeitado pelo usuário: ${why}.`, undefined, { detail }),
   ]);
 }
 
@@ -249,14 +272,16 @@ export function recoverInterrupted(session: Session, deps?: WorkflowDeps): Sessi
   if (!['planning', 'executing', 'reviewing'].includes(session.status)) return session;
   const d = resolve(deps);
   const message = 'Interrompida: o app foi fechado ou recarregado durante a execução.';
-  return moveTo(session, 'failed', { error: message }, [event(d, 'error', message)]);
+  return moveTo(session, 'failed', { error: message }, [
+    event(d, 'error', message, undefined, { code: 'interrupted' }),
+  ]);
 }
 
 export function cancelSession(session: Session, deps?: WorkflowDeps): Session {
   const d = resolve(deps);
   if (isTerminal(session.status)) return session;
   return moveTo(session, 'cancelled', {}, [
-    event(d, 'cancelled', 'Sessão cancelada pelo usuário.'),
+    event(d, 'cancelled', 'Sessão cancelada pelo usuário.', undefined, { code: 'cancelled' }),
   ]);
 }
 

@@ -224,3 +224,16 @@ describe('recoverInterrupted', () => {
     expect(recoverInterrupted(planned)).toBe(planned);
   });
 });
+
+describe('translatable details', () => {
+  it('keeps the rejection reason and error codes as data', async () => {
+    const planned = await runPlanning(newSession(), createMockProvider(), deps());
+    const rejected = rejectPlan(planned, 'grande demais', deps());
+    expect(rejected.events.at(-1)?.detail).toBe('grande demais');
+    const recovered = recoverInterrupted({ ...newSession(), status: 'planning' }, deps());
+    expect(recovered.events.at(-1)?.code).toBe('interrupted');
+    expect(() => createSession(createProject('P', ''), ' ')).toThrow(
+      expect.objectContaining({ reason: 'empty_request' }),
+    );
+  });
+});
