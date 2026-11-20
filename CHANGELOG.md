@@ -11,4 +11,5 @@ Todas as mudanças relevantes serão registradas aqui. O formato segue [Keep a C
 - Máquina de estados da sessão com aprovação humana obrigatória antes da execução, rejeição e cancelamento via `AbortSignal`.
 - Provedor mock offline e determinístico (sem rede e sem disco).
 - Testes com Vitest, CI no GitHub Actions (Windows e Ubuntu) e varredura de segredos com gitleaks.
+- Shell desktop Tauri 2 mínimo (`src-tauri/`) com CSP restritiva, capability `core:default` e sem plugins; CI com `cargo fmt`, `clippy` e `cargo test` em Windows.
 - Documentação: arquitetura, modelo de ameaças inicial, ADRs e guia do shell Tauri.

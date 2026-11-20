@@ -10,15 +10,19 @@ Nada aqui está pronto, exceto o que estiver marcado. Itens podem mudar de ordem
 - [x] CI (lint, typecheck, testes, build em Windows/Ubuntu) e varredura de segredos
 - [x] Arquitetura, modelo de ameaças inicial e ADRs
 
-## Próximo: shell desktop (Tauri 2)
+## Shell desktop (Tauri 2) — concluído em 2026-11-20
 
-- [ ] Instalar pré-requisitos (C++ Build Tools, Rust MSVC) — ver [docs/tauri-setup.md](docs/tauri-setup.md)
-- [ ] `npx tauri init` com CSP restritiva e capabilities mínimas
-- [ ] CI compilando o shell em `windows-latest`
+- [x] Pré-requisitos (C++ Build Tools, Rust MSVC) — ver [docs/tauri-setup.md](docs/tauri-setup.md)
+- [x] `tauri init` com CSP restritiva e capability mínima
+- [x] CI compilando o shell em `windows-latest`
+
+## Próximo: persistência local
+
+- [ ] SQLite no lado Rust (projetos, sessões, eventos) exposto por comandos Tauri específicos
 
 ## MVP v0.1.0 (critérios da especificação)
 
-- [ ] App abre no Windows e permite criar projeto/sessão
+- [x] App abre no Windows e permite criar projeto/sessão (em memória)
 - [ ] Persistência SQLite (projetos, sessões, eventos) que sobrevive a reinício
 - [ ] Allowlist de diretórios no lado Rust, com testes de `..`, caminhos absolutos, symlinks e junctions
 - [ ] Aplicar diffs aprovados apenas dentro do diretório autorizado (aprovação por alteração)
