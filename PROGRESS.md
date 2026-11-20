@@ -2,6 +2,27 @@
 
 Registro das etapas de desenvolvimento, da mais recente para a mais antiga.
 
+## 2026-11-20 — Etapa 3: chave de API no Gerenciador de Credenciais do Windows
+
+**Status:** concluída no desktop Windows.
+
+### Feito
+
+- Comandos Rust `secret_save`, `secret_load` e `secret_delete` com `keyring-core` 1.1 + `windows-native-keyring-store` 1.1 ([ADR 0008](docs/adr/0008-chave-no-gerenciador-de-credenciais.md)). Serviço `agent-orchestra`, uma entrada por endereço de provedor.
+- Validação no Rust (endereço e chave), mensagens de erro sem a chave e permissão explícita por comando (`build.rs` + capability).
+- Configurações: "Salvar no Windows" / "Remover do Windows"; ao abrir o app, a chave do provedor configurado é carregada.
+
+### Verificação
+
+- `npm test` (63 testes), lint, typecheck e build: OK.
+- `cargo test` (4 testes com store simulado), `cargo clippy -D warnings` e `cargo fmt --check`: OK.
+- `cargo test --test windows_credential_manager -- --ignored`: gravou, leu e apagou no Gerenciador de Credenciais real, sem deixar entrada para trás.
+- **Ainda não testado**: o clique ponta a ponta em "Salvar no Windows" dentro da janela desktop.
+
+### Próximo passo objetivo
+
+Mover as chamadas HTTP do provedor para o lado Rust, para que a chave não passe pelo JavaScript; depois, leitura controlada dos arquivos do projeto como contexto do Builder.
+
 ## 2026-11-20 — Etapa 2: interface Grafite e funcionalidades reais
 
 **Status:** concluída. O produto continua em desenvolvimento (sem acesso a arquivos, sem instalador).
@@ -24,7 +45,7 @@ A primeira UI de três painéis ficou simples demais. Troquei por uma interface 
 - `npm run lint`, `npm run typecheck`, `npm test` (58 testes) e `npm run build`: OK.
 - Navegador (1440×900): criar projeto → sugestão → plano → aprovar → diffs → revisão; abrir diff; chat com o Orchestra; Configurações; tema claro; recarregar mantém projeto, sessão e tema.
 - `npm run tauri dev`: janela abriu com a nova UI, fonte e CSP ativas (screenshot em `docs/screenshots/`).
-- **Não testado**: chamada a um provedor real com chave. Os contratos 401, 429, timeout, rede e resposta malformada estão cobertos por testes com `fetch` simulado.
+- **Ainda não testado**: chamada a um provedor real com chave. Os contratos 401, 429, timeout, rede e resposta malformada estão cobertos por testes com `fetch` simulado.
 
 ### Próximo passo objetivo
 
