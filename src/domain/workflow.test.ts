@@ -10,6 +10,7 @@ import {
   createProject,
   createSession,
   MAX_REQUEST_LENGTH,
+  recoverInterrupted,
   rejectPlan,
   runExecution,
   runPlanning,
@@ -210,5 +211,16 @@ describe('errors and cancellation', () => {
     const cancelled = cancelSession(planned, deps());
     expect(cancelled.status).toBe('cancelled');
     expect(cancelSession(cancelled, deps())).toBe(cancelled);
+  });
+});
+
+describe('recoverInterrupted', () => {
+  it('marks in-flight sessions as failed and leaves others alone', async () => {
+    const planning = { ...newSession(), status: 'planning' as const };
+    const recovered = recoverInterrupted(planning, deps());
+    expect(recovered.status).toBe('failed');
+    expect(recovered.error).toMatch(/Interrompida/);
+    const planned = await runPlanning(newSession(), createMockProvider(), deps());
+    expect(recoverInterrupted(planned)).toBe(planned);
   });
 });

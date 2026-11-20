@@ -241,6 +241,17 @@ export async function runReview(
   }
 }
 
+/**
+ * Sessions persisted while a provider call was in flight cannot resume that
+ * call. On load they are marked as failed so the user sees what happened.
+ */
+export function recoverInterrupted(session: Session, deps?: WorkflowDeps): Session {
+  if (!['planning', 'executing', 'reviewing'].includes(session.status)) return session;
+  const d = resolve(deps);
+  const message = 'Interrompida: o app foi fechado ou recarregado durante a execução.';
+  return moveTo(session, 'failed', { error: message }, [event(d, 'error', message)]);
+}
+
 export function cancelSession(session: Session, deps?: WorkflowDeps): Session {
   const d = resolve(deps);
   if (isTerminal(session.status)) return session;
