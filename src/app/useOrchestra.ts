@@ -16,9 +16,18 @@ import {
 import { createMockProvider } from '../providers/mock.ts';
 import { createOpenAICompatibleProvider } from '../providers/openai-compatible.ts';
 import { clearSavedState, loadState, saveState } from './persistence.ts';
+import { accountFor, createSecretStore, isDesktop } from './secrets.ts';
 import { appReducer, type View } from './state.ts';
 
 type Step = (session: Session, signal: AbortSignal) => Promise<Session>;
+
+/** Where the API key lives right now. */
+export interface VaultState {
+  available: boolean;
+  saved: boolean;
+  busy: boolean;
+  message: string | null;
+}
 
 export interface ProviderStatus {
   provider: AgentProvider;
@@ -41,6 +50,37 @@ export function useOrchestra() {
   const [busySessions, setBusySessions] = useState<ReadonlySet<string>>(new Set());
   const [busyAgents, setBusyAgents] = useState<ReadonlySet<AgentId>>(new Set());
   const controllers = useRef(new Map<string, AbortController>());
+  const secretStore = useMemo(() => createSecretStore(), []);
+  const desktop = useMemo(() => isDesktop(), []);
+  const [vault, setVault] = useState<VaultState>({
+    available: desktop,
+    saved: false,
+    busy: false,
+    message: null,
+  });
+  const loadedAccount = useRef<string | null>(null);
+
+  // Desktop only: load the key for the configured provider from the Windows
+  // Credential Manager, once per provider address.
+  const account = state.settings.kind === 'openai' ? accountFor(state.settings.baseUrl) : null;
+  useEffect(() => {
+    if (!desktop || !account || loadedAccount.current === account) return;
+    loadedAccount.current = account;
+    let alive = true;
+    secretStore
+      .load(account)
+      .then((key) => {
+        if (!alive) return;
+        if (key) setApiKey(key);
+        setVault((v) => ({ ...v, saved: Boolean(key), message: null }));
+      })
+      .catch((e: unknown) => {
+        if (alive) setVault((v) => ({ ...v, saved: false, message: errorText(e) }));
+      });
+    return () => {
+      alive = false;
+    };
+  }, [desktop, account, secretStore]);
 
   useEffect(() => {
     const t = setTimeout(() => saveState(state), 250);
@@ -222,6 +262,29 @@ export function useOrchestra() {
     controllers.current.get(`chat:${agentId}`)?.abort();
   }, []);
 
+  const saveKeyToVault = useCallback(async () => {
+    if (!account) return;
+    setVault((v) => ({ ...v, busy: true, message: null }));
+    try {
+      await secretStore.save(account, apiKey);
+      setVault((v) => ({ ...v, busy: false, saved: true }));
+    } catch (e) {
+      setVault((v) => ({ ...v, busy: false, message: errorText(e) }));
+    }
+  }, [account, apiKey, secretStore]);
+
+  const removeKeyFromVault = useCallback(async () => {
+    if (!account) return;
+    setVault((v) => ({ ...v, busy: true, message: null }));
+    try {
+      await secretStore.remove(account);
+      setApiKey('');
+      setVault((v) => ({ ...v, busy: false, saved: false }));
+    } catch (e) {
+      setVault((v) => ({ ...v, busy: false, message: errorText(e) }));
+    }
+  }, [account, secretStore]);
+
   const resetAll = useCallback(() => {
     for (const c of controllers.current.values()) c.abort();
     clearSavedState();
@@ -248,6 +311,9 @@ export function useOrchestra() {
     sendChat,
     stopChat,
     resetAll,
+    vault,
+    saveKeyToVault,
+    removeKeyFromVault,
   };
 }
 
