@@ -286,10 +286,13 @@ export function SessionView(props: Props) {
   const { session, busy } = props;
   const { t, locale } = useI18n();
   const feedRef = useRef<HTMLDivElement>(null);
-  const working = busy ? WORKING_AGENT[session.status] : undefined;
-  const tone = STATUS_TONE[session.status];
+  // A brand-new session is saved as a draft and only becomes `planning` when the
+  // provider answers; while the call is in flight, show it as planning.
+  const status = busy && session.status === 'draft' ? 'planning' : session.status;
+  const working = busy ? WORKING_AGENT[status] : undefined;
+  const tone = STATUS_TONE[status];
   // Octo follows what the agents are doing.
-  const mood = octoMoodFor(session.status, busy);
+  const mood = octoMoodFor(status, busy);
   const time = (iso: string) =>
     new Date(iso).toLocaleTimeString(t.meta.dateLocale, { hour: '2-digit', minute: '2-digit' });
 
@@ -312,7 +315,7 @@ export function SessionView(props: Props) {
             TONE_BADGE[tone],
           )}
         >
-          {t.status[session.status]}
+          {t.status[status]}
         </span>
         <span className="flex-1" />
         <IconButton label={t.session.delete} onClick={props.onDelete}>
