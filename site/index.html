@@ -1,0 +1,1954 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Agent Orchestra · efer.online</title>
+    <meta
+      name="description"
+      content="App desktop local-first e open source para coordenar agentes de IA (Planner, Builder, Reviewer) com aprovação humana antes de qualquer execução. Tauri 2, React e TypeScript."
+    />
+    <meta name="color-scheme" content="dark" />
+    <meta property="og:title" content="Agent Orchestra" />
+    <meta
+      property="og:description"
+      content="Planner divide, Builder propõe diffs, Reviewer confere. Nada roda sem a sua aprovação. Open source, MIT."
+    />
+    <meta property="og:url" content="https://efer.online/projeto/agent-orchestra/" />
+    <link rel="canonical" href="https://efer.online/projeto/agent-orchestra/" />
+    <link
+      rel="icon"
+      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%237377F0'/%3E%3Cpath d='M13 22V10l9-2v11' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3Ccircle cx='10.5' cy='22' r='2.6' fill='none' stroke='white' stroke-width='2'/%3E%3Ccircle cx='19.5' cy='19' r='2.6' fill='none' stroke='white' stroke-width='2'/%3E%3C/svg%3E"
+    />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500&display=swap"
+    />
+    <style>
+      :root {
+        --bg: #0b0c0e;
+        --surface-1: #111215;
+        --surface-2: #16171b;
+        --surface-3: #1c1d22;
+        --border: rgba(255, 255, 255, 0.08);
+        --border-subtle: rgba(255, 255, 255, 0.05);
+        --border-strong: rgba(255, 255, 255, 0.14);
+        --text-1: #edeef0;
+        --text-2: #a0a3ab;
+        --text-3: #6c707a;
+        --accent: #7377f0;
+        --accent-hover: #8487f3;
+        --accent-press: #6266e0;
+        --accent-subtle: rgba(115, 119, 240, 0.14);
+        --accent-text: #a9abf7;
+        --success: #4cb782;
+        --warning: #d9a54a;
+        --danger: #e0646a;
+        --info: #5e9edb;
+        --orchestra: #8b7cff;
+        --planner: #4fb6ff;
+        --builder: #ffb547;
+        --reviewer: #5fd08f;
+        --focus-ring: 0 0 0 2px var(--bg), 0 0 0 4px rgba(115, 119, 240, 0.65);
+        --mono: 'Geist Mono', ui-monospace, 'SF Mono', Consolas, monospace;
+        --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+        color-scheme: dark;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      html {
+        scroll-behavior: smooth;
+      }
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--text-1);
+        font:
+          400 14px/22px 'Geist',
+          Inter,
+          system-ui,
+          -apple-system,
+          'Segoe UI',
+          sans-serif;
+        -webkit-font-smoothing: antialiased;
+      }
+      a {
+        color: inherit;
+      }
+      :focus-visible {
+        outline: none;
+        box-shadow: var(--focus-ring);
+        border-radius: 4px;
+      }
+      .skip {
+        position: absolute;
+        left: -9999px;
+      }
+      .skip:focus {
+        left: 16px;
+        top: 12px;
+        z-index: 20;
+        background: var(--surface-2);
+        padding: 8px 12px;
+        border-radius: 8px;
+      }
+      .wrap {
+        max-width: 1120px;
+        margin: 0 auto;
+        padding: 0 24px;
+      }
+      svg.i {
+        width: 16px;
+        height: 16px;
+        stroke: currentColor;
+        fill: none;
+        stroke-width: 1.5;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+        flex: none;
+      }
+      .mono {
+        font-family: var(--mono);
+        font-variant-numeric: tabular-nums;
+      }
+
+      /* nav */
+      header.nav {
+        position: sticky;
+        top: 0;
+        z-index: 10;
+        background: rgba(11, 12, 14, 0.8);
+        backdrop-filter: blur(8px);
+        border-bottom: 1px solid var(--border);
+      }
+      header.nav .wrap {
+        height: 56px;
+        display: flex;
+        align-items: center;
+        gap: 16px;
+      }
+      .brand {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        text-decoration: none;
+        font-weight: 600;
+      }
+      .mark {
+        position: relative;
+        width: 24px;
+        height: 24px;
+        display: grid;
+        place-items: center;
+        border-radius: 6px;
+        background: var(--surface-2);
+        border: 1px solid var(--border);
+        font-weight: 600;
+        font-size: 13px;
+      }
+      .mark::after {
+        content: '';
+        position: absolute;
+        right: 4px;
+        bottom: 4px;
+        width: 4px;
+        height: 4px;
+        border-radius: 50%;
+        background: var(--accent);
+      }
+      .crumb {
+        color: var(--text-3);
+        font-size: 13px;
+      }
+      .crumb b {
+        color: var(--text-2);
+        font-weight: 500;
+      }
+      .nav-links {
+        margin-left: auto;
+        display: flex;
+        align-items: center;
+        gap: 20px;
+        font-size: 13px;
+        font-weight: 500;
+      }
+      .nav-links a {
+        color: var(--text-2);
+        text-decoration: none;
+      }
+      .nav-links a:hover {
+        color: var(--text-1);
+      }
+      .icon-btn {
+        width: 32px;
+        height: 32px;
+        display: grid;
+        place-items: center;
+        border-radius: 8px;
+        border: 1px solid var(--border);
+        background: var(--surface-2);
+      }
+
+      /* buttons, badges */
+      .btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        height: 36px;
+        padding: 0 14px;
+        border-radius: 8px;
+        font: 500 13px/1 inherit;
+        font-family: inherit;
+        text-decoration: none;
+        border: 1px solid transparent;
+        cursor: pointer;
+        transition:
+          background 120ms,
+          border-color 120ms,
+          color 120ms;
+      }
+      .btn:active {
+        transform: translateY(1px);
+      }
+      .btn.primary {
+        background: var(--accent);
+        color: #fff;
+      }
+      .btn.primary:hover {
+        background: var(--accent-hover);
+      }
+      .btn.secondary {
+        background: var(--surface-2);
+        border-color: var(--border-strong);
+        color: var(--text-1);
+      }
+      .btn.secondary:hover {
+        background: #1d1e23;
+      }
+      .badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        height: 20px;
+        padding: 0 8px;
+        border-radius: 4px;
+        font: 500 12px/1 var(--mono);
+        background: var(--surface-2);
+        border: 1px solid var(--border);
+        color: var(--text-2);
+      }
+      .badge.warn {
+        background: rgba(217, 165, 74, 0.14);
+        border-color: transparent;
+        color: var(--warning);
+      }
+      .dot {
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: currentColor;
+      }
+
+      /* hero */
+      .hero {
+        padding: 96px 0 56px;
+      }
+      .eyebrow {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-bottom: 24px;
+      }
+      h1 {
+        margin: 0;
+        font-size: 52px;
+        line-height: 56px;
+        letter-spacing: -0.035em;
+        font-weight: 600;
+      }
+      .lead {
+        max-width: 720px;
+        margin: 20px 0 0;
+        font-size: 17px;
+        line-height: 28px;
+        letter-spacing: -0.005em;
+        color: var(--text-2);
+      }
+      .lead strong {
+        color: var(--text-1);
+        font-weight: 500;
+      }
+      .ctas {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+        margin-top: 32px;
+      }
+      .index {
+        margin-top: 24px;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 4px 20px;
+        font: 400 12px/16px var(--mono);
+        color: var(--text-3);
+      }
+
+      /* app preview */
+      .preview {
+        margin-top: 56px;
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        background: var(--surface-1);
+        padding: 8px;
+      }
+      .win {
+        border-radius: 8px;
+        overflow: hidden;
+        background: #262624;
+        color: #eceae4;
+        font-size: 12.5px;
+        border: 1px solid rgba(255, 255, 255, 0.06);
+      }
+      .win-bar {
+        height: 32px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 0 12px;
+        background: #1d1d1b;
+        border-bottom: 1px solid #3b3a37;
+        font: 500 12px/1 var(--mono);
+        color: #95928a;
+      }
+      .win-bar .chip {
+        margin-left: auto;
+        font-size: 11px;
+        border: 1px solid #3b3a37;
+        border-radius: 4px;
+        padding: 3px 6px;
+      }
+      .win-body {
+        display: grid;
+        grid-template-columns: 200px minmax(0, 1fr) 220px;
+        height: 380px;
+      }
+      .w-side {
+        background: #1d1d1b;
+        border-right: 1px solid #3b3a37;
+        padding: 12px 8px;
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+      }
+      .w-nav {
+        padding: 6px 8px;
+        border-radius: 6px;
+        color: #c3c0b7;
+      }
+      .w-nav.on {
+        background: #3c3c38;
+        color: #eceae4;
+      }
+      .w-group {
+        margin: 12px 8px 4px;
+        font-size: 11px;
+        color: #95928a;
+        font-weight: 600;
+      }
+      .w-sess {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 6px 8px;
+        border-radius: 6px;
+        color: #c3c0b7;
+        white-space: nowrap;
+        overflow: hidden;
+      }
+      .w-sess.on {
+        background: #3c3c38;
+        color: #eceae4;
+      }
+      .w-sess i {
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        flex: none;
+      }
+      .w-main {
+        display: flex;
+        flex-direction: column;
+        min-width: 0;
+      }
+      .w-head {
+        height: 40px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 0 16px;
+        border-bottom: 1px solid #3b3a37;
+        font-weight: 600;
+      }
+      .w-head {
+        white-space: nowrap;
+        overflow: hidden;
+      }
+      .w-head .st {
+        flex: none;
+        font-size: 11px;
+        font-weight: 600;
+        padding: 2px 8px;
+        border-radius: 99px;
+        background: #3e2f17;
+        color: #f2b45a;
+      }
+      .w-feed {
+        flex: 1;
+        padding: 16px;
+        display: grid;
+        gap: 12px;
+        align-content: start;
+        overflow: hidden;
+      }
+      .w-user {
+        justify-self: end;
+        max-width: 80%;
+        background: #33332f;
+        border: 1px solid #3b3a37;
+        border-radius: 10px;
+        padding: 8px 12px;
+        line-height: 1.45;
+      }
+      .w-turn {
+        display: grid;
+        grid-template-columns: 24px 1fr;
+        gap: 10px;
+      }
+      .av {
+        width: 24px;
+        height: 24px;
+        border-radius: 50%;
+        background: radial-gradient(
+          circle at 30% 25%,
+          color-mix(in srgb, var(--h) 72%, #fff),
+          var(--h) 55%,
+          color-mix(in srgb, var(--h) 60%, #000)
+        );
+      }
+      .w-turn b {
+        font-weight: 600;
+        font-size: 12px;
+      }
+      .w-turn p {
+        margin: 2px 0 0;
+        color: #c3c0b7;
+        line-height: 1.45;
+      }
+      .w-card {
+        margin-top: 8px;
+        border: 1px solid #3b3a37;
+        border-radius: 10px;
+        background: #2d2d2a;
+        overflow: hidden;
+      }
+      .w-card ol {
+        margin: 0;
+        padding: 10px 12px 10px 30px;
+        display: grid;
+        gap: 4px;
+      }
+      .w-approve {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 10px;
+        border-top: 1px solid #3b3a37;
+        background: #33332f;
+        color: #c3c0b7;
+        font-size: 11.5px;
+      }
+      .w-approve .why {
+        flex: 1;
+      }
+      .w-btn {
+        border-radius: 6px;
+        padding: 4px 9px;
+        border: 1px solid #3b3a37;
+        background: #2d2d2a;
+        color: #eceae4;
+        font-weight: 500;
+      }
+      .w-btn.pri {
+        background: #8b7cff;
+        border-color: transparent;
+        color: #15121f;
+      }
+      .w-composer {
+        margin: 0 16px 14px;
+        border: 1px solid #3b3a37;
+        background: #2d2d2a;
+        border-radius: 14px;
+        padding: 10px 12px;
+        color: #95928a;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+      .w-composer .send {
+        margin-left: auto;
+        width: 22px;
+        height: 22px;
+        border-radius: 50%;
+        background: #8b7cff;
+      }
+      .w-right {
+        border-left: 1px solid #3b3a37;
+        background: #1d1d1b;
+        padding: 12px;
+        display: grid;
+        gap: 14px;
+        align-content: start;
+      }
+      .w-sec h6 {
+        margin: 0 0 6px;
+        font-size: 11px;
+        color: #95928a;
+        font-weight: 600;
+      }
+      .w-kv {
+        display: flex;
+        justify-content: space-between;
+        gap: 8px;
+        color: #c3c0b7;
+        padding: 2px 0;
+      }
+      .w-kv span:last-child {
+        color: #eceae4;
+      }
+      .w-bar {
+        height: 5px;
+        border-radius: 99px;
+        background: #3c3c38;
+        overflow: hidden;
+      }
+      .w-bar i {
+        display: block;
+        width: 21%;
+        height: 100%;
+        background: #8b7cff;
+      }
+      .w-agent {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 3px 0;
+        color: #eceae4;
+      }
+      .w-agent .av {
+        width: 18px;
+        height: 18px;
+      }
+      .w-agent small {
+        margin-left: auto;
+        color: #95928a;
+      }
+
+      /* sections */
+      section {
+        padding: 96px 0 0;
+      }
+      .sec-head {
+        max-width: 720px;
+        margin-bottom: 24px;
+      }
+      .sec-head .eyebrow-mono {
+        font: 500 12px/16px var(--mono);
+        color: var(--text-3);
+        letter-spacing: 0.02em;
+      }
+      h2 {
+        margin: 8px 0 0;
+        font-size: 24px;
+        line-height: 32px;
+        letter-spacing: -0.02em;
+        font-weight: 600;
+      }
+      .sec-head p {
+        margin: 8px 0 0;
+        color: var(--text-2);
+      }
+      .flow {
+        display: grid;
+        grid-template-columns: repeat(5, minmax(0, 1fr));
+        gap: 12px;
+      }
+      .step {
+        background: var(--surface-1);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 20px;
+        position: relative;
+      }
+      .step.gate {
+        border-color: rgba(115, 119, 240, 0.45);
+        background: linear-gradient(var(--accent-subtle), var(--accent-subtle)), var(--surface-1);
+      }
+      .step .n {
+        font: 500 12px/16px var(--mono);
+        color: var(--text-3);
+      }
+      .step h3 {
+        margin: 12px 0 0;
+        font-size: 15px;
+        line-height: 20px;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+      .step p {
+        margin: 6px 0 0;
+        color: var(--text-2);
+        font-size: 13px;
+        line-height: 20px;
+      }
+      .step code {
+        font: 400 12px/16px var(--mono);
+        color: var(--accent-text);
+      }
+      .grid2 {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 12px;
+      }
+      .grid3 {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 12px;
+      }
+      .card {
+        background: var(--surface-1);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 24px;
+      }
+      .card h3 {
+        margin: 0;
+        font-size: 15px;
+        line-height: 20px;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+      .card p {
+        margin: 8px 0 0;
+        color: var(--text-2);
+      }
+      .tile-icon {
+        width: 32px;
+        height: 32px;
+        display: grid;
+        place-items: center;
+        border-radius: 8px;
+        background: var(--surface-2);
+        border: 1px solid var(--border);
+        color: var(--text-2);
+        margin-bottom: 16px;
+      }
+      ul.list {
+        list-style: none;
+        margin: 12px 0 0;
+        padding: 0;
+        display: grid;
+        gap: 10px;
+      }
+      ul.list li {
+        display: grid;
+        grid-template-columns: 16px 1fr;
+        gap: 10px;
+        color: var(--text-2);
+      }
+      ul.list li svg {
+        margin-top: 3px;
+      }
+      ul.list.ok svg {
+        color: var(--success);
+      }
+      ul.list.todo svg {
+        color: var(--text-3);
+      }
+      ul.list li b {
+        color: var(--text-1);
+        font-weight: 500;
+      }
+      .code {
+        margin-top: 12px;
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        background: var(--surface-2);
+        overflow: hidden;
+      }
+      .code-head {
+        height: 32px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 0 8px 0 12px;
+        border-bottom: 1px solid var(--border-subtle);
+        font: 500 12px/1 var(--mono);
+        color: var(--text-3);
+      }
+      .copy {
+        margin-left: auto;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        height: 24px;
+        padding: 0 8px;
+        border-radius: 6px;
+        border: 1px solid var(--border);
+        background: transparent;
+        color: var(--text-2);
+        font: 500 12px/1 var(--mono);
+        cursor: pointer;
+      }
+      .copy:hover {
+        color: var(--text-1);
+        border-color: var(--border-strong);
+      }
+      .copy.done {
+        color: var(--success);
+      }
+      pre {
+        margin: 0;
+        padding: 14px 16px;
+        overflow-x: auto;
+        font: 400 13px/22px var(--mono);
+        color: var(--text-1);
+      }
+      pre .c {
+        color: var(--text-3);
+      }
+      .tree {
+        margin: 0;
+        padding: 0;
+        overflow-x: auto;
+        font: 400 13px/22px var(--mono);
+        color: var(--text-2);
+      }
+      .tree b {
+        color: var(--text-1);
+        font-weight: 500;
+      }
+      .tree span {
+        color: var(--text-3);
+      }
+      .note {
+        margin-top: 12px;
+        padding: 12px 16px;
+        border-radius: 8px;
+        border: 1px solid var(--border);
+        background: var(--surface-2);
+        color: var(--text-2);
+        font-size: 13px;
+        line-height: 20px;
+      }
+      .note b {
+        color: var(--text-1);
+        font-weight: 500;
+      }
+      .links {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-top: 16px;
+      }
+      footer {
+        margin-top: 96px;
+        border-top: 1px solid var(--border);
+      }
+      footer .wrap {
+        min-height: 64px;
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 8px 24px;
+        font-size: 13px;
+        color: var(--text-3);
+        padding-top: 16px;
+        padding-bottom: 16px;
+      }
+      footer a {
+        color: var(--text-2);
+        text-decoration: none;
+      }
+      footer a:hover {
+        color: var(--text-1);
+      }
+      footer .sp {
+        flex: 1;
+      }
+
+      /* github live card */
+      .gh {
+        display: grid;
+        grid-template-columns: repeat(12, minmax(0, 1fr));
+        gap: 12px;
+      }
+      .gh .card {
+        min-width: 0;
+      }
+      .gh-stats {
+        grid-column: span 12;
+        display: grid;
+        grid-template-columns: repeat(6, minmax(0, 1fr));
+        padding: 0;
+        overflow: hidden;
+      }
+      .gh-stat {
+        padding: 20px 24px;
+        border-right: 1px solid var(--border-subtle);
+        text-decoration: none;
+        transition: background 120ms;
+      }
+      .gh-stat:last-child {
+        border-right: 0;
+      }
+      a.gh-stat:hover {
+        background: var(--surface-hover, rgba(255, 255, 255, 0.035));
+      }
+      .gh-stat .k {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        font: 500 12px/16px var(--mono);
+        color: var(--text-3);
+      }
+      .gh-stat .v {
+        margin-top: 8px;
+        font: 500 24px/32px var(--mono);
+        font-variant-numeric: tabular-nums;
+        letter-spacing: -0.02em;
+      }
+      .gh-stat .s {
+        margin-top: 2px;
+        font-size: 12px;
+        color: var(--text-3);
+      }
+      .gh-commits {
+        grid-column: span 7;
+      }
+      .gh-side {
+        grid-column: span 5;
+        display: grid;
+        gap: 12px;
+        align-content: start;
+      }
+      .gh-head {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 12px;
+      }
+      .gh-head h3 {
+        margin: 0;
+      }
+      .gh-head a {
+        margin-left: auto;
+        font: 500 12px/16px var(--mono);
+        color: var(--text-3);
+        text-decoration: none;
+      }
+      .gh-head a:hover {
+        color: var(--text-1);
+      }
+      .gh-list {
+        list-style: none;
+        margin: 0;
+        padding: 0;
+      }
+      .gh-list li {
+        border-top: 1px solid var(--border-subtle);
+      }
+      .gh-list li:first-child {
+        border-top: 0;
+      }
+      .gh-row {
+        display: grid;
+        grid-template-columns: 64px minmax(0, 1fr) auto;
+        gap: 12px;
+        align-items: baseline;
+        padding: 10px 0;
+        text-decoration: none;
+        color: var(--text-2);
+      }
+      .gh-row:hover .msg {
+        color: var(--text-1);
+      }
+      .gh-row .sha {
+        font: 400 12px/20px var(--mono);
+        color: var(--accent-text);
+      }
+      .gh-row .msg {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        color: var(--text-1);
+        transition: color 120ms;
+      }
+      .gh-row .msg em {
+        font-style: normal;
+        font-family: var(--mono);
+        font-size: 12px;
+        color: var(--text-3);
+        margin-right: 6px;
+      }
+      .gh-row time {
+        font: 400 12px/20px var(--mono);
+        color: var(--text-3);
+        white-space: nowrap;
+      }
+      .gh-people {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+      }
+      .gh-person {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        height: 32px;
+        padding: 0 10px 0 4px;
+        border-radius: 999px;
+        border: 1px solid var(--border);
+        background: var(--surface-2);
+        text-decoration: none;
+        font-size: 13px;
+      }
+      .gh-person img {
+        width: 24px;
+        height: 24px;
+        border-radius: 50%;
+      }
+      .gh-person span {
+        font: 400 12px/1 var(--mono);
+        color: var(--text-3);
+      }
+      .gh-langs {
+        display: flex;
+        height: 8px;
+        border-radius: 2px;
+        overflow: hidden;
+        gap: 2px;
+        margin-bottom: 12px;
+      }
+      .gh-legend {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px 16px;
+        font: 400 12px/16px var(--mono);
+        color: var(--text-2);
+      }
+      .gh-legend i {
+        display: inline-block;
+        width: 8px;
+        height: 8px;
+        border-radius: 2px;
+        margin-right: 6px;
+      }
+      .ci-dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: var(--text-3);
+      }
+      .ci-dot.success {
+        background: var(--success);
+      }
+      .ci-dot.failure {
+        background: var(--danger);
+      }
+      .ci-dot.running {
+        background: var(--warning);
+      }
+      .gh-empty {
+        color: var(--text-3);
+        font-size: 13px;
+        padding: 6px 0;
+      }
+      .skel {
+        display: inline-block;
+        height: 12px;
+        width: 60%;
+        border-radius: 2px;
+        background: var(--surface-3);
+      }
+      .gh-foot {
+        grid-column: span 12;
+        font: 400 12px/16px var(--mono);
+        color: var(--text-3);
+      }
+      @media (max-width: 1023px) {
+        .gh-stats {
+          grid-template-columns: repeat(3, minmax(0, 1fr));
+        }
+        .gh-stat:nth-child(3) {
+          border-right: 0;
+        }
+        .gh-stat:nth-child(-n + 3) {
+          border-bottom: 1px solid var(--border-subtle);
+        }
+        .gh-commits,
+        .gh-side {
+          grid-column: span 12;
+        }
+        .win-body {
+          grid-template-columns: 180px minmax(0, 1fr);
+        }
+        .w-right {
+          display: none;
+        }
+        .flow {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+        .flow .step:last-child {
+          grid-column: span 2;
+        }
+        .grid3 {
+          grid-template-columns: 1fr 1fr;
+        }
+      }
+      @media (max-width: 639px) {
+        .gh-stats {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+        .gh-stat {
+          padding: 16px;
+        }
+        .gh-stat:nth-child(odd) {
+          border-right: 1px solid var(--border-subtle);
+        }
+        .gh-stat:nth-child(even) {
+          border-right: 0;
+        }
+        .gh-stat:nth-child(-n + 4) {
+          border-bottom: 1px solid var(--border-subtle);
+        }
+        .gh-row {
+          grid-template-columns: 56px minmax(0, 1fr);
+        }
+        .gh-row time {
+          display: none;
+        }
+        .wrap {
+          padding: 0 16px;
+        }
+        .hero {
+          padding: 56px 0 40px;
+        }
+        h1 {
+          font-size: 36px;
+          line-height: 40px;
+        }
+        .lead {
+          font-size: 16px;
+          line-height: 26px;
+        }
+        h2 {
+          font-size: 20px;
+          line-height: 28px;
+        }
+        section {
+          padding-top: 64px;
+        }
+        .nav-links .anchor {
+          display: none;
+        }
+        .crumb {
+          display: none;
+        }
+        .win-body {
+          grid-template-columns: minmax(0, 1fr);
+          height: 340px;
+        }
+        .w-side {
+          display: none;
+        }
+        .flow,
+        .grid2,
+        .grid3 {
+          grid-template-columns: 1fr;
+        }
+        .flow .step:last-child {
+          grid-column: auto;
+        }
+        .card {
+          padding: 20px;
+        }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        html {
+          scroll-behavior: auto;
+        }
+        * {
+          transition-duration: 0ms !important;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <a class="skip" href="#conteudo">Pular para o conteúdo</a>
+    <svg width="0" height="0" style="position: absolute" aria-hidden="true">
+      <defs>
+        <symbol id="i-github" viewBox="0 0 24 24">
+          <path
+            d="M15 22v-4a4.8 4.8 0 0 0-1-3.5c3 0 6-2 6-5.5.08-1.25-.27-2.48-1-3.5.28-1.15.28-2.35 0-3.5 0 0-1 0-3 1.5-2.64-.5-5.36-.5-8 0C6 2 5 2 5 2c-.3 1.15-.3 2.35 0 3.5A5.403 5.403 0 0 0 4 9c0 3.5 3 5.5 6 5.5-.39.49-.68 1.05-.85 1.65-.17.6-.22 1.23-.15 1.85v4"
+          />
+          <path d="M9 18c-4.51 2-5-2-7-2" />
+        </symbol>
+        <symbol id="i-play" viewBox="0 0 24 24"><path d="m6 3 14 9-14 9z" /></symbol>
+        <symbol id="i-arrow" viewBox="0 0 24 24"><path d="M7 7h10v10M7 17 17 7" /></symbol>
+        <symbol id="i-check" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5" /></symbol>
+        <symbol id="i-circle" viewBox="0 0 24 24">
+          <circle cx="12" cy="12" r="9" stroke-dasharray="3 3" />
+        </symbol>
+        <symbol id="i-copy" viewBox="0 0 24 24">
+          <rect x="8" y="8" width="13" height="13" rx="2" />
+          <path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2" />
+        </symbol>
+        <symbol id="i-lock" viewBox="0 0 24 24">
+          <rect x="3" y="11" width="18" height="11" rx="2" />
+          <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+        </symbol>
+        <symbol id="i-shield" viewBox="0 0 24 24">
+          <path
+            d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"
+          />
+        </symbol>
+        <symbol id="i-plug" viewBox="0 0 24 24">
+          <path d="M12 22v-5M9 8V2M15 8V2M18 8v5a4 4 0 0 1-4 4h-4a4 4 0 0 1-4-4V8z" />
+        </symbol>
+        <symbol id="i-terminal" viewBox="0 0 24 24"><path d="m4 17 6-6-6-6M12 19h8" /></symbol>
+        <symbol id="i-monitor" viewBox="0 0 24 24">
+          <rect x="2" y="3" width="20" height="14" rx="2" />
+          <path d="M8 21h8M12 17v4" />
+        </symbol>
+      </defs>
+    </svg>
+
+    <header class="nav">
+      <div class="wrap">
+        <a class="brand" href="/"><span class="mark">e</span>efer.online</a>
+        <span class="crumb">/ projeto / <b>agent-orchestra</b></span>
+        <nav class="nav-links" aria-label="Seções">
+          <a class="anchor" href="#github">GitHub</a>
+          <a class="anchor" href="#fluxo">Fluxo</a>
+          <a class="anchor" href="#rodar">Rodar</a>
+          <a class="anchor" href="#arquitetura">Arquitetura</a>
+          <a
+            class="icon-btn"
+            href="https://github.com/Efer-Eder/agent-orchestra"
+            aria-label="Repositório no GitHub"
+            ><svg class="i"><use href="#i-github" /></svg
+          ></a>
+        </nav>
+      </div>
+    </header>
+
+    <main id="conteudo">
+      <div class="wrap">
+        <div class="hero">
+          <div class="eyebrow">
+            <span class="badge">open source · MIT</span>
+            <span class="badge warn"><span class="dot"></span>em desenvolvimento</span>
+            <span class="badge">Tauri 2 · React 19 · TypeScript · Rust</span>
+          </div>
+          <h1>Agent Orchestra</h1>
+          <p class="lead">
+            Um app desktop local-first para coordenar agentes de IA no fluxo de desenvolvimento. O
+            <strong>Planner</strong> divide o pedido, o <strong>Builder</strong> propõe diffs, o
+            <strong>Reviewer</strong> confere. Entre o plano e a execução existe um portão que só
+            você abre.
+          </p>
+          <div class="ctas">
+            <a class="btn primary" href="./demo/"
+              ><svg class="i"><use href="#i-play" /></svg>Abrir a demo no navegador</a
+            >
+            <a class="btn secondary" href="https://github.com/Efer-Eder/agent-orchestra"
+              ><svg class="i"><use href="#i-github" /></svg>Código no GitHub</a
+            >
+          </div>
+          <div class="index">
+            <span>/projeto/agent-orchestra/demo</span>
+            <span>github.com/Efer-Eder/agent-orchestra</span>
+          </div>
+
+          <div class="preview" aria-hidden="true">
+            <div class="win">
+              <div class="win-bar">Agent Orchestra<span class="chip">prévia</span></div>
+              <div class="win-body">
+                <div class="w-side">
+                  <div class="w-nav on">+ Nova sessão</div>
+                  <div class="w-nav">Procurar</div>
+                  <div class="w-nav">Agentes</div>
+                  <div class="w-nav">Projetos</div>
+                  <div class="w-group">Hoje</div>
+                  <div class="w-sess on">
+                    <i style="background: #f2b45a"></i>Login com OAuth no painel
+                  </div>
+                  <div class="w-sess">
+                    <i style="background: #5fd08f"></i>Exportar pedidos em CSV
+                  </div>
+                  <div class="w-sess">
+                    <i style="background: #5fd08f"></i>Testes do módulo de faturas
+                  </div>
+                  <div class="w-group">Ontem</div>
+                  <div class="w-sess">
+                    <i style="background: #95928a"></i>Migrar CI para Node 24
+                  </div>
+                </div>
+                <div class="w-main">
+                  <div class="w-head">
+                    Login com OAuth no painel<span class="st">Aguardando aprovação</span>
+                  </div>
+                  <div class="w-feed">
+                    <div class="w-user">
+                      Adicionar login com Google mantendo o login por senha. Cobrir com testes.
+                    </div>
+                    <div class="w-turn">
+                      <span class="av" style="--h: var(--orchestra)"></span>
+                      <div>
+                        <b>Orchestra</b>
+                        <p>
+                          Vou pedir um plano ao Planner. Nada é alterado antes da sua aprovação.
+                        </p>
+                      </div>
+                    </div>
+                    <div class="w-turn">
+                      <span class="av" style="--h: var(--planner)"></span>
+                      <div>
+                        <b>Planner</b>
+                        <div class="w-card">
+                          <ol>
+                            <li>Configurar o provedor OAuth por variáveis de ambiente.</li>
+                            <li>Botão "Entrar com Google" ao lado do login por senha.</li>
+                            <li>Testes do callback e de conta inexistente.</li>
+                          </ol>
+                          <div class="w-approve">
+                            <span class="why">Aprovar libera o Builder para propor diffs.</span>
+                            <span class="w-btn">Rejeitar</span
+                            ><span class="w-btn pri">Aprovar plano</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="w-composer">Peça um ajuste no plano...<span class="send"></span></div>
+                </div>
+                <div class="w-right">
+                  <div class="w-sec">
+                    <h6>Ambiente</h6>
+                    <div class="w-kv"><span>Projeto</span><span>meu-saas</span></div>
+                    <div class="w-kv"><span>Provedor</span><span>OpenAI-compatível</span></div>
+                  </div>
+                  <div class="w-sec">
+                    <h6>Contexto</h6>
+                    <div class="w-bar"><i></i></div>
+                  </div>
+                  <div class="w-sec">
+                    <h6>Agentes</h6>
+                    <div class="w-agent">
+                      <span class="av" style="--h: var(--planner)"></span>Planner<small
+                        >concluiu</small
+                      >
+                    </div>
+                    <div class="w-agent">
+                      <span class="av" style="--h: var(--builder)"></span>Builder<small
+                        >aguardando</small
+                      >
+                    </div>
+                    <div class="w-agent">
+                      <span class="av" style="--h: var(--reviewer)"></span>Reviewer<small
+                        >aguardando</small
+                      >
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <section id="github" aria-labelledby="t-gh">
+          <div class="sec-head">
+            <div class="eyebrow-mono">api.github.com · ao vivo</div>
+            <h2 id="t-gh">Atividade no GitHub</h2>
+            <p>
+              Números lidos direto da API pública do GitHub pelo seu navegador, com cache de 10
+              minutos. Estrela, issue e PR contam; o repositório é o lugar da conversa.
+            </p>
+          </div>
+          <div class="gh" id="gh">
+            <div class="card gh-stats">
+              <a
+                class="gh-stat"
+                id="gh-stars"
+                href="https://github.com/Efer-Eder/agent-orchestra/stargazers"
+                ><div class="k">estrelas</div>
+                <div class="v">·</div>
+                <div class="s">stargazers</div></a
+              >
+              <a
+                class="gh-stat"
+                id="gh-forks"
+                href="https://github.com/Efer-Eder/agent-orchestra/forks"
+                ><div class="k">forks</div>
+                <div class="v">·</div>
+                <div class="s">cópias públicas</div></a
+              >
+              <a
+                class="gh-stat"
+                id="gh-commits"
+                href="https://github.com/Efer-Eder/agent-orchestra/commits/main"
+                ><div class="k">commits</div>
+                <div class="v">·</div>
+                <div class="s">na main</div></a
+              >
+              <a
+                class="gh-stat"
+                id="gh-issues"
+                href="https://github.com/Efer-Eder/agent-orchestra/issues"
+                ><div class="k">issues abertas</div>
+                <div class="v">·</div>
+                <div class="s">bugs e ideias</div></a
+              >
+              <a
+                class="gh-stat"
+                id="gh-prs"
+                href="https://github.com/Efer-Eder/agent-orchestra/pulls"
+                ><div class="k">PRs abertos</div>
+                <div class="v">·</div>
+                <div class="s">contribuições</div></a
+              >
+              <a
+                class="gh-stat"
+                id="gh-ci"
+                href="https://github.com/Efer-Eder/agent-orchestra/actions/workflows/ci.yml"
+                ><div class="k">CI</div>
+                <div class="v">·</div>
+                <div class="s">último run na main</div></a
+              >
+            </div>
+            <div class="card gh-commits">
+              <div class="gh-head">
+                <h3>Últimos commits</h3>
+                <a href="https://github.com/Efer-Eder/agent-orchestra/commits/main">ver todos</a>
+              </div>
+              <ul class="gh-list" id="gh-commit-list">
+                <li class="gh-empty"><span class="skel"></span></li>
+                <li class="gh-empty"><span class="skel" style="width: 45%"></span></li>
+                <li class="gh-empty"><span class="skel" style="width: 52%"></span></li>
+              </ul>
+            </div>
+            <div class="gh-side">
+              <div class="card">
+                <div class="gh-head">
+                  <h3>Issues abertas</h3>
+                  <a href="https://github.com/Efer-Eder/agent-orchestra/issues/new">abrir uma</a>
+                </div>
+                <ul class="gh-list" id="gh-issue-list">
+                  <li class="gh-empty"><span class="skel"></span></li>
+                </ul>
+              </div>
+              <div class="card">
+                <div class="gh-head">
+                  <h3>Contribuidores</h3>
+                  <a href="https://github.com/Efer-Eder/agent-orchestra/graphs/contributors"
+                    >gráfico</a
+                  >
+                </div>
+                <div class="gh-people" id="gh-people"><span class="skel"></span></div>
+              </div>
+              <div class="card">
+                <div class="gh-head"><h3>Linguagens</h3></div>
+                <div class="gh-langs" id="gh-langs"></div>
+                <div class="gh-legend" id="gh-legend"><span class="skel"></span></div>
+              </div>
+            </div>
+            <div class="gh-foot" id="gh-foot">carregando dados do GitHub...</div>
+          </div>
+        </section>
+
+        <section id="fluxo" aria-labelledby="t-fluxo">
+          <div class="sec-head">
+            <div class="eyebrow-mono">src/domain/workflow.ts</div>
+            <h2 id="t-fluxo">Um fluxo explícito, com um portão no meio</h2>
+            <p>
+              A sessão é uma máquina de estados com tabela de transições. A única aresta para
+              <span class="mono">executing</span> sai de
+              <span class="mono">awaiting_approval</span> e só é percorrida por
+              <span class="mono">approvePlan()</span>, que é uma ação humana. Transição inválida
+              lança erro, e isso está coberto por teste.
+            </p>
+          </div>
+          <div class="flow">
+            <div class="step">
+              <div class="n">01 · draft</div>
+              <h3>Solicitação</h3>
+              <p>Você descreve a tarefa. O Orchestra abre a sessão no projeto ativo.</p>
+            </div>
+            <div class="step">
+              <div class="n">02 · planning</div>
+              <h3>
+                <span class="av" style="--h: var(--planner); width: 14px; height: 14px"></span>Plano
+              </h3>
+              <p>O Planner devolve tarefas em JSON, validadas antes de aparecer na tela.</p>
+            </div>
+            <div class="step gate">
+              <div class="n">03 · awaiting_approval</div>
+              <h3>
+                <svg class="i"><use href="#i-lock" /></svg>Aprovação
+              </h3>
+              <p>Aprovar, rejeitar com motivo ou pedir ajuste. Sem clique, nada anda.</p>
+            </div>
+            <div class="step">
+              <div class="n">04 · executing</div>
+              <h3>
+                <span class="av" style="--h: var(--builder); width: 14px; height: 14px"></span
+                >Execução
+              </h3>
+              <p>O Builder <b>propõe</b> diffs. Nada é gravado no disco nesta versão.</p>
+            </div>
+            <div class="step">
+              <div class="n">05 · reviewing</div>
+              <h3>
+                <span class="av" style="--h: var(--reviewer); width: 14px; height: 14px"></span
+                >Revisão
+              </h3>
+              <p>O Reviewer aponta riscos e testes faltando. A sessão fecha como concluída.</p>
+            </div>
+          </div>
+          <div class="note">
+            <b>Saída de modelo é dado não confiável.</b> Plano, diffs e revisão passam por
+            <span class="mono">src/providers/parse.ts</span>: tipos, limites de tamanho e caminhos.
+            Diff com <span class="mono">../</span>, caminho absoluto, letra de drive,
+            <span class="mono">~</span> ou UNC é recusado e a sessão vai para
+            <span class="mono">failed</span>.
+          </div>
+        </section>
+
+        <section id="estado" aria-labelledby="t-estado">
+          <div class="sec-head">
+            <div class="eyebrow-mono">PROGRESS.md · ROADMAP.md</div>
+            <h2 id="t-estado">O que já funciona e o que ainda não existe</h2>
+            <p>
+              Sem promessa: o que está na esquerda roda hoje e tem teste; o resto está no roadmap.
+            </p>
+          </div>
+          <div class="grid2">
+            <div class="card">
+              <h3>Funciona hoje</h3>
+              <ul class="list ok">
+                <li>
+                  <svg class="i"><use href="#i-check" /></svg
+                  ><span
+                    ><b>Fluxo completo</b> solicitação → plano → aprovação → execução → revisão, com
+                    cancelamento por <span class="mono">AbortSignal</span>.</span
+                  >
+                </li>
+                <li>
+                  <svg class="i"><use href="#i-check" /></svg
+                  ><span
+                    ><b>Provedor OpenAI-compatível</b> (OpenAI, OpenRouter, Groq, Ollama, LM Studio)
+                    com 401, 429, timeout e rede tratados.</span
+                  >
+                </li>
+                <li>
+                  <svg class="i"><use href="#i-check" /></svg
+                  ><span
+                    ><b>Modo demonstração offline</b>, sem chave e sem rede, para ver o fluxo
+                    inteiro.</span
+                  >
+                </li>
+                <li>
+                  <svg class="i"><use href="#i-check" /></svg
+                  ><span
+                    ><b>Chave no Gerenciador de Credenciais do Windows</b> no app desktop, via
+                    comando Rust.</span
+                  >
+                </li>
+                <li>
+                  <svg class="i"><use href="#i-check" /></svg
+                  ><span
+                    ><b>Chat direto com cada agente</b>, projetos, sessões e conversas salvos
+                    localmente.</span
+                  >
+                </li>
+                <li>
+                  <svg class="i"><use href="#i-check" /></svg
+                  ><span
+                    ><b>CI</b> em Windows e Ubuntu: lint, typecheck, Vitest, build, clippy,
+                    gitleaks.</span
+                  >
+                </li>
+              </ul>
+            </div>
+            <div class="card">
+              <h3>Ainda não existe</h3>
+              <ul class="list todo">
+                <li>
+                  <svg class="i"><use href="#i-circle" /></svg
+                  ><span
+                    >Ler arquivos do projeto como contexto (allowlist de diretório, negação de
+                    <span class="mono">.env</span> e chaves).</span
+                  >
+                </li>
+                <li>
+                  <svg class="i"><use href="#i-circle" /></svg
+                  ><span>Aplicar diffs aprovados no disco, com aprovação por arquivo.</span>
+                </li>
+                <li>
+                  <svg class="i"><use href="#i-circle" /></svg
+                  ><span
+                    >Chamadas HTTP pelo lado Rust, para a chave não passar pelo JavaScript.</span
+                  >
+                </li>
+                <li>
+                  <svg class="i"><use href="#i-circle" /></svg
+                  ><span>Persistência em SQLite, exportação de sessão e instalador publicado.</span>
+                </li>
+                <li>
+                  <svg class="i"><use href="#i-circle" /></svg
+                  ><span
+                    >Execução de comandos: só com isolamento demonstrado. Não há sandbox hoje.</span
+                  >
+                </li>
+                <li>
+                  <svg class="i"><use href="#i-circle" /></svg
+                  ><span>Mascotes dos agentes (os espaços já estão reservados na UI).</span>
+                </li>
+              </ul>
+            </div>
+          </div>
+        </section>
+
+        <section id="rodar" aria-labelledby="t-rodar">
+          <div class="sec-head">
+            <div class="eyebrow-mono">README.md</div>
+            <h2 id="t-rodar">Rodar na sua máquina</h2>
+            <p>
+              Node.js 22 ou mais recente. O app desktop precisa também de Rust (MSVC) e das C++
+              Build Tools no Windows.
+            </p>
+          </div>
+          <div class="grid2">
+            <div>
+              <div class="code">
+                <div class="code-head">
+                  <svg class="i"><use href="#i-terminal" /></svg>navegador<button
+                    class="copy"
+                    type="button"
+                    data-copy="web"
+                  >
+                    <svg class="i"><use href="#i-copy" /></svg>copiar
+                  </button>
+                </div>
+                <pre id="web">git clone https://github.com/Efer-Eder/agent-orchestra.git
+cd agent-orchestra
+npm install
+npm run dev   <span class="c"># http://localhost:5173</span></pre>
+              </div>
+            </div>
+            <div>
+              <div class="code">
+                <div class="code-head">
+                  <svg class="i"><use href="#i-monitor" /></svg>desktop (Windows)<button
+                    class="copy"
+                    type="button"
+                    data-copy="desk"
+                  >
+                    <svg class="i"><use href="#i-copy" /></svg>copiar
+                  </button>
+                </div>
+                <pre id="desk">winget install --id Rustlang.Rustup
+rustup default stable-msvc
+npm run tauri dev
+npm test      <span class="c"># Vitest</span></pre>
+              </div>
+            </div>
+          </div>
+          <div class="note">
+            <b>Sobre a demo hospedada aqui:</b> ela é o mesmo build do frontend, em modo
+            demonstração (respostas fixas, sem rede). Se você configurar um provedor nela, a chave
+            fica só na memória da aba e a chamada vai direto do seu navegador para o provedor; nada
+            passa pelo efer.online. Alguns provedores bloqueiam chamadas de navegador (CORS); no app
+            desktop isso não muda, então teste com um servidor local como Ollama ou LM Studio.
+          </div>
+        </section>
+
+        <section id="arquitetura" aria-labelledby="t-arq">
+          <div class="sec-head">
+            <div class="eyebrow-mono">docs/architecture.md · docs/adr/</div>
+            <h2 id="t-arq">Arquitetura em uma tela</h2>
+            <p>
+              O domínio é TypeScript puro, sem I/O, com dependências injetáveis (ids e relógio) para
+              testes determinísticos. O shell Rust é mínimo de propósito.
+            </p>
+          </div>
+          <div class="grid3">
+            <div class="card">
+              <div class="tile-icon">
+                <svg class="i"><use href="#i-plug" /></svg>
+              </div>
+              <h3>Provedores</h3>
+              <p>
+                Contrato <span class="mono">AgentProvider</span> com <span class="mono">plan</span>,
+                <span class="mono">build</span>, <span class="mono">review</span> e
+                <span class="mono">chat</span>, todos com <span class="mono">AbortSignal</span>.
+                Mock e OpenAI-compatível implementam o mesmo contrato.
+              </p>
+            </div>
+            <div class="card">
+              <div class="tile-icon">
+                <svg class="i"><use href="#i-shield" /></svg>
+              </div>
+              <h3>Shell Tauri</h3>
+              <p>
+                Sem plugins de fs, shell ou http. Três comandos de chave, cada um liberado por
+                permissão explícita. CSP restritiva. Nenhuma telemetria.
+              </p>
+            </div>
+            <div class="card">
+              <div class="tile-icon">
+                <svg class="i"><use href="#i-lock" /></svg>
+              </div>
+              <h3>Segredos</h3>
+              <p>
+                <span class="mono">keyring-core</span> + store nativo do Windows. A chave nunca vai
+                para <span class="mono">localStorage</span>, logs ou mensagens de erro; há teste
+                garantindo isso.
+              </p>
+            </div>
+          </div>
+          <div class="card" style="margin-top: 12px">
+            <pre class="tree"><b>src/</b>
+  domain/      <span>tipos, máquina de estados, contrato do provedor</span>
+  providers/   <span>mock offline, OpenAI-compatível, validação da saída</span>
+  app/         <span>estado, persistência local, ponte com o cofre</span>
+  components/  <span>UI (sidebar, sessão, agentes, configurações)</span>
+<b>src-tauri/</b>
+  src/secrets.rs  <span>Gerenciador de Credenciais do Windows</span>
+<b>docs/</b>       <span>arquitetura, threat model, ADRs 0001 a 0008</span></pre>
+          </div>
+        </section>
+
+        <section id="contribuir" aria-labelledby="t-contrib">
+          <div class="sec-head">
+            <div class="eyebrow-mono">CONTRIBUTING.md</div>
+            <h2 id="t-contrib">Contribuir</h2>
+            <p>
+              Issues e PRs pequenos são bem-vindos. Lógica nova no domínio vem com teste; mudança
+              que toca disco, rede ou execução atualiza o threat model. Vulnerabilidade: use o
+              relato privado do GitHub, não issue pública.
+            </p>
+          </div>
+          <div class="links">
+            <a class="btn secondary" href="https://github.com/Efer-Eder/agent-orchestra/issues"
+              ><svg class="i"><use href="#i-arrow" /></svg>Issues</a
+            >
+            <a
+              class="btn secondary"
+              href="https://github.com/Efer-Eder/agent-orchestra/blob/main/ROADMAP.md"
+              ><svg class="i"><use href="#i-arrow" /></svg>Roadmap</a
+            >
+            <a
+              class="btn secondary"
+              href="https://github.com/Efer-Eder/agent-orchestra/blob/main/docs/threat-model.md"
+              ><svg class="i"><use href="#i-arrow" /></svg>Threat model</a
+            >
+            <a
+              class="btn secondary"
+              href="https://github.com/Efer-Eder/agent-orchestra/blob/main/DESIGN.md"
+              ><svg class="i"><use href="#i-arrow" /></svg>Design</a
+            >
+          </div>
+        </section>
+      </div>
+    </main>
+
+    <footer>
+      <div class="wrap">
+        <a class="brand" href="/"><span class="mark">e</span>efer.online</a>
+        <span class="sp"></span>
+        <span class="mono">Agent Orchestra · MIT</span>
+        <a href="https://github.com/Efer-Eder/agent-orchestra">GitHub</a>
+      </div>
+    </footer>
+
+    <script>
+      for (const btn of document.querySelectorAll('[data-copy]')) {
+        btn.addEventListener('click', async () => {
+          const pre = document.getElementById(btn.dataset.copy);
+          const text = [...pre.childNodes]
+            .map((n) => (n.nodeType === 3 ? n.textContent : ''))
+            .join('')
+            .replace(/[ \t]+$/gm, '')
+            .trim();
+          try {
+            await navigator.clipboard.writeText(text);
+            btn.classList.add('done');
+            btn.lastChild.textContent = 'copiado';
+            setTimeout(() => {
+              btn.classList.remove('done');
+              btn.lastChild.textContent = 'copiar';
+            }, 1600);
+          } catch {
+            btn.lastChild.textContent = 'selecione e copie';
+          }
+        });
+      }
+
+      // GitHub live card: public REST API, no token, read in the visitor's browser.
+      (() => {
+        const REPO = 'Efer-Eder/agent-orchestra';
+        const API = 'https://api.github.com/repos/' + REPO;
+        const KEY = 'ao-gh-cache-v1';
+        const TTL = 10 * 60 * 1000;
+        const LANG_COLORS = {
+          TypeScript: '#3178c6',
+          Rust: '#dea584',
+          CSS: '#663399',
+          HTML: '#e34c26',
+          JavaScript: '#f1e05a',
+          PowerShell: '#5391fe',
+          Shell: '#89e051',
+        };
+        const $ = (id) => document.getElementById(id);
+        const el = (tag, cls, text) => {
+          const n = document.createElement(tag);
+          if (cls) n.className = cls;
+          if (text != null) n.textContent = text;
+          return n;
+        };
+        const fmt = (n) => new Intl.NumberFormat('pt-BR').format(n);
+        const ago = (iso) => {
+          const s = Math.max(1, Math.round((Date.now() - new Date(iso).getTime()) / 1000));
+          const units = [
+            [31536000, 'ano', 'anos'],
+            [2592000, 'mês', 'meses'],
+            [86400, 'dia', 'dias'],
+            [3600, 'h', 'h'],
+            [60, 'min', 'min'],
+          ];
+          for (const [sec, one, many] of units) {
+            const v = Math.floor(s / sec);
+            if (v >= 1) return 'há ' + v + (sec >= 86400 ? ' ' : ' ') + (v === 1 ? one : many);
+          }
+          return 'agora';
+        };
+
+        async function get(path) {
+          const r = await fetch(API + path, { headers: { Accept: 'application/vnd.github+json' } });
+          if (!r.ok)
+            throw new Error(r.status === 403 || r.status === 429 ? 'rate' : 'http ' + r.status);
+          return { body: await r.json(), link: r.headers.get('Link') };
+        }
+        const lastPage = (link) => {
+          const m = link && /[?&]page=(\d+)>;\s*rel="last"/.exec(link);
+          return m ? Number(m[1]) : null;
+        };
+
+        async function load() {
+          const [repo, commits, count, issues, pulls, people, langs, runs] = await Promise.all([
+            get(''),
+            get('/commits?per_page=6'),
+            get('/commits?per_page=1'),
+            get('/issues?state=open&per_page=10'),
+            get('/pulls?state=open&per_page=1'),
+            get('/contributors?per_page=12'),
+            get('/languages'),
+            get('/actions/workflows/ci.yml/runs?branch=main&per_page=1'),
+          ]);
+          return {
+            at: Date.now(),
+            stars: repo.body.stargazers_count,
+            forks: repo.body.forks_count,
+            watchers: repo.body.subscribers_count,
+            pushed: repo.body.pushed_at,
+            commits: lastPage(count.link) ?? count.body.length,
+            prs: lastPage(pulls.link) ?? pulls.body.length,
+            issues: issues.body
+              .filter((i) => !i.pull_request)
+              .slice(0, 5)
+              .map((i) => ({ n: i.number, t: i.title, u: i.html_url, at: i.created_at })),
+            issuesTotal: repo.body.open_issues_count - (lastPage(pulls.link) ?? pulls.body.length),
+            list: commits.body.map((c) => ({
+              sha: c.sha.slice(0, 7),
+              msg: c.commit.message.split('\n')[0],
+              u: c.html_url,
+              at: c.commit.author.date,
+            })),
+            people: people.body
+              .filter((p) => p.type === 'User')
+              .map((p) => ({ l: p.login, a: p.avatar_url, u: p.html_url, c: p.contributions })),
+            langs: langs.body,
+            ci: runs.body.workflow_runs[0]
+              ? {
+                  st: runs.body.workflow_runs[0].status,
+                  c: runs.body.workflow_runs[0].conclusion,
+                  u: runs.body.workflow_runs[0].html_url,
+                  at: runs.body.workflow_runs[0].updated_at,
+                }
+              : null,
+          };
+        }
+
+        function setStat(id, value, sub) {
+          const a = $('gh-' + id);
+          a.querySelector('.v').textContent = value;
+          if (sub) a.querySelector('.s').textContent = sub;
+        }
+
+        function render(d, cached) {
+          setStat('stars', fmt(d.stars), d.watchers + ' acompanhando');
+          setStat('forks', fmt(d.forks));
+          setStat('commits', fmt(d.commits), 'último ' + ago(d.pushed));
+          setStat('issues', fmt(Math.max(0, d.issuesTotal)));
+          setStat('prs', fmt(d.prs));
+          const ci = $('gh-ci');
+          if (d.ci) {
+            const state =
+              d.ci.st !== 'completed' ? 'running' : d.ci.c === 'success' ? 'success' : 'failure';
+            const label = { running: 'rodando', success: 'passando', failure: 'falhou' }[state];
+            const v = ci.querySelector('.v');
+            v.textContent = '';
+            v.style.display = 'flex';
+            v.style.alignItems = 'center';
+            v.style.gap = '8px';
+            v.append(el('span', 'ci-dot ' + state), el('span', null, label));
+            ci.querySelector('.s').textContent = ago(d.ci.at);
+            ci.href = d.ci.u;
+          }
+
+          const cl = $('gh-commit-list');
+          cl.textContent = '';
+          for (const c of d.list) {
+            const li = el('li');
+            const a = el('a', 'gh-row');
+            a.href = c.u;
+            const m = /^(\w+(?:\([^)]*\))?!?:)\s*(.*)$/.exec(c.msg);
+            const msg = el('span', 'msg');
+            if (m) msg.append(el('em', null, m[1]), document.createTextNode(m[2]));
+            else msg.textContent = c.msg;
+            const t = el('time', null, ago(c.at));
+            t.dateTime = c.at;
+            a.append(el('span', 'sha', c.sha), msg, t);
+            li.append(a);
+            cl.append(li);
+          }
+
+          const il = $('gh-issue-list');
+          il.textContent = '';
+          if (!d.issues.length) {
+            const li = el(
+              'li',
+              'gh-empty',
+              'Nenhuma issue aberta. Achou um bug ou tem uma ideia? Abra a primeira.',
+            );
+            il.append(li);
+          } else {
+            for (const i of d.issues) {
+              const li = el('li');
+              const a = el('a', 'gh-row');
+              a.href = i.u;
+              a.append(
+                el('span', 'sha', '#' + i.n),
+                el('span', 'msg', i.t),
+                el('time', null, ago(i.at)),
+              );
+              li.append(a);
+              il.append(li);
+            }
+          }
+
+          const pp = $('gh-people');
+          pp.textContent = '';
+          for (const p of d.people) {
+            const a = el('a', 'gh-person');
+            a.href = p.u;
+            const img = el('img');
+            img.src = p.a + '&s=48';
+            img.alt = '';
+            img.loading = 'lazy';
+            a.append(img, document.createTextNode(p.l + ' '), el('span', null, fmt(p.c)));
+            pp.append(a);
+          }
+
+          const total = Object.values(d.langs).reduce((a, b) => a + b, 0) || 1;
+          const bar = $('gh-langs');
+          const legend = $('gh-legend');
+          bar.textContent = '';
+          legend.textContent = '';
+          for (const [name, bytes] of Object.entries(d.langs)) {
+            const pct = (bytes / total) * 100;
+            if (pct < 0.5) continue;
+            const color = LANG_COLORS[name] || '#6c707a';
+            const seg = el('span');
+            seg.style.width = pct + '%';
+            seg.style.background = color;
+            bar.append(seg);
+            const item = el('span');
+            const sw = el('i');
+            sw.style.background = color;
+            item.append(sw, document.createTextNode(name + ' ' + pct.toFixed(1) + '%'));
+            legend.append(item);
+          }
+
+          $('gh-foot').textContent =
+            (cached ? 'dados em cache · ' : 'atualizado agora · ') +
+            'lido de api.github.com/repos/' +
+            REPO +
+            ' às ' +
+            new Date(d.at).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+        }
+
+        let cache = null;
+        try {
+          cache = JSON.parse(sessionStorage.getItem(KEY) || 'null');
+        } catch {}
+        if (cache && Date.now() - cache.at < TTL) {
+          render(cache, true);
+          return;
+        }
+        if (cache) render(cache, true);
+        load()
+          .then((d) => {
+            render(d, false);
+            try {
+              sessionStorage.setItem(KEY, JSON.stringify(d));
+            } catch {}
+          })
+          .catch((e) => {
+            $('gh-foot').textContent =
+              (e.message === 'rate'
+                ? 'O GitHub limitou as consultas deste IP por agora (60 por hora sem login). '
+                : 'Não deu para ler a API do GitHub agora. ') +
+              'Os números estão no repositório: github.com/' +
+              REPO;
+            if (!cache) {
+              for (const id of ['gh-commit-list', 'gh-issue-list']) {
+                $(id).textContent = '';
+                $(id).append(el('li', 'gh-empty', 'Indisponível no momento.'));
+              }
+              $('gh-people').textContent = '';
+              $('gh-legend').textContent = '';
+            }
+          });
+      })();
+    </script>
+  </body>
+</html>
