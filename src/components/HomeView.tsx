@@ -1,16 +1,11 @@
 import { FolderPlus } from 'lucide-react';
 import { useState, type FormEvent } from 'react';
-import { AGENTS } from '../domain/agents.ts';
+import { agentProfile } from '../domain/agents.ts';
 import type { Project } from '../domain/types.ts';
+import { useI18n } from '../i18n/I18n.tsx';
 import { Composer } from './Composer.tsx';
 import { OctoMascot } from './octo/index.ts';
 import { Button, Field, TextInput } from './primitives.tsx';
-
-const SUGGESTIONS = [
-  'Adicionar login com Google mantendo o login por senha. Cobrir com testes.',
-  'Criar endpoint de exportação CSV dos pedidos com paginação.',
-  'Revisar o tratamento de erros da API de pagamentos.',
-];
 
 export function ProjectForm({
   onCreate,
@@ -19,6 +14,7 @@ export function ProjectForm({
   onCreate: (name: string, root: string) => string | null;
   compact?: boolean;
 }) {
+  const { t } = useI18n();
   const [name, setName] = useState('');
   const [root, setRoot] = useState('');
   const [error, setError] = useState<string | null>(null);
@@ -32,16 +28,16 @@ export function ProjectForm({
     }
   };
   return (
-    <form onSubmit={submit} className="grid gap-3" aria-label="Novo projeto">
+    <form onSubmit={submit} className="grid gap-3" aria-label={t.projectForm.aria}>
       <div className={compact ? 'grid gap-3' : 'grid gap-3 sm:grid-cols-2'}>
-        <Field label="Nome do projeto">
+        <Field label={t.projectForm.name}>
           <TextInput
             value={name}
             onChange={(e) => setName(e.target.value)}
             placeholder="meu-saas"
           />
         </Field>
-        <Field label="Pasta" hint="Por enquanto é só um rótulo: nada é lido do disco.">
+        <Field label={t.projectForm.folder} hint={t.projectForm.folderHint}>
           <TextInput
             value={root}
             onChange={(e) => setRoot(e.target.value)}
@@ -57,7 +53,7 @@ export function ProjectForm({
       <div>
         <Button type="submit" variant="primary">
           <FolderPlus size={15} />
-          Criar projeto
+          {t.projectForm.create}
         </Button>
       </div>
     </form>
@@ -75,24 +71,19 @@ export function HomeView({
   onCreateProject: (name: string, root: string) => string | null;
   onStart: (text: string) => string | null;
 }) {
-  const orchestra = AGENTS.orchestra;
+  const { t, locale } = useI18n();
+  const orchestra = agentProfile('orchestra', locale);
   return (
     <div className="flex h-full min-h-0 flex-col overflow-y-auto">
       <div className="mx-auto flex w-full max-w-[720px] flex-1 flex-col justify-center px-6 py-10">
         <div className="mb-7 flex flex-col items-center text-center">
-          {/* Sem projeto, o Octo acena dando as boas-vindas; com projeto, espera a tarefa. */}
-          <OctoMascot
-            size={112}
-            mood={project ? 'idle' : 'waving'}
-            label="Octo, o maestro do Agent Orchestra"
-          />
+          {/* Without a project Octo waves hello; with one it waits for the task. */}
+          <OctoMascot size={112} mood={project ? 'idle' : 'waving'} label={t.home.octoLabel} />
           <h1 className="mt-4 text-[26px] font-semibold tracking-[-0.02em] text-ink">
-            {project ? 'O que vamos orquestrar hoje?' : 'Bem-vindo ao Agent Orchestra'}
+            {project ? t.home.prompt : t.home.welcome}
           </h1>
           <p className="mt-2 max-w-md text-[14px] leading-relaxed text-ink-3">
-            {project
-              ? `Descreva a tarefa em ${project.name}. O Planner propõe um plano e nada segue sem a sua aprovação.`
-              : 'Comece criando um projeto. Depois é só descrever o que você quer e acompanhar os agentes.'}
+            {project ? t.home.withProject(project.name) : t.home.withoutProject}
           </p>
         </div>
 
@@ -101,17 +92,17 @@ export function HomeView({
             <Composer
               agent={orchestra}
               autoFocus
-              placeholder="Descreva o que você quer construir…"
+              placeholder={t.home.placeholder}
               onSubmit={onStart}
               meta={
                 <>
                   <span>{providerLabel}</span>
-                  <span>Enter envia · Shift+Enter quebra linha</span>
+                  <span>{t.home.keys}</span>
                 </>
               }
             />
             <div className="mt-5 grid gap-2">
-              {SUGGESTIONS.map((s) => (
+              {t.home.suggestions.map((s) => (
                 <button
                   key={s}
                   type="button"

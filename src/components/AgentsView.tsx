@@ -1,7 +1,8 @@
 import { ArrowLeft, Eraser, MessageCircle } from 'lucide-react';
 import { useEffect, useRef, type CSSProperties } from 'react';
-import { AGENT_LIST, AGENTS, type AgentId, type AgentProfile } from '../domain/agents.ts';
+import { agentList, agentProfile, type AgentId, type AgentProfile } from '../domain/agents.ts';
 import type { ChatMessage } from '../domain/types.ts';
+import { useI18n } from '../i18n/I18n.tsx';
 import { AgentAvatar } from './AgentAvatar.tsx';
 import { Composer } from './Composer.tsx';
 import { Button, cn, IconButton } from './primitives.tsx';
@@ -28,16 +29,16 @@ export function AgentsView({
   chats: Partial<Record<AgentId, ChatMessage[]>>;
   onOpen: (id: AgentId) => void;
 }) {
+  const { t, locale } = useI18n();
   return (
     <div className="h-full overflow-y-auto">
       <div className="mx-auto max-w-[1080px] px-6 py-8">
-        <h1 className="text-[24px] font-semibold tracking-[-0.02em]">Agentes</h1>
+        <h1 className="text-[24px] font-semibold tracking-[-0.02em]">{t.agents.title}</h1>
         <p className="mt-1.5 max-w-xl text-[14px] leading-relaxed text-ink-3">
-          Converse direto com cada agente. O Orchestra conduz as sessões; os outros três trabalham
-          sob a batuta dele.
+          {t.agents.subtitle}
         </p>
         <div className="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-[1.35fr_1fr_1fr_1fr]">
-          {AGENT_LIST.map((a, i) => {
+          {agentList(locale).map((a, i) => {
             const count = chats[a.id]?.length ?? 0;
             return (
               <article
@@ -62,9 +63,11 @@ export function AgentsView({
                     onClick={() => onOpen(a.id)}
                   >
                     <MessageCircle size={14} />
-                    Conversar
+                    {t.agents.talk}
                   </Button>
-                  {count > 0 && <span className="text-[12px] text-ink-3">{count} mensagens</span>}
+                  {count > 0 && (
+                    <span className="text-[12px] text-ink-3">{t.agents.messages(count)}</span>
+                  )}
                 </div>
               </article>
             );
@@ -94,7 +97,8 @@ export function AgentChatView({
   onStop: () => void;
   onClear: () => void;
 }) {
-  const agent = AGENTS[agentId];
+  const { t, locale } = useI18n();
+  const agent = agentProfile(agentId, locale);
   const feedRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
     feedRef.current?.scrollTo({ top: feedRef.current.scrollHeight, behavior: 'smooth' });
@@ -103,7 +107,7 @@ export function AgentChatView({
   return (
     <div className="flex h-full min-h-0 flex-col">
       <header className="flex h-12 shrink-0 items-center gap-2 border-b border-line px-3">
-        <IconButton label="Voltar para Agentes" onClick={onBack}>
+        <IconButton label={t.agents.backToAgents} onClick={onBack}>
           <ArrowLeft size={16} />
         </IconButton>
         <AgentAvatar agent={agent} size={24} />
@@ -111,7 +115,7 @@ export function AgentChatView({
         <span className="truncate text-[12.5px] text-ink-3">{agent.tagline}</span>
         <span className="flex-1" />
         {messages.length > 0 && (
-          <IconButton label="Limpar conversa" onClick={onClear}>
+          <IconButton label={t.agents.clear} onClick={onClear}>
             <Eraser size={15} />
           </IconButton>
         )}
@@ -124,7 +128,7 @@ export function AgentChatView({
               <p className="mt-4 max-w-sm text-[14px] leading-relaxed text-ink-2">
                 {agent.responsibility}
               </p>
-              <p className="mt-1 text-[12.5px] text-ink-3">Diga oi para começar.</p>
+              <p className="mt-1 text-[12.5px] text-ink-3">{t.agents.sayHi}</p>
             </div>
           )}
           {messages.map((m) =>
@@ -154,7 +158,7 @@ export function AgentChatView({
           {busy && (
             <div className="grid grid-cols-[34px_minmax(0,1fr)] gap-3">
               <AgentAvatar agent={agent} working />
-              <div className="grid gap-2 pt-2" aria-label="Carregando">
+              <div className="grid gap-2 pt-2" aria-label={t.common.loading}>
                 <span className="h-3 w-2/3 animate-pulse rounded bg-surface-3" />
                 <span className="h-3 w-1/3 animate-pulse rounded bg-surface-3" />
               </div>
@@ -168,12 +172,12 @@ export function AgentChatView({
           busy={busy}
           onStop={onStop}
           autoFocus
-          placeholder={`Mensagem para ${agent.name}…`}
+          placeholder={t.agents.messageTo(agent.name)}
           onSubmit={onSend}
           meta={
             <>
               <span>{providerLabel}</span>
-              <span>Conversa salva neste dispositivo</span>
+              <span>{t.agents.savedHere}</span>
             </>
           }
         />

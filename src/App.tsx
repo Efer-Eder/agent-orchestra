@@ -10,6 +10,7 @@ import { RightPanel } from './components/RightPanel.tsx';
 import { SessionView } from './components/SessionView.tsx';
 import { SettingsView } from './components/SettingsView.tsx';
 import { Sidebar } from './components/Sidebar.tsx';
+import { useI18n } from './i18n/I18n.tsx';
 
 function useMedia(query: string) {
   const [match, setMatch] = useState(() => matchMedia(query).matches);
@@ -23,7 +24,8 @@ function useMedia(query: string) {
 }
 
 export default function App() {
-  const o = useOrchestra();
+  const { locale, t } = useI18n();
+  const o = useOrchestra(locale, t);
   const { state } = o;
   const { preference, setPreference } = useTheme();
   const wide = useMedia('(min-width: 1100px)');
@@ -38,7 +40,7 @@ export default function App() {
   const session =
     view.name === 'session' ? (state.sessions.find((s) => s.id === view.id) ?? null) : null;
   const offline = o.provider.offline;
-  const providerLabel = offline ? 'Demonstração offline' : o.provider.label;
+  const providerLabel = offline ? t.common.demoOffline : o.provider.label;
 
   // Reset transient panels when the view changes (derived-state pattern, no effect).
   const viewKey = JSON.stringify(view);
@@ -166,7 +168,7 @@ export default function App() {
         />
       )}
       <aside
-        aria-label="Barra lateral"
+        aria-label={t.shell.sidebar}
         className={cn(
           'w-[264px] shrink-0 border-r border-line bg-sidebar',
           narrow && 'fixed inset-y-0 left-0 z-40 transition-transform duration-200',
@@ -184,7 +186,7 @@ export default function App() {
       <main className="relative flex min-w-0 flex-1 flex-col bg-app">
         {narrow && (
           <div className="flex h-11 shrink-0 items-center gap-2 border-b border-line px-2">
-            <IconButton label="Abrir menu" onClick={() => setSideOpen(true)}>
+            <IconButton label={t.shell.openMenu} onClick={() => setSideOpen(true)}>
               <Menu size={17} />
             </IconButton>
             <span className="text-[13.5px] font-semibold">Agent Orchestra</span>
@@ -203,7 +205,7 @@ export default function App() {
             />
           )}
           <aside
-            aria-label="Detalhes da sessão"
+            aria-label={t.shell.details}
             className={cn(
               'shrink-0 border-l border-line bg-sidebar',
               openPath ? 'w-[min(560px,100vw)]' : 'w-[300px]',

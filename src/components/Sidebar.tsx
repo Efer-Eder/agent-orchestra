@@ -1,7 +1,8 @@
 import { FolderClosed, Plus, Search, Settings, Users, X } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { dayLabel, STATUS_LABEL, STATUS_TONE, TONE_DOT } from '../app/labels.ts';
+import { dayLabel, STATUS_TONE, TONE_DOT } from '../app/labels.ts';
 import { sessionStartedAt, type AppState, type View } from '../app/state.ts';
+import { useI18n } from '../i18n/I18n.tsx';
 import { cn, IconButton, Kbd, Logo } from './primitives.tsx';
 
 interface Props {
@@ -49,6 +50,7 @@ function NavItem({
 }
 
 export function Sidebar({ state, providerLabel, onNavigate, searchTick = 0 }: Props) {
+  const { t } = useI18n();
   const [query, setQuery] = useState('');
   const [searching, setSearching] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -63,11 +65,11 @@ export function Sidebar({ state, providerLabel, onNavigate, searchTick = 0 }: Pr
       .sort((a, b) => sessionStartedAt(b).localeCompare(sessionStartedAt(a)));
     const map = new Map<string, typeof list>();
     for (const s of list) {
-      const label = dayLabel(sessionStartedAt(s));
+      const label = dayLabel(sessionStartedAt(s), t.days, t.meta.dateLocale);
       map.set(label, [...(map.get(label) ?? []), s]);
     }
     return [...map.entries()];
-  }, [state.sessions, state.activeProjectId, query]);
+  }, [state.sessions, state.activeProjectId, query, t]);
 
   const openSearch = () => {
     setSearching(true);
@@ -91,29 +93,29 @@ export function Sidebar({ state, providerLabel, onNavigate, searchTick = 0 }: Pr
         <span className="text-[15px] font-semibold tracking-[-0.01em]">Agent Orchestra</span>
       </div>
 
-      <nav aria-label="Navegação principal" className="grid gap-0.5">
+      <nav aria-label={t.sidebar.mainNav} className="grid gap-0.5">
         <NavItem
           icon={<Plus size={16} />}
-          label="Nova sessão"
+          label={t.sidebar.newSession}
           shortcut="Ctrl N"
           active={view.name === 'home'}
           onClick={() => onNavigate({ name: 'home' })}
         />
         <NavItem
           icon={<Search size={16} />}
-          label="Procurar"
+          label={t.sidebar.search}
           shortcut="Ctrl K"
           onClick={openSearch}
         />
         <NavItem
           icon={<Users size={16} />}
-          label="Agentes"
+          label={t.sidebar.agents}
           active={view.name === 'agents' || view.name === 'agent'}
           onClick={() => onNavigate({ name: 'agents' })}
         />
         <NavItem
           icon={<FolderClosed size={16} />}
-          label="Projetos"
+          label={t.sidebar.projects}
           active={view.name === 'projects'}
           onClick={() => onNavigate({ name: 'projects' })}
         />
@@ -135,12 +137,12 @@ export function Sidebar({ state, providerLabel, onNavigate, searchTick = 0 }: Pr
                 setSearching(false);
               }
             }}
-            placeholder="Procurar sessões"
-            aria-label="Procurar sessões"
+            placeholder={t.sidebar.searchPlaceholder}
+            aria-label={t.sidebar.searchPlaceholder}
             className="h-8 w-full rounded-lg border border-line bg-surface pr-8 pl-8 text-[13px] text-ink placeholder:text-ink-3 focus:border-accent focus:outline-none"
           />
           <IconButton
-            label="Fechar busca"
+            label={t.sidebar.closeSearch}
             className="absolute top-0 right-0"
             onClick={() => {
               setQuery('');
@@ -152,14 +154,17 @@ export function Sidebar({ state, providerLabel, onNavigate, searchTick = 0 }: Pr
         </div>
       )}
 
-      <div className="mt-2 min-h-0 flex-1 overflow-x-hidden overflow-y-auto" aria-label="Sessões">
+      <div
+        className="mt-2 min-h-0 flex-1 overflow-x-hidden overflow-y-auto"
+        aria-label={t.sidebar.sessions}
+      >
         {!project ? (
           <p className="px-2.5 pt-4 text-[12.5px] leading-relaxed text-ink-3">
-            Crie um projeto para começar a registrar sessões.
+            {t.sidebar.noProject}
           </p>
         ) : groups.length === 0 ? (
           <p className="px-2.5 pt-4 text-[12.5px] leading-relaxed text-ink-3">
-            {query ? 'Nenhuma sessão encontrada.' : 'Suas sessões aparecem aqui.'}
+            {query ? t.sidebar.noResults : t.sidebar.empty}
           </p>
         ) : (
           groups.map(([label, sessions]) => (
@@ -174,7 +179,7 @@ export function Sidebar({ state, providerLabel, onNavigate, searchTick = 0 }: Pr
                         type="button"
                         onClick={() => onNavigate({ name: 'session', id: s.id })}
                         aria-current={active ? 'page' : undefined}
-                        title={`${s.title} — ${STATUS_LABEL[s.status]}`}
+                        title={`${s.title} — ${t.status[s.status]}`}
                         className={cn(
                           'flex h-8 w-full items-center gap-2.5 rounded-lg px-2.5 text-left text-[13px] transition-colors',
                           active
@@ -189,7 +194,7 @@ export function Sidebar({ state, providerLabel, onNavigate, searchTick = 0 }: Pr
                           )}
                         />
                         <span className="truncate">{s.title}</span>
-                        <span className="sr-only">({STATUS_LABEL[s.status]})</span>
+                        <span className="sr-only">({t.status[s.status]})</span>
                       </button>
                     </li>
                   );
@@ -211,13 +216,13 @@ export function Sidebar({ state, providerLabel, onNavigate, searchTick = 0 }: Pr
           </span>
           <span className="min-w-0">
             <span className="block truncate text-[13px] text-ink">
-              {project?.name ?? 'Sem projeto'}
+              {project?.name ?? t.sidebar.withoutProject}
             </span>
             <span className="block truncate text-[11.5px] text-ink-3">{providerLabel}</span>
           </span>
         </button>
         <IconButton
-          label="Configurações"
+          label={t.sidebar.settings}
           active={view.name === 'settings'}
           onClick={() => onNavigate({ name: 'settings' })}
         >

@@ -1,18 +1,22 @@
 import { useCallback, useEffect, useMemo, useReducer, useRef, useState } from 'react';
-import { AGENTS, type AgentId } from '../domain/agents.ts';
+import { agentProfile, type AgentId } from '../domain/agents.ts';
 import type { AgentProvider } from '../domain/provider.ts';
 import type { ChatMessage, Session } from '../domain/types.ts';
 import { defaultIdFactory } from '../domain/ids.ts';
+import type { Locale } from '../domain/locale.ts';
 import {
   approvePlan,
   cancelSession,
   createProject,
   createSession,
   rejectPlan,
+  MAX_REQUEST_LENGTH,
   runExecution,
   runPlanning,
   runReview,
+  WorkflowError,
 } from '../domain/workflow.ts';
+import type { Messages } from '../i18n/messages.ts';
 import { createMockProvider } from '../providers/mock.ts';
 import { createOpenAICompatibleProvider } from '../providers/openai-compatible.ts';
 import { clearSavedState, loadState, saveState } from './persistence.ts';
@@ -35,7 +39,12 @@ export interface ProviderStatus {
   problem: string | null;
 }
 
-function errorText(e: unknown): string {
+function errorText(e: unknown, t?: Messages): string {
+  if (t && e instanceof WorkflowError && e.reason) {
+    if (e.reason === 'empty_project_name') return t.errors.emptyProjectName;
+    if (e.reason === 'empty_request') return t.errors.emptyRequest;
+    if (e.reason === 'request_too_long') return t.errors.requestTooLong(MAX_REQUEST_LENGTH);
+  }
   return e instanceof Error ? e.message : String(e);
 }
 
@@ -43,7 +52,7 @@ function errorText(e: unknown): string {
  * Central hook: app state (persisted), the active provider, and the actions
  * that drive the approval-gated workflow and the agent chats.
  */
-export function useOrchestra() {
+export function useOrchestra(locale: Locale, t: Messages) {
   const [state, dispatch] = useReducer(appReducer, undefined, loadState);
   // API key lives only in memory: never persisted, gone when the app closes.
   const [apiKey, setApiKey] = useState('');
@@ -87,23 +96,28 @@ export function useOrchestra() {
     return () => clearTimeout(t);
   }, [state]);
 
-  const mock = useMemo(() => createMockProvider({ latencyMs: 650 }), []);
+  const mock = useMemo(() => createMockProvider({ latencyMs: 650, locale }), [locale]);
 
   const providerStatus = useMemo<ProviderStatus>(() => {
     const s = state.settings;
     if (s.kind === 'mock') return { provider: mock, problem: null };
     if (!apiKey.trim()) {
-      return { provider: mock, problem: 'Informe a chave de API para usar o provedor real.' };
+      return { provider: mock, problem: t.settings.needKey };
     }
     try {
       return {
-        provider: createOpenAICompatibleProvider({ baseUrl: s.baseUrl, apiKey, model: s.model }),
+        provider: createOpenAICompatibleProvider({
+          baseUrl: s.baseUrl,
+          apiKey,
+          model: s.model,
+          locale,
+        }),
         problem: null,
       };
     } catch (e) {
       return { provider: mock, problem: errorText(e) };
     }
-  }, [state.settings, apiKey, mock]);
+  }, [state.settings, apiKey, mock, locale, t]);
   const provider = providerStatus.provider;
 
   const save = useCallback((s: Session) => dispatch({ type: 'upsertSession', session: s }), []);
@@ -140,31 +154,34 @@ export function useOrchestra() {
 
   const setView = useCallback((view: View) => dispatch({ type: 'setView', view }), []);
 
-  const addProject = useCallback((name: string, root: string): string | null => {
-    try {
-      dispatch({ type: 'addProject', project: createProject(name, root) });
-      return null;
-    } catch (e) {
-      return errorText(e);
-    }
-  }, []);
+  const addProject = useCallback(
+    (name: string, root: string): string | null => {
+      try {
+        dispatch({ type: 'addProject', project: createProject(name, root) });
+        return null;
+      } catch (e) {
+        return errorText(e, t);
+      }
+    },
+    [t],
+  );
 
   const startSession = useCallback(
     (request: string): string | null => {
       const project = state.projects.find((p) => p.id === state.activeProjectId);
-      if (!project) return 'Crie ou selecione um projeto primeiro.';
+      if (!project) return t.errors.selectProject;
       let draft: Session;
       try {
         draft = createSession(project, request);
       } catch (e) {
-        return errorText(e);
+        return errorText(e, t);
       }
       save(draft);
       setView({ name: 'session', id: draft.id });
       void runSteps(draft, [(s, signal) => runPlanning(s, provider, { signal })]);
       return null;
     },
-    [state.projects, state.activeProjectId, save, setView, runSteps, provider],
+    [state.projects, state.activeProjectId, save, setView, runSteps, provider, t],
   );
 
   const approve = useCallback(
@@ -188,11 +205,11 @@ export function useOrchestra() {
   const requestAdjustment = useCallback(
     (session: Session, note: string): string | null => {
       const trimmed = note.trim();
-      if (!trimmed) return 'Descreva o ajuste.';
-      save(rejectPlan(session, `pediu ajuste: ${trimmed}`));
-      return startSession(`${session.request}\n\nAjuste pedido: ${trimmed}`);
+      if (!trimmed) return t.errors.describeAdjust;
+      save(rejectPlan(session, t.session.adjustReason(trimmed)));
+      return startSession(`${session.request}\n\n${t.session.adjustRequest(trimmed)}`);
     },
-    [save, startSession],
+    [save, startSession, t],
   );
 
   const cancel = useCallback(
@@ -221,7 +238,11 @@ export function useOrchestra() {
       controllers.current.set(`chat:${agentId}`, ctrl);
       setBusyAgents((prev) => new Set(prev).add(agentId));
       try {
-        const { output, usage } = await provider.chat(AGENTS[agentId], history, ctrl.signal);
+        const { output, usage } = await provider.chat(
+          agentProfile(agentId, locale),
+          history,
+          ctrl.signal,
+        );
         dispatch({
           type: 'appendChat',
           agentId,
@@ -241,7 +262,7 @@ export function useOrchestra() {
           message: {
             id: defaultIdFactory(),
             from: 'agent',
-            content: aborted ? 'Resposta cancelada.' : errorText(e),
+            content: aborted ? t.agents.replyCancelled : errorText(e, t),
             at: now(),
             error: true,
           },
@@ -255,7 +276,7 @@ export function useOrchestra() {
         });
       }
     },
-    [provider, state.chats],
+    [provider, state.chats, locale, t],
   );
 
   const stopChat = useCallback((agentId: AgentId) => {
@@ -269,9 +290,9 @@ export function useOrchestra() {
       await secretStore.save(account, apiKey);
       setVault((v) => ({ ...v, busy: false, saved: true }));
     } catch (e) {
-      setVault((v) => ({ ...v, busy: false, message: errorText(e) }));
+      setVault((v) => ({ ...v, busy: false, message: errorText(e, t) }));
     }
-  }, [account, apiKey, secretStore]);
+  }, [account, apiKey, secretStore, t]);
 
   const removeKeyFromVault = useCallback(async () => {
     if (!account) return;

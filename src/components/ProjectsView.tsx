@@ -1,5 +1,6 @@
 import { Check, Folder } from 'lucide-react';
 import type { Project, Session } from '../domain/types.ts';
+import { useI18n } from '../i18n/I18n.tsx';
 import { ProjectForm } from './HomeView.tsx';
 import { cn } from './primitives.tsx';
 
@@ -16,14 +17,13 @@ export function ProjectsView({
   onSelect: (id: string) => void;
   onCreate: (name: string, root: string) => string | null;
 }) {
+  const { t } = useI18n();
   return (
     <div className="h-full overflow-y-auto">
       <div className="mx-auto grid max-w-[720px] gap-5 px-6 py-8">
         <div>
-          <h1 className="text-[24px] font-semibold tracking-[-0.02em]">Projetos</h1>
-          <p className="mt-1.5 text-[14px] text-ink-3">
-            Cada projeto tem suas sessões. O selecionado aparece na barra lateral.
-          </p>
+          <h1 className="text-[24px] font-semibold tracking-[-0.02em]">{t.projects.title}</h1>
+          <p className="mt-1.5 text-[14px] text-ink-3">{t.projects.subtitle}</p>
         </div>
         {projects.length > 0 && (
           <ul className="overflow-hidden rounded-2xl border border-line bg-surface">
@@ -45,7 +45,7 @@ export function ProjectsView({
                     <span className="min-w-0 flex-1">
                       <span className="block truncate text-[14px] font-medium">{p.name}</span>
                       <span className="block truncate text-[12px] text-ink-3">
-                        {p.rootLabel || 'sem pasta'} · {count} sessão(ões)
+                        {p.rootLabel || t.projects.noFolder} · {t.projects.sessions(count)}
                       </span>
                     </span>
                     {active && <Check size={16} className="text-accent" />}
@@ -56,7 +56,7 @@ export function ProjectsView({
           </ul>
         )}
         <section className="rounded-2xl border border-line bg-surface p-5">
-          <h2 className="mb-4 text-[15px] font-semibold">Novo projeto</h2>
+          <h2 className="mb-4 text-[15px] font-semibold">{t.projects.newProject}</h2>
           <ProjectForm onCreate={onCreate} />
         </section>
       </div>

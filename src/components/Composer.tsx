@@ -1,6 +1,7 @@
 import { ArrowUp, Square } from 'lucide-react';
 import { useEffect, useRef, useState, type FormEvent } from 'react';
 import type { AgentProfile } from '../domain/agents.ts';
+import { useI18n } from '../i18n/I18n.tsx';
 import { AgentAvatar } from './AgentAvatar.tsx';
 import { cn } from './primitives.tsx';
 
@@ -27,6 +28,7 @@ export function Composer({
   onSubmit,
   onStop,
 }: Props) {
+  const { t } = useI18n();
   const [text, setText] = useState('');
   const [error, setError] = useState<string | null>(null);
   const ref = useRef<HTMLTextAreaElement>(null);
@@ -85,8 +87,8 @@ export function Composer({
             <button
               type="button"
               onClick={onStop}
-              aria-label="Parar"
-              title="Parar"
+              aria-label={t.composer.stop}
+              title={t.composer.stop}
               className="grid h-8 w-8 place-items-center rounded-full bg-ink text-app transition-opacity hover:opacity-85"
             >
               <Square size={12} fill="currentColor" />
@@ -94,8 +96,8 @@ export function Composer({
           ) : (
             <button
               type="submit"
-              aria-label="Enviar"
-              title="Enviar (Enter)"
+              aria-label={t.composer.send}
+              title={t.composer.sendHint}
               disabled={!text.trim() || busy || disabled}
               className="grid h-8 w-8 place-items-center rounded-full bg-accent text-accent-ink transition-opacity hover:bg-accent-hover disabled:opacity-40"
             >

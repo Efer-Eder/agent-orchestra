@@ -1,7 +1,8 @@
 import { ArrowLeft, Cpu, FileMinus, FilePen, FilePlus, Folder, X } from 'lucide-react';
-import { AGENT_LIST } from '../domain/agents.ts';
+import { agentList } from '../domain/agents.ts';
 import type { Project, Session } from '../domain/types.ts';
 import { totalUsage } from '../domain/workflow.ts';
+import { useI18n } from '../i18n/I18n.tsx';
 import { diffStats } from '../providers/parse.ts';
 import { AgentAvatar } from './AgentAvatar.tsx';
 import { cn, IconButton, SectionTitle } from './primitives.tsx';
@@ -18,17 +19,17 @@ function lineClass(line: string): string {
   return 'text-ink-2';
 }
 
-function agentState(session: Session | null, id: string): string {
-  if (!session) return '—';
+type AgentState = 'working' | 'done' | 'waiting' | 'leading' | null;
+
+function agentState(session: Session | null, id: string): AgentState {
+  if (!session) return null;
   const done = (kind: string) => session.events.some((e) => e.kind === kind);
   const s = session.status;
-  if (id === 'planner')
-    return s === 'planning' ? 'trabalhando' : done('plan') ? 'concluiu' : 'aguardando';
+  if (id === 'planner') return s === 'planning' ? 'working' : done('plan') ? 'done' : 'waiting';
   if (id === 'builder')
-    return s === 'executing' ? 'trabalhando' : done('execution') ? 'concluiu' : 'aguardando';
-  if (id === 'reviewer')
-    return s === 'reviewing' ? 'trabalhando' : done('review') ? 'concluiu' : 'aguardando';
-  return 'conduzindo';
+    return s === 'executing' ? 'working' : done('execution') ? 'done' : 'waiting';
+  if (id === 'reviewer') return s === 'reviewing' ? 'working' : done('review') ? 'done' : 'waiting';
+  return 'leading';
 }
 
 export function RightPanel({
@@ -46,17 +47,18 @@ export function RightPanel({
   onOpenPath: (path: string | null) => void;
   onClose: () => void;
 }) {
+  const { t, locale } = useI18n();
   const change = openPath ? session?.changes?.find((c) => c.path === openPath) : undefined;
 
   if (change) {
     return (
       <div className="flex h-full min-h-0 flex-col">
         <div className="flex h-12 shrink-0 items-center gap-1.5 border-b border-line px-2">
-          <IconButton label="Voltar" onClick={() => onOpenPath(null)}>
+          <IconButton label={t.panel.back} onClick={() => onOpenPath(null)}>
             <ArrowLeft size={16} />
           </IconButton>
           <code className="min-w-0 flex-1 truncate font-mono text-[12.5px]">{change.path}</code>
-          <IconButton label="Fechar painel" onClick={onClose}>
+          <IconButton label={t.session.closePanel} onClick={onClose}>
             <X size={16} />
           </IconButton>
         </div>
@@ -68,7 +70,7 @@ export function RightPanel({
           ))}
         </pre>
         <p className="border-t border-line px-4 py-2.5 text-[12px] text-ink-3">
-          Somente visualização. Aplicar no disco ainda não existe.
+          {t.panel.readOnly}
         </p>
       </div>
     );
@@ -81,29 +83,29 @@ export function RightPanel({
   return (
     <div className="flex h-full min-h-0 flex-col">
       <div className="flex h-12 shrink-0 items-center justify-between border-b border-line pr-2 pl-4">
-        <span className="text-[13px] font-semibold">Detalhes</span>
-        <IconButton label="Fechar painel" onClick={onClose}>
+        <span className="text-[13px] font-semibold">{t.panel.details}</span>
+        <IconButton label={t.session.closePanel} onClick={onClose}>
           <X size={16} />
         </IconButton>
       </div>
       <div className="min-h-0 flex-1 overflow-x-hidden overflow-y-auto">
         <section className="border-b border-line px-4 py-3.5">
-          <SectionTitle>Ambiente</SectionTitle>
+          <SectionTitle>{t.panel.environment}</SectionTitle>
           <dl className="grid gap-2 text-[13px]">
             <div className="flex items-center gap-2.5 text-ink-2">
               <Folder size={15} className="text-ink-3" />
-              <dt className="sr-only">Projeto</dt>
+              <dt className="sr-only">{t.panel.project}</dt>
               <dd className="min-w-0 flex-1 truncate">{project?.name ?? '—'}</dd>
               <dd
                 className="max-w-[55%] truncate text-[12px] text-ink-3"
                 title={project?.rootLabel}
               >
-                {project?.rootLabel || 'sem pasta'}
+                {project?.rootLabel || t.panel.noFolder}
               </dd>
             </div>
             <div className="flex items-center gap-2.5 text-ink-2">
               <Cpu size={15} className="text-ink-3" />
-              <dt>Provedor</dt>
+              <dt>{t.panel.provider}</dt>
               <dd className="ml-auto max-w-[60%] truncate text-[12.5px] text-ink">
                 {providerLabel}
               </dd>
@@ -112,15 +114,17 @@ export function RightPanel({
         </section>
 
         <section className="border-b border-line px-4 py-3.5">
-          <SectionTitle>Contexto</SectionTitle>
+          <SectionTitle>{t.panel.context}</SectionTitle>
           {!usage || session?.usage.length === 0 ? (
-            <p className="text-[12.5px] text-ink-3">Sem chamadas ainda.</p>
+            <p className="text-[12.5px] text-ink-3">{t.panel.noCalls}</p>
           ) : (
             <>
               <div className="flex justify-between text-[13px] text-ink-2">
                 <span>
-                  {usage.inputTokens.toLocaleString('pt-BR')} entrada ·{' '}
-                  {usage.outputTokens.toLocaleString('pt-BR')} saída
+                  {t.panel.tokens(
+                    usage.inputTokens.toLocaleString(t.meta.dateLocale),
+                    usage.outputTokens.toLocaleString(t.meta.dateLocale),
+                  )}
                 </span>
               </div>
               <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-surface-3">
@@ -130,22 +134,17 @@ export function RightPanel({
                 />
               </div>
               <p className="mt-2 text-[12px] leading-relaxed text-ink-3">
-                {usage.synthetic
-                  ? 'Números sintéticos do modo demonstração (≈ 4 caracteres por token).'
-                  : 'Uso reportado pelo provedor.'}{' '}
-                Custo: não estimado (sem tabela de preços configurada).
+                {usage.synthetic ? t.panel.synthetic : t.panel.reported} {t.panel.noCost}
               </p>
             </>
           )}
         </section>
 
         <section className="border-b border-line px-4 py-3.5">
-          <SectionTitle>Alterações propostas</SectionTitle>
+          <SectionTitle>{t.panel.changes}</SectionTitle>
           {!session?.changes?.length ? (
             <p className="text-[12.5px] text-ink-3">
-              {session?.status === 'awaiting_approval'
-                ? 'Aguardando aprovação do plano.'
-                : 'Nenhuma alteração ainda.'}
+              {session?.status === 'awaiting_approval' ? t.panel.awaitingPlan : t.panel.noChanges}
             </p>
           ) : (
             <ul className="flex flex-col gap-0.5">
@@ -174,20 +173,22 @@ export function RightPanel({
         </section>
 
         <section className="px-4 py-3.5">
-          <SectionTitle>Agentes nesta sessão</SectionTitle>
+          <SectionTitle>{t.panel.agents}</SectionTitle>
           <ul className="grid gap-2.5">
-            {AGENT_LIST.map((a) => {
+            {agentList(locale).map((a) => {
               const st = agentState(session, a.id);
               return (
                 <li key={a.id} className="flex items-center gap-2.5 text-[13px]">
                   <AgentAvatar
                     agent={a}
                     size={26}
-                    working={st === 'trabalhando'}
-                    done={st === 'concluiu'}
+                    working={st === 'working'}
+                    done={st === 'done'}
                   />
                   {a.name}
-                  <span className="ml-auto text-[12px] text-ink-3">{st}</span>
+                  <span className="ml-auto text-[12px] text-ink-3">
+                    {st ? t.panel.agentState[st] : '·'}
+                  </span>
                 </li>
               );
             })}

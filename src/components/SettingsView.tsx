@@ -1,6 +1,7 @@
 import {
   CircleCheck,
   KeyRound,
+  Languages,
   LockKeyhole,
   Monitor,
   Moon,
@@ -13,6 +14,8 @@ import { useState } from 'react';
 import type { ProviderSettings } from '../app/state.ts';
 import type { VaultState } from '../app/useOrchestra.ts';
 import type { ThemePreference } from '../app/theme.ts';
+import { useI18n } from '../i18n/I18n.tsx';
+import { LOCALES, MESSAGES, type Locale } from '../i18n/messages.ts';
 import { createOpenAICompatibleProvider } from '../providers/openai-compatible.ts';
 import { Button, Field, Segmented, TextInput } from './primitives.tsx';
 
@@ -50,6 +53,7 @@ export function SettingsView({
   onSaveToVault: () => void;
   onRemoveFromVault: () => void;
 }) {
+  const { t, locale, setLocale } = useI18n();
   const [test, setTest] = useState<{ ok: boolean; text: string } | null>(null);
   const [testing, setTesting] = useState(false);
   const [confirmReset, setConfirmReset] = useState(false);
@@ -61,20 +65,15 @@ export function SettingsView({
       const provider = createOpenAICompatibleProvider({
         baseUrl: settings.baseUrl,
         apiKey,
-        model: settings.model || 'teste',
+        model: settings.model || 'test',
         timeoutMs: 15_000,
+        locale,
       });
       const models = await provider.testConnection();
       const has = settings.model && models.includes(settings.model);
       setTest({
         ok: true,
-        text: `Conectado. ${models.length} modelo(s) disponível(is)${
-          settings.model
-            ? has
-              ? `, incluindo ${settings.model}.`
-              : `; "${settings.model}" não apareceu na lista.`
-            : '.'
-        }`,
+        text: t.settings.testOk(models.length, settings.model, Boolean(has)),
       });
     } catch (e) {
       setTest({ ok: false, text: e instanceof Error ? e.message : String(e) });
@@ -87,49 +86,55 @@ export function SettingsView({
     <div className="h-full overflow-y-auto">
       <div className="mx-auto grid max-w-[720px] gap-5 px-6 py-8">
         <div>
-          <h1 className="text-[24px] font-semibold tracking-[-0.02em]">Configurações</h1>
-          <p className="mt-1.5 text-[14px] text-ink-3">
-            Tudo fica neste dispositivo. Sem telemetria.
-          </p>
+          <h1 className="text-[24px] font-semibold tracking-[-0.02em]">{t.settings.title}</h1>
+          <p className="mt-1.5 text-[14px] text-ink-3">{t.settings.subtitle}</p>
         </div>
 
-        <Card title="Aparência">
-          <Segmented<ThemePreference>
-            label="Tema"
-            value={theme}
-            onChange={onTheme}
-            options={[
-              { value: 'light', label: 'Claro', icon: <Sun size={14} /> },
-              { value: 'dark', label: 'Escuro', icon: <Moon size={14} /> },
-              { value: 'system', label: 'Sistema', icon: <Monitor size={14} /> },
-            ]}
-          />
+        <Card title={t.settings.appearance}>
+          <div className="grid gap-4">
+            <Segmented<ThemePreference>
+              label={t.settings.theme}
+              value={theme}
+              onChange={onTheme}
+              options={[
+                { value: 'light', label: t.settings.light, icon: <Sun size={14} /> },
+                { value: 'dark', label: t.settings.dark, icon: <Moon size={14} /> },
+                { value: 'system', label: t.settings.system, icon: <Monitor size={14} /> },
+              ]}
+            />
+            <div className="flex flex-wrap items-center gap-3">
+              <span className="inline-flex items-center gap-1.5 text-[12.5px] font-medium text-ink-2">
+                <Languages size={14} className="text-ink-3" />
+                {t.settings.language}
+              </span>
+              <Segmented<Locale>
+                label={t.settings.language}
+                value={locale}
+                onChange={setLocale}
+                options={LOCALES.map((l) => ({ value: l, label: MESSAGES[l].meta.name }))}
+              />
+            </div>
+          </div>
         </Card>
 
-        <Card title="Provedor de IA">
+        <Card title={t.settings.provider}>
           <div className="grid gap-4">
             <div>
               <Segmented<ProviderSettings['kind']>
-                label="Tipo de provedor"
+                label={t.settings.providerKind}
                 value={settings.kind}
                 onChange={(kind) => onSettings({ kind })}
                 options={[
-                  { value: 'mock', label: 'Demonstração (offline)' },
-                  { value: 'openai', label: 'OpenAI-compatível' },
+                  { value: 'mock', label: t.settings.mock },
+                  { value: 'openai', label: t.settings.openai },
                 ]}
               />
             </div>
             {settings.kind === 'mock' ? (
-              <p className="text-[13px] leading-relaxed text-ink-2">
-                O modo demonstração percorre o fluxo inteiro sem rede e sem chave. As respostas são
-                fixas e rotuladas.
-              </p>
+              <p className="text-[13px] leading-relaxed text-ink-2">{t.settings.mockHelp}</p>
             ) : (
               <>
-                <Field
-                  label="Endereço da API"
-                  hint="Qualquer servidor compatível com /chat/completions: OpenAI, OpenRouter, Groq, Ollama, LM Studio… http:// só é aceito para localhost."
-                >
+                <Field label={t.settings.baseUrl} hint={t.settings.baseUrlHint}>
                   <TextInput
                     value={settings.baseUrl}
                     onChange={(e) => onSettings({ baseUrl: e.target.value })}
@@ -137,18 +142,15 @@ export function SettingsView({
                     spellCheck={false}
                   />
                 </Field>
-                <Field label="Modelo">
+                <Field label={t.settings.model}>
                   <TextInput
                     value={settings.model}
                     onChange={(e) => onSettings({ model: e.target.value })}
-                    placeholder="nome do modelo no provedor"
+                    placeholder={t.settings.modelPlaceholder}
                     spellCheck={false}
                   />
                 </Field>
-                <Field
-                  label="Chave de API"
-                  hint="Nunca vai para os arquivos do app. Sem salvar no Windows, fica só na memória e some ao fechar. É enviada apenas ao endereço acima. O uso é cobrado pelo provedor, separado de qualquer assinatura de chat."
-                >
+                <Field label={t.settings.apiKey} hint={t.settings.apiKeyHint}>
                   <div className="relative">
                     <KeyRound
                       size={15}
@@ -159,7 +161,7 @@ export function SettingsView({
                       autoComplete="off"
                       value={apiKey}
                       onChange={(e) => onApiKey(e.target.value)}
-                      placeholder="cole sua chave aqui"
+                      placeholder={t.settings.apiKeyPlaceholder}
                       className="pl-9"
                     />
                   </div>
@@ -169,10 +171,10 @@ export function SettingsView({
                     <LockKeyhole size={16} className="shrink-0 text-ink-3" />
                     <span className="min-w-0 flex-1 text-[12.5px] leading-relaxed text-ink-2">
                       {!vault.available
-                        ? 'Para lembrar a chave com segurança, use o app desktop: ela fica no Gerenciador de Credenciais do Windows.'
+                        ? t.settings.vaultUnavailable
                         : vault.saved
-                          ? 'Chave guardada no Gerenciador de Credenciais do Windows para este endereço. Ela é carregada ao abrir o app.'
-                          : 'Guarde a chave no Gerenciador de Credenciais do Windows para não precisar digitá-la de novo.'}
+                          ? t.settings.vaultSaved
+                          : t.settings.vaultHint}
                     </span>
                     {vault.available &&
                       (vault.saved ? (
@@ -182,7 +184,7 @@ export function SettingsView({
                           disabled={vault.busy}
                           onClick={onRemoveFromVault}
                         >
-                          Remover do Windows
+                          {t.settings.vaultRemove}
                         </Button>
                       ) : (
                         <Button
@@ -190,7 +192,7 @@ export function SettingsView({
                           disabled={vault.busy || !apiKey.trim()}
                           onClick={onSaveToVault}
                         >
-                          Salvar no Windows
+                          {t.settings.vaultSave}
                         </Button>
                       ))}
                   </div>
@@ -203,7 +205,7 @@ export function SettingsView({
                 <div className="flex flex-wrap items-center gap-3">
                   <Button onClick={runTest} disabled={testing || !settings.baseUrl}>
                     <PlugZap size={15} />
-                    {testing ? 'Testando…' : 'Testar conexão'}
+                    {testing ? t.settings.testing : t.settings.test}
                   </Button>
                   {test && (
                     <span
@@ -221,7 +223,7 @@ export function SettingsView({
                 </div>
                 {providerProblem && (
                   <p className="rounded-xl bg-warn-soft px-3.5 py-2.5 text-[12.5px] text-warn">
-                    {providerProblem} Enquanto isso, o modo demonstração continua ativo.
+                    {providerProblem} {t.settings.providerFallback}
                   </p>
                 )}
               </>
@@ -229,17 +231,14 @@ export function SettingsView({
           </div>
         </Card>
 
-        <Card title="Dados locais">
-          <p className="text-[13px] leading-relaxed text-ink-2">
-            Projetos, sessões e conversas ficam salvos neste dispositivo (armazenamento local do
-            app). A chave de API nunca é salva.
-          </p>
+        <Card title={t.settings.data}>
+          <p className="text-[13px] leading-relaxed text-ink-2">{t.settings.dataHelp}</p>
           <div className="mt-4 flex flex-wrap items-center gap-2">
             {confirmReset ? (
               <>
-                <span className="text-[12.5px] text-bad">Apagar tudo? Não dá para desfazer.</span>
+                <span className="text-[12.5px] text-bad">{t.settings.confirmReset}</span>
                 <Button size="sm" variant="ghost" onClick={() => setConfirmReset(false)}>
-                  Cancelar
+                  {t.common.cancel}
                 </Button>
                 <Button
                   size="sm"
@@ -249,13 +248,13 @@ export function SettingsView({
                     setConfirmReset(false);
                   }}
                 >
-                  Apagar tudo
+                  {t.settings.reset}
                 </Button>
               </>
             ) : (
               <Button size="sm" variant="danger" onClick={() => setConfirmReset(true)}>
                 <Trash size={14} />
-                Apagar dados locais
+                {t.settings.resetButton}
               </Button>
             )}
           </div>

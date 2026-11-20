@@ -10,9 +10,11 @@ import {
   TriangleExclamationPoint,
 } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
-import { STATUS_LABEL, STATUS_TONE, TONE_BADGE } from '../app/labels.ts';
-import { AGENTS, type AgentId } from '../domain/agents.ts';
+import { STATUS_TONE, TONE_BADGE } from '../app/labels.ts';
+import { agentProfile, type AgentId } from '../domain/agents.ts';
 import type { ProposedChange, Session, TimelineEvent } from '../domain/types.ts';
+import { useI18n } from '../i18n/I18n.tsx';
+import type { Messages } from '../i18n/messages.ts';
 import { diffStats } from '../providers/parse.ts';
 import { AgentAvatar } from './AgentAvatar.tsx';
 import { Composer } from './Composer.tsx';
@@ -40,10 +42,6 @@ const WORKING_AGENT: Partial<Record<Session['status'], AgentId>> = {
   reviewing: 'reviewer',
 };
 
-function time(iso: string) {
-  return new Date(iso).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
-}
-
 function AgentTurn({
   agentId,
   meta,
@@ -57,7 +55,8 @@ function AgentTurn({
   mood?: OctoMood;
   children: React.ReactNode;
 }) {
-  const agent = AGENTS[agentId];
+  const { locale } = useI18n();
+  const agent = agentProfile(agentId, locale);
   return (
     <div className="grid animate-fade-up grid-cols-[34px_minmax(0,1fr)] gap-3">
       <AgentAvatar agent={agent} working={working ?? false} {...(mood ? { mood } : {})} />
@@ -128,6 +127,7 @@ function PlanCard({
   onApprove: () => void;
   onReject: (reason: string) => void;
 }) {
+  const { t } = useI18n();
   const [rejecting, setRejecting] = useState(false);
   const [reason, setReason] = useState('');
   if (!session.plan) return null;
@@ -135,13 +135,13 @@ function PlanCard({
     <div
       className="mt-2.5 overflow-hidden rounded-xl border border-line bg-surface"
       role={awaiting ? 'region' : undefined}
-      aria-label={awaiting ? 'Plano aguardando aprovação' : undefined}
+      aria-label={awaiting ? t.session.awaitingAria : undefined}
     >
       <ol className="grid list-decimal gap-1.5 py-3 pr-4 pl-9 text-[14px] leading-snug text-ink marker:text-ink-3">
-        {session.plan.tasks.map((t) => (
-          <li key={t.id}>
-            {t.title}
-            {t.detail && <span className="block text-[12.5px] text-ink-3">{t.detail}</span>}
+        {session.plan.tasks.map((task) => (
+          <li key={task.id}>
+            {task.title}
+            {task.detail && <span className="block text-[12.5px] text-ink-3">{task.detail}</span>}
           </li>
         ))}
       </ol>
@@ -159,28 +159,29 @@ function PlanCard({
                 autoFocus
                 value={reason}
                 onChange={(e) => setReason(e.target.value)}
-                placeholder="Motivo (opcional)"
-                aria-label="Motivo da rejeição"
+                placeholder={t.session.reasonPlaceholder}
+                aria-label={t.session.reasonAria}
                 className="h-8 min-w-0 flex-1 rounded-lg border border-line bg-surface px-2.5 text-[13px] focus:border-accent focus:outline-none"
               />
               <Button size="sm" variant="ghost" onClick={() => setRejecting(false)}>
-                Voltar
+                {t.common.back}
               </Button>
               <Button size="sm" variant="danger" type="submit">
-                Confirmar rejeição
+                {t.session.confirmReject}
               </Button>
             </form>
           ) : (
             <div className="flex flex-wrap items-center gap-2">
               <span className="min-w-0 flex-1 text-[12.5px] text-ink-2">
-                Aprovar libera o Builder para <b className="font-semibold">propor</b> alterações.
-                Nada é gravado no disco.
+                {t.session.approveHint.before}
+                <b className="font-semibold">{t.session.approveHint.strong}</b>
+                {t.session.approveHint.after}
               </span>
               <Button size="sm" onClick={() => setRejecting(true)}>
-                Rejeitar
+                {t.session.reject}
               </Button>
               <Button size="sm" variant="primary" onClick={onApprove}>
-                Aprovar plano
+                {t.session.approve}
               </Button>
             </div>
           )}
@@ -190,7 +191,7 @@ function PlanCard({
   );
 }
 
-function renderEvent(ev: TimelineEvent, props: Props) {
+function renderEvent(ev: TimelineEvent, props: Props, t: Messages, time: (iso: string) => string) {
   const { session } = props;
   switch (ev.kind) {
     case 'request':
@@ -203,7 +204,7 @@ function renderEvent(ev: TimelineEvent, props: Props) {
       );
     case 'plan':
       return (
-        <AgentTurn key={ev.id} agentId="planner" meta={`plano · ${time(ev.at)}`}>
+        <AgentTurn key={ev.id} agentId="planner" meta={`${t.session.planMeta} · ${time(ev.at)}`}>
           {session.plan?.summary}
           <PlanCard
             session={session}
@@ -216,19 +217,19 @@ function renderEvent(ev: TimelineEvent, props: Props) {
     case 'approval':
       return (
         <SystemLine key={ev.id} icon={<CircleCheck size={14} className="text-ok" />}>
-          Você aprovou o plano · {time(ev.at)}
+          {t.session.approved} · {time(ev.at)}
         </SystemLine>
       );
     case 'rejection':
       return (
         <SystemLine key={ev.id} icon={<CircleX size={14} />}>
-          {ev.message}
+          {t.session.rejected(ev.detail ?? '')}
         </SystemLine>
       );
     case 'execution':
       return (
-        <AgentTurn key={ev.id} agentId="builder" meta={`alterações · ${time(ev.at)}`}>
-          {ev.message}
+        <AgentTurn key={ev.id} agentId="builder" meta={`${t.session.changesMeta} · ${time(ev.at)}`}>
+          {t.session.proposed(session.changes?.length ?? 0)}
           {session.changes && session.changes.length > 0 && (
             <ChangeList changes={session.changes} onOpen={props.onOpenChange} />
           )}
@@ -236,7 +237,7 @@ function renderEvent(ev: TimelineEvent, props: Props) {
       );
     case 'review':
       return (
-        <AgentTurn key={ev.id} agentId="reviewer" meta={`revisão · ${time(ev.at)}`}>
+        <AgentTurn key={ev.id} agentId="reviewer" meta={`${t.session.reviewMeta} · ${time(ev.at)}`}>
           <span
             className={cn(
               'inline-flex items-center gap-1.5 font-medium',
@@ -248,7 +249,9 @@ function renderEvent(ev: TimelineEvent, props: Props) {
             ) : (
               <TriangleExclamationPoint size={15} />
             )}
-            {session.review?.verdict === 'approve' ? 'Aprovado pelo Reviewer' : 'Pede ajustes'}
+            {session.review?.verdict === 'approve'
+              ? t.session.reviewApproved
+              : t.session.reviewChanges}
           </span>
           {session.review && session.review.comments.length > 0 && (
             <ul className="mt-1.5 grid list-disc gap-1 pl-5">
@@ -262,7 +265,7 @@ function renderEvent(ev: TimelineEvent, props: Props) {
     case 'cancelled':
       return (
         <SystemLine key={ev.id} icon={<CircleX size={14} />}>
-          {ev.message}
+          {t.session.cancelled}
         </SystemLine>
       );
     case 'error':
@@ -273,7 +276,7 @@ function renderEvent(ev: TimelineEvent, props: Props) {
           className="ml-[46px] flex gap-2.5 rounded-xl border border-bad/30 bg-bad-soft px-3.5 py-2.5 text-[13px] leading-relaxed text-bad"
         >
           <TriangleExclamationPoint size={15} className="mt-0.5 shrink-0" />
-          <span>{ev.message}</span>
+          <span>{ev.code === 'interrupted' ? t.session.interrupted : ev.message}</span>
         </div>
       );
   }
@@ -281,11 +284,14 @@ function renderEvent(ev: TimelineEvent, props: Props) {
 
 export function SessionView(props: Props) {
   const { session, busy } = props;
+  const { t, locale } = useI18n();
   const feedRef = useRef<HTMLDivElement>(null);
   const working = busy ? WORKING_AGENT[session.status] : undefined;
   const tone = STATUS_TONE[session.status];
-  // O Octo acompanha o que os agentes estão fazendo.
+  // Octo follows what the agents are doing.
   const mood = octoMoodFor(session.status, busy);
+  const time = (iso: string) =>
+    new Date(iso).toLocaleTimeString(t.meta.dateLocale, { hour: '2-digit', minute: '2-digit' });
 
   useEffect(() => {
     const el = feedRef.current;
@@ -298,7 +304,7 @@ export function SessionView(props: Props) {
   return (
     <div className="flex h-full min-h-0 flex-col">
       <header className="flex h-12 shrink-0 items-center gap-2.5 border-b border-line px-4">
-        <OctoMascot size={30} mood={mood} />
+        <OctoMascot size={30} mood={mood} label={t.session.octoLabel(t.octoMood[mood])} />
         <h1 className="min-w-0 truncate text-[14px] font-semibold">{session.title}</h1>
         <span
           className={cn(
@@ -306,14 +312,14 @@ export function SessionView(props: Props) {
             TONE_BADGE[tone],
           )}
         >
-          {STATUS_LABEL[session.status]}
+          {t.status[session.status]}
         </span>
         <span className="flex-1" />
-        <IconButton label="Apagar sessão" onClick={props.onDelete}>
+        <IconButton label={t.session.delete} onClick={props.onDelete}>
           <Trash size={15} />
         </IconButton>
         <IconButton
-          label={props.rightOpen ? 'Fechar painel' : 'Abrir painel'}
+          label={props.rightOpen ? t.session.closePanel : t.session.openPanel}
           active={props.rightOpen}
           onClick={props.onToggleRight}
         >
@@ -323,14 +329,14 @@ export function SessionView(props: Props) {
 
       <div ref={feedRef} className="min-h-0 flex-1 overflow-y-auto" aria-live="polite">
         <div className="mx-auto grid max-w-[720px] gap-5 px-6 pt-6 pb-8">
-          {session.events.slice(0, 1).map((ev) => renderEvent(ev, props))}
-          <AgentTurn agentId="orchestra" meta="maestro" mood={mood}>
-            Vou pedir um plano ao Planner. Nada é alterado antes da sua aprovação.
+          {session.events.slice(0, 1).map((ev) => renderEvent(ev, props, t, time))}
+          <AgentTurn agentId="orchestra" meta={t.session.maestro} mood={mood}>
+            {t.session.orchestraIntro}
           </AgentTurn>
-          {session.events.slice(1).map((ev) => renderEvent(ev, props))}
+          {session.events.slice(1).map((ev) => renderEvent(ev, props, t, time))}
           {working && (
-            <AgentTurn agentId={working} meta="trabalhando…" working>
-              <div className="grid gap-2 pt-1" aria-label="Carregando">
+            <AgentTurn agentId={working} meta={t.session.working} working>
+              <div className="grid gap-2 pt-1" aria-label={t.common.loading}>
                 <span className="h-3 w-3/4 animate-pulse rounded bg-surface-3" />
                 <span className="h-3 w-1/2 animate-pulse rounded bg-surface-3" />
               </div>
@@ -341,22 +347,22 @@ export function SessionView(props: Props) {
 
       <div className="shrink-0 px-6 pt-1 pb-4">
         <Composer
-          agent={AGENTS.orchestra}
+          agent={agentProfile('orchestra', locale)}
           busy={busy}
           onStop={props.onCancel}
           placeholder={
             awaiting
-              ? 'Peça um ajuste no plano…'
+              ? t.session.placeholderAdjust
               : terminal
-                ? 'Nova solicitação neste projeto…'
-                : 'Aguarde os agentes terminarem…'
+                ? t.session.placeholderNew
+                : t.session.placeholderWait
           }
           disabled={!awaiting && !terminal && !busy}
           onSubmit={(text) => (awaiting ? props.onAdjust(text) : props.onNewRequest(text))}
           meta={
             <>
               <span>{props.providerLabel}</span>
-              <span>Aprovação manual</span>
+              <span>{t.common.manualApproval}</span>
             </>
           }
         />
