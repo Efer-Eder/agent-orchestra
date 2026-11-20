@@ -40,7 +40,26 @@ export interface PlanTask {
 export interface Plan {
   summary: string;
   tasks: PlanTask[];
+  /**
+   * Project files the Planner wants the Builder to read (relative paths).
+   * Shown to the human before approval; read only after approval.
+   */
+  files?: string[];
 }
+
+/** A project file as read by the desktop shell (already size-capped and redacted). */
+export interface FileContent {
+  path: string;
+  content: string;
+  bytes: number;
+  truncated: boolean;
+  redactions: number;
+  /** Why the file was not read: denied, outside, missing, binary, budget. */
+  skipped: string | null;
+}
+
+/** What the Builder actually received, kept on the session (no contents). */
+export type ContextFile = Omit<FileContent, 'content'>;
 
 export type ChangeKind = 'create' | 'modify' | 'delete';
 
@@ -95,6 +114,8 @@ export interface Session {
   plan?: Plan;
   changes?: ProposedChange[];
   review?: Review;
+  /** Files read for the Builder, without their contents. */
+  context?: ContextFile[];
   usage: Usage[];
   events: TimelineEvent[];
   error?: string;

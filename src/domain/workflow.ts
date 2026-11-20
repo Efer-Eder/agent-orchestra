@@ -2,6 +2,7 @@ import { defaultIdFactory, systemClock, type Clock, type IdFactory } from './ids
 import type { AgentProvider } from './provider.ts';
 import type {
   AgentRole,
+  FileContent,
   Project,
   Session,
   SessionStatus,
@@ -179,6 +180,10 @@ export function createSession(project: Project, request: string, deps?: Workflow
 
 export interface RunOptions extends WorkflowDeps {
   signal?: AbortSignal;
+  /** Lists the readable files of the authorized project (desktop only). */
+  loadTree?: () => Promise<string[] | null>;
+  /** Reads the approved files (desktop only). Errors fail the session. */
+  loadFiles?: (paths: string[]) => Promise<FileContent[]>;
 }
 
 /** Planner step. Ends in `awaiting_approval`: a human must decide what happens next. */
@@ -190,7 +195,12 @@ export async function runPlanning(
   const d = resolve(options);
   const planning = moveTo(session, 'planning');
   try {
-    const { output, usage } = await provider.plan(planning.request, options.signal);
+    const tree = options.loadTree ? await options.loadTree() : null;
+    const { output, usage } = await provider.plan(
+      planning.request,
+      options.signal,
+      tree ?? undefined,
+    );
     return moveTo(
       planning,
       'awaiting_approval',
@@ -229,8 +239,28 @@ export async function runExecution(
     throw new WorkflowError('invalid_transition', 'A execução exige um plano aprovado.');
   }
   try {
-    const { output, usage } = await provider.build(session.plan, options.signal);
-    return moveTo(session, 'reviewing', { changes: output, usage: addUsage(session, usage) }, [
+    const wanted = session.plan.files ?? [];
+    const files = wanted.length && options.loadFiles ? await options.loadFiles(wanted) : [];
+    const readable = files.filter((f) => !f.skipped);
+    const { output, usage } = await provider.build(
+      session.plan,
+      options.signal,
+      readable.length ? readable : undefined,
+    );
+    // Keep only metadata of what was read: contents never go into saved data.
+    const context = files.map((f) => ({
+      path: f.path,
+      bytes: f.bytes,
+      truncated: f.truncated,
+      redactions: f.redactions,
+      skipped: f.skipped,
+    }));
+    const patch = {
+      changes: output,
+      usage: addUsage(session, usage),
+      ...(context.length ? { context } : {}),
+    };
+    return moveTo(session, 'reviewing', patch, [
       event(
         d,
         'execution',

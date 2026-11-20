@@ -237,3 +237,67 @@ describe('translatable details', () => {
     );
   });
 });
+
+describe('project files as Builder context', () => {
+  const file = (path: string, content: string, skipped: string | null = null) => ({
+    path,
+    content,
+    bytes: content.length,
+    truncated: false,
+    redactions: 0,
+    skipped,
+  });
+
+  it('gives the tree to the Planner and the approved files to the Builder', async () => {
+    const provider = createMockProvider();
+    const tree = ['README.md', 'src/login/LoginPage.tsx', 'package.json'];
+    const planned = await runPlanning(newSession('Criar página de login.'), provider, {
+      ...deps(),
+      loadTree: async () => tree,
+    });
+    expect(planned.plan?.files).toContain('src/login/LoginPage.tsx');
+
+    const requested: string[][] = [];
+    const done = await runExecution(approvePlan(planned, deps()), provider, {
+      ...deps(),
+      loadFiles: async (paths) => {
+        requested.push(paths);
+        return paths.map((p) =>
+          p === 'package.json' ? file(p, '', 'denied') : file(p, `// ${p}\nconteúdo`),
+        );
+      },
+    });
+    expect(requested).toEqual([planned.plan!.files!]);
+    expect(done.status).toBe('reviewing');
+    expect(done.changes?.some((c) => c.kind === 'modify')).toBe(true);
+    // Only metadata is kept on the session, never file contents.
+    expect(JSON.stringify(done.context)).not.toContain('conteúdo');
+    expect(done.context?.find((c) => c.path === 'package.json')?.skipped).toBe('denied');
+  });
+
+  it('does not read anything when the plan asks for no files', async () => {
+    const planned = await runPlanning(newSession(), createMockProvider(), deps());
+    let called = false;
+    const done = await runExecution(approvePlan(planned, deps()), createMockProvider(), {
+      loadFiles: async () => {
+        called = true;
+        return [];
+      },
+    });
+    expect(called).toBe(false);
+    expect(done.context).toBeUndefined();
+  });
+
+  it('fails the session when reading the folder fails', async () => {
+    const planned = await runPlanning(newSession('Ajustar README.'), createMockProvider(), {
+      loadTree: async () => ['README.md'],
+    });
+    const done = await runExecution(approvePlan(planned, deps()), createMockProvider(), {
+      loadFiles: async () => {
+        throw new Error('pasta não encontrada');
+      },
+    });
+    expect(done.status).toBe('failed');
+    expect(done.error).toBe('pasta não encontrada');
+  });
+});

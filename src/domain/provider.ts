@@ -1,5 +1,5 @@
 import type { AgentProfile } from './agents.ts';
-import type { ChatMessage, Plan, ProposedChange, Review, Usage } from './types.ts';
+import type { ChatMessage, FileContent, Plan, ProposedChange, Review, Usage } from './types.ts';
 
 export interface ProviderResult<T> {
   output: T;
@@ -18,8 +18,14 @@ export interface AgentProvider {
   readonly label: string;
   /** True for providers that never leave the machine (e.g. the mock). */
   readonly offline: boolean;
-  plan(request: string, signal?: AbortSignal): Promise<ProviderResult<Plan>>;
-  build(plan: Plan, signal?: AbortSignal): Promise<ProviderResult<ProposedChange[]>>;
+  /** `tree` lists the project's readable files, when a folder is authorized. */
+  plan(request: string, signal?: AbortSignal, tree?: string[]): Promise<ProviderResult<Plan>>;
+  /** `files` are the approved files' contents, already capped and redacted. */
+  build(
+    plan: Plan,
+    signal?: AbortSignal,
+    files?: FileContent[],
+  ): Promise<ProviderResult<ProposedChange[]>>;
   review(changes: ProposedChange[], signal?: AbortSignal): Promise<ProviderResult<Review>>;
   /** Direct conversation with one agent, using its persona. */
   chat(

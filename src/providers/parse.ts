@@ -13,6 +13,8 @@ export class ParseError extends Error {
 }
 
 const MAX_TASKS = 8;
+/** Same cap as the desktop shell (MAX_READ_FILES). */
+export const MAX_CONTEXT_FILES = 12;
 const MAX_CHANGES = 20;
 const MAX_DIFF_LENGTH = 40_000;
 const MAX_TEXT = 500;
@@ -54,7 +56,27 @@ export function parsePlan(raw: unknown): Plan {
       detail: typeof t.detail === 'string' ? t.detail.trim().slice(0, MAX_TEXT) : '',
     };
   });
-  return { summary: text(raw.summary, 'summary', 200), tasks };
+  const files = Array.isArray(raw.files)
+    ? [
+        ...new Set(
+          raw.files
+            .filter((f): f is string => typeof f === 'string')
+            .slice(0, MAX_CONTEXT_FILES)
+            .flatMap((f) => {
+              try {
+                return [safeRelativePath(f)];
+              } catch {
+                return []; // unsafe paths are dropped, never read
+              }
+            }),
+        ),
+      ]
+    : [];
+  return {
+    summary: text(raw.summary, 'summary', 200),
+    tasks,
+    ...(files.length ? { files } : {}),
+  };
 }
 
 /**
