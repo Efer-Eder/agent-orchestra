@@ -2,8 +2,8 @@ import { FolderPlus } from 'lucide-react';
 import { useState, type FormEvent } from 'react';
 import { AGENTS } from '../domain/agents.ts';
 import type { Project } from '../domain/types.ts';
-import { AgentAvatar } from './AgentAvatar.tsx';
 import { Composer } from './Composer.tsx';
+import { OctoMascot } from './octo/index.ts';
 import { Button, Field, TextInput } from './primitives.tsx';
 
 const SUGGESTIONS = [
@@ -80,7 +80,12 @@ export function HomeView({
     <div className="flex h-full min-h-0 flex-col overflow-y-auto">
       <div className="mx-auto flex w-full max-w-[720px] flex-1 flex-col justify-center px-6 py-10">
         <div className="mb-7 flex flex-col items-center text-center">
-          <AgentAvatar agent={orchestra} size={64} className="animate-breathe" />
+          {/* Sem projeto, o Octo acena dando as boas-vindas; com projeto, espera a tarefa. */}
+          <OctoMascot
+            size={112}
+            mood={project ? 'idle' : 'waving'}
+            label="Octo, o maestro do Agent Orchestra"
+          />
           <h1 className="mt-4 text-[26px] font-semibold tracking-[-0.02em] text-ink">
             {project ? 'O que vamos orquestrar hoje?' : 'Bem-vindo ao Agent Orchestra'}
           </h1>

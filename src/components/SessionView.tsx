@@ -16,6 +16,7 @@ import type { ProposedChange, Session, TimelineEvent } from '../domain/types.ts'
 import { diffStats } from '../providers/parse.ts';
 import { AgentAvatar } from './AgentAvatar.tsx';
 import { Composer } from './Composer.tsx';
+import { OctoMascot, octoMoodFor, type OctoMood } from './octo/index.ts';
 import { Button, cn, IconButton } from './primitives.tsx';
 
 interface Props {
@@ -47,17 +48,19 @@ function AgentTurn({
   agentId,
   meta,
   working,
+  mood,
   children,
 }: {
   agentId: AgentId;
   meta?: string;
   working?: boolean;
+  mood?: OctoMood;
   children: React.ReactNode;
 }) {
   const agent = AGENTS[agentId];
   return (
     <div className="grid animate-fade-up grid-cols-[34px_minmax(0,1fr)] gap-3">
-      <AgentAvatar agent={agent} working={working ?? false} />
+      <AgentAvatar agent={agent} working={working ?? false} {...(mood ? { mood } : {})} />
       <div className="min-w-0 pt-0.5">
         <div className="flex items-baseline gap-2 text-[13px] font-semibold">
           {agent.name}
@@ -281,6 +284,8 @@ export function SessionView(props: Props) {
   const feedRef = useRef<HTMLDivElement>(null);
   const working = busy ? WORKING_AGENT[session.status] : undefined;
   const tone = STATUS_TONE[session.status];
+  // O Octo acompanha o que os agentes estão fazendo.
+  const mood = octoMoodFor(session.status, busy);
 
   useEffect(() => {
     const el = feedRef.current;
@@ -293,6 +298,7 @@ export function SessionView(props: Props) {
   return (
     <div className="flex h-full min-h-0 flex-col">
       <header className="flex h-12 shrink-0 items-center gap-2.5 border-b border-line px-4">
+        <OctoMascot size={30} mood={mood} />
         <h1 className="min-w-0 truncate text-[14px] font-semibold">{session.title}</h1>
         <span
           className={cn(
@@ -318,7 +324,7 @@ export function SessionView(props: Props) {
       <div ref={feedRef} className="min-h-0 flex-1 overflow-y-auto" aria-live="polite">
         <div className="mx-auto grid max-w-[720px] gap-5 px-6 pt-6 pb-8">
           {session.events.slice(0, 1).map((ev) => renderEvent(ev, props))}
-          <AgentTurn agentId="orchestra" meta="maestro">
+          <AgentTurn agentId="orchestra" meta="maestro" mood={mood}>
             Vou pedir um plano ao Planner. Nada é alterado antes da sua aprovação.
           </AgentTurn>
           {session.events.slice(1).map((ev) => renderEvent(ev, props))}

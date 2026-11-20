@@ -1,0 +1,604 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Octo · 5 opções</title>
+    <style>
+      :root {
+        --app: #f5f4ef;
+        --surface: #ffffff;
+        --surface-2: #f0eee8;
+        --line: #dfdcd2;
+        --ink: #1d1c19;
+        --ink-2: #4b4943;
+        --ink-3: #7c796f;
+        --octo: #5a48d6;
+        --octo-2: #7a6ae6;
+        --octo-tip: #a99cf2;
+        --glow: #60d5ed;
+        --eye: #ffffff;
+        --pupil: #1d1c19;
+        --planner: #2f8fd8;
+        --builder: #d88a1c;
+        --reviewer: #2f9e63;
+        color-scheme: light;
+      }
+      :root.dark {
+        --app: #262624;
+        --surface: #2d2d2a;
+        --surface-2: #33332f;
+        --line: #3b3a37;
+        --ink: #eceae4;
+        --ink-2: #c3c0b7;
+        --ink-3: #95928a;
+        --octo: #8b7cff;
+        --octo-2: #a296ff;
+        --octo-tip: #c4baff;
+        --pupil: #14121f;
+        --planner: #4fb6ff;
+        --builder: #ffb547;
+        --reviewer: #5fd08f;
+        color-scheme: dark;
+      }
+      * {
+        box-sizing: border-box;
+        margin: 0;
+      }
+      body {
+        background: var(--app);
+        color: var(--ink);
+        font:
+          14px/1.5 'Inter Variable',
+          Inter,
+          system-ui,
+          'Segoe UI',
+          sans-serif;
+        transition: background 0.2s;
+      }
+      .wrap {
+        max-width: 1120px;
+        margin: 0 auto;
+        padding: 40px 16px 64px;
+      }
+      header {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: space-between;
+        align-items: flex-end;
+        gap: 16px;
+        margin-bottom: 28px;
+      }
+      h1 {
+        font-size: 26px;
+        font-weight: 600;
+        letter-spacing: -0.01em;
+      }
+      .sub {
+        color: var(--ink-2);
+        margin-top: 4px;
+        max-width: 620px;
+      }
+      .btn {
+        font: 500 13.5px inherit;
+        font-family: inherit;
+        color: var(--ink);
+        background: var(--surface);
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        padding: 7px 12px;
+        cursor: pointer;
+      }
+      .btn:hover {
+        background: var(--surface-2);
+      }
+      .btn[aria-pressed='true'] {
+        border-color: var(--octo);
+      }
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+        gap: 12px;
+      }
+      .card {
+        background: var(--surface);
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        padding: 20px;
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+      }
+      .card h2 {
+        font-size: 15px;
+        font-weight: 600;
+        display: flex;
+        gap: 8px;
+        align-items: center;
+      }
+      .card h2 span {
+        font:
+          500 12px ui-monospace,
+          Consolas,
+          monospace;
+        color: var(--ink-3);
+      }
+      .card p {
+        color: var(--ink-2);
+        font-size: 13.5px;
+      }
+      .stage {
+        display: flex;
+        align-items: flex-end;
+        justify-content: center;
+        gap: 22px;
+        padding: 14px 0 4px;
+        border-radius: 10px;
+        background: var(--app);
+      }
+      .stage .lg {
+        width: 150px;
+        height: 150px;
+      }
+      .stage .md {
+        width: 48px;
+        height: 48px;
+      }
+      .stage .sm {
+        width: 24px;
+        height: 24px;
+      }
+      .stage svg {
+        display: block;
+        overflow: visible;
+      }
+      .sizes {
+        display: flex;
+        justify-content: center;
+        gap: 22px;
+        font:
+          12px ui-monospace,
+          Consolas,
+          monospace;
+        color: var(--ink-3);
+      }
+      .sizes span:first-child {
+        width: 150px;
+        text-align: center;
+      }
+      .sizes span {
+        width: 48px;
+        text-align: center;
+      }
+      .sizes span:last-child {
+        width: 24px;
+      }
+
+      /* ---------- animações base ---------- */
+      .float {
+        animation: float 3.6s ease-in-out infinite;
+        transform-box: fill-box;
+        transform-origin: 50% 100%;
+      }
+      @keyframes float {
+        0%,
+        100% {
+          transform: translateY(0) scale(1, 1);
+        }
+        50% {
+          transform: translateY(-3px) scale(1.02, 0.98);
+        }
+      }
+      .blink {
+        animation: blink 4.2s infinite;
+        transform-box: fill-box;
+        transform-origin: center;
+      }
+      @keyframes blink {
+        0%,
+        92%,
+        100% {
+          transform: scaleY(1);
+        }
+        95% {
+          transform: scaleY(0.1);
+        }
+      }
+      .look {
+        animation: look 6s ease-in-out infinite;
+      }
+      @keyframes look {
+        0%,
+        20%,
+        100% {
+          transform: translate(0, 0);
+        }
+        30%,
+        45% {
+          transform: translate(1.6px, -0.6px);
+        }
+        55%,
+        70% {
+          transform: translate(-1.6px, 0.4px);
+        }
+      }
+      .sway {
+        transform-box: fill-box;
+        transform-origin: 50% 0;
+        animation: sway 2.8s ease-in-out infinite;
+      }
+      @keyframes sway {
+        0%,
+        100% {
+          transform: rotate(-7deg);
+        }
+        50% {
+          transform: rotate(7deg);
+        }
+      }
+      .d1 {
+        animation-delay: -0.4s;
+      }
+      .d2 {
+        animation-delay: -0.9s;
+      }
+      .d3 {
+        animation-delay: -1.4s;
+      }
+      .d4 {
+        animation-delay: -1.9s;
+      }
+      .d5 {
+        animation-delay: -2.3s;
+      }
+      /* 1 gota */
+      .skirt {
+        animation: skirt 1.8s ease-in-out infinite;
+        transform-box: fill-box;
+        transform-origin: 50% 0;
+      }
+      @keyframes skirt {
+        0%,
+        100% {
+          transform: skewX(4deg);
+        }
+        50% {
+          transform: skewX(-4deg);
+        }
+      }
+      /* 3 maestro */
+      .conduct {
+        transform-box: view-box;
+        transform-origin: 63px 60px;
+        animation: conduct 1.6s cubic-bezier(0.45, 0, 0.2, 1) infinite;
+      }
+      @keyframes conduct {
+        0%,
+        100% {
+          transform: rotate(0);
+        }
+        25% {
+          transform: rotate(-16deg);
+        }
+        55% {
+          transform: rotate(10deg);
+        }
+        80% {
+          transform: rotate(-4deg);
+        }
+      }
+      .tipglow {
+        animation: tip 1.6s ease-in-out infinite;
+      }
+      @keyframes tip {
+        0%,
+        100% {
+          opacity: 0.5;
+        }
+        25% {
+          opacity: 1;
+        }
+      }
+      /* 4 geométrico */
+      .bar {
+        transform-box: fill-box;
+        transform-origin: 50% 0;
+        animation: bar 1.4s ease-in-out infinite;
+      }
+      @keyframes bar {
+        0%,
+        100% {
+          transform: scaleY(1);
+        }
+        50% {
+          transform: scaleY(0.62);
+        }
+      }
+      /* 5 rede */
+      .node {
+        transform-box: fill-box;
+        transform-origin: center;
+        animation: node 2.4s ease-in-out infinite;
+      }
+      @keyframes node {
+        0%,
+        70%,
+        100% {
+          transform: scale(1);
+        }
+        80% {
+          transform: scale(1.45);
+        }
+      }
+      .flow {
+        stroke-dasharray: 3 4;
+        animation: flow 1.2s linear infinite;
+      }
+      @keyframes flow {
+        to {
+          stroke-dashoffset: -14;
+        }
+      }
+
+      .paused * {
+        animation-play-state: paused !important;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <header>
+        <div>
+          <h1>Octo · 5 opções</h1>
+          <p class="sub">
+            Cinco polvos chapados, no estilo do app: cor de destaque violeta, sem gradiente, sem
+            textura. Cada um com uma ideia e só animação leve. Repare também como ficam em 48 e 24
+            px.
+          </p>
+        </div>
+        <div style="display: flex; gap: 8px">
+          <button class="btn" id="theme" aria-pressed="false">Tema escuro</button>
+          <button class="btn" id="pause" aria-pressed="false">Pausar</button>
+        </div>
+      </header>
+
+      <div class="grid" id="grid">
+        <!-- 1 -->
+        <article class="card">
+          <h2>Gota <span>01</span></h2>
+          <div class="stage">
+            <template>
+              <svg viewBox="0 0 100 100" aria-hidden="true">
+                <g class="float">
+                  <g class="skirt">
+                    <path
+                      d="M22 52 L22 74 Q29 86 36 74 Q43 86 50 74 Q57 86 64 74 Q71 86 78 74 L78 52 Z"
+                      fill="var(--octo)"
+                    />
+                  </g>
+                  <path d="M22 54 C22 32 34 18 50 18 C66 18 78 32 78 54 Z" fill="var(--octo)" />
+                  <g class="blink">
+                    <rect x="38.5" y="42" width="5" height="9" rx="2.5" fill="var(--surface)" />
+                    <rect x="56.5" y="42" width="5" height="9" rx="2.5" fill="var(--surface)" />
+                  </g>
+                </g>
+              </svg>
+            </template>
+          </div>
+          <div class="sizes"><span>150</span><span>48</span><span>24</span></div>
+          <p>
+            O mais minimalista: cabeça redonda e a saia ondulada de tentáculos, olhos recortados na
+            cor do fundo. Primo do Ponto do efer.online. Melhor em ícone pequeno.
+          </p>
+        </article>
+
+        <!-- 2 -->
+        <article class="card">
+          <h2>Clássico <span>02</span></h2>
+          <div class="stage">
+            <template>
+              <svg viewBox="0 0 100 100" aria-hidden="true">
+                <g class="float">
+                  <g fill="none" stroke="var(--octo)" stroke-width="7.5" stroke-linecap="round">
+                    <path class="sway" d="M33 54 C25 62 18 64 15 57" />
+                    <path class="sway d1" d="M40 58 C38 70 31 77 26 74" />
+                    <path class="sway d2" d="M46.5 60 C46.5 72 43 81 38 82" />
+                    <path class="sway d3" d="M53.5 60 C53.5 72 57 81 62 82" />
+                    <path class="sway d4" d="M60 58 C62 70 69 77 74 74" />
+                    <path class="sway d5" d="M67 54 C75 62 82 64 85 57" />
+                  </g>
+                  <ellipse cx="50" cy="40" rx="25" ry="23" fill="var(--octo)" />
+                  <g class="blink">
+                    <ellipse cx="42" cy="40" rx="5.4" ry="6.4" fill="var(--eye)" />
+                    <ellipse cx="58" cy="40" rx="5.4" ry="6.4" fill="var(--eye)" />
+                    <g class="look">
+                      <circle cx="42.5" cy="41.5" r="2.9" fill="var(--pupil)" />
+                      <circle cx="58.5" cy="41.5" r="2.9" fill="var(--pupil)" />
+                    </g>
+                  </g>
+                  <path
+                    d="M46 51 Q50 54 54 51"
+                    fill="none"
+                    stroke="var(--pupil)"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                  />
+                </g>
+              </svg>
+            </template>
+          </div>
+          <div class="sizes"><span>150</span><span>48</span><span>24</span></div>
+          <p>
+            O polvo que todo mundo reconhece: cabeça redonda, olhos brancos e seis tentáculos
+            enrolando para fora, cada um balançando no seu tempo. O mais simpático.
+          </p>
+        </article>
+
+        <!-- 3 -->
+        <article class="card">
+          <h2>Maestro <span>03</span></h2>
+          <div class="stage">
+            <template>
+              <svg viewBox="0 0 100 100" aria-hidden="true">
+                <g class="float">
+                  <g fill="none" stroke="var(--octo)" stroke-width="8" stroke-linecap="round">
+                    <path class="sway" d="M35 60 Q32 71 27 76" />
+                    <path class="sway d2" d="M44 63 Q44 74 40 80" />
+                    <path class="sway d4" d="M54 63 Q54 74 58 80" />
+                  </g>
+                  <path
+                    d="M25 46 C25 29 36 19 50 19 C64 19 75 29 75 46 C75 57 66 64 50 64 C34 64 25 57 25 46 Z"
+                    fill="var(--octo)"
+                  />
+                  <g class="conduct">
+                    <path
+                      d="M63 60 Q74 56 75 44"
+                      fill="none"
+                      stroke="var(--octo)"
+                      stroke-width="8"
+                      stroke-linecap="round"
+                    />
+                    <line
+                      x1="75"
+                      y1="44"
+                      x2="85"
+                      y2="27"
+                      stroke="var(--ink)"
+                      stroke-width="2.2"
+                      stroke-linecap="round"
+                    />
+                    <circle
+                      class="tipglow"
+                      cx="85"
+                      cy="27"
+                      r="5"
+                      fill="var(--glow)"
+                      opacity=".35"
+                    />
+                    <circle cx="85" cy="27" r="2" fill="var(--glow)" />
+                  </g>
+                  <g class="blink">
+                    <ellipse cx="42" cy="42" rx="5" ry="6" fill="var(--eye)" />
+                    <ellipse cx="57" cy="42" rx="5" ry="6" fill="var(--eye)" />
+                    <circle cx="43.6" cy="40.6" r="2.7" fill="var(--pupil)" />
+                    <circle cx="58.6" cy="40.6" r="2.7" fill="var(--pupil)" />
+                  </g>
+                  <path
+                    d="M45.5 52 Q49.5 55 53.5 52"
+                    fill="none"
+                    stroke="var(--pupil)"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                  />
+                </g>
+              </svg>
+            </template>
+          </div>
+          <div class="sizes"><span>150</span><span>48</span><span>24</span></div>
+          <p>
+            A ideia do nome do app: um tentáculo sempre segura a batuta e rege, os olhos acompanham
+            a ponta. Conta a história sozinho, mas a batuta some em tamanho pequeno.
+          </p>
+        </article>
+
+        <!-- 4 -->
+        <article class="card">
+          <h2>Equalizador <span>04</span></h2>
+          <div class="stage">
+            <template>
+              <svg viewBox="0 0 100 100" aria-hidden="true">
+                <g class="float">
+                  <g fill="var(--octo)">
+                    <rect class="bar" x="29" y="52" width="8" height="26" rx="4" />
+                    <rect class="bar d2" x="40" y="52" width="8" height="32" rx="4" />
+                    <rect class="bar d4" x="51" y="52" width="8" height="29" rx="4" />
+                    <rect class="bar d1" x="62" y="52" width="8" height="23" rx="4" />
+                  </g>
+                  <rect x="24" y="18" width="52" height="44" rx="18" fill="var(--octo)" />
+                  <g class="blink">
+                    <rect x="38.5" y="34" width="5.5" height="10" rx="2.75" fill="var(--surface)" />
+                    <rect x="56" y="34" width="5.5" height="10" rx="2.75" fill="var(--surface)" />
+                  </g>
+                </g>
+              </svg>
+            </template>
+          </div>
+          <div class="sizes"><span>150</span><span>48</span><span>24</span></div>
+          <p>
+            Cara de ícone de app: cabeça quadrada arredondada e quatro tentáculos que sobem e descem
+            como barras de um equalizador, a orquestra tocando. Bem "dev tool".
+          </p>
+        </article>
+
+        <!-- 5 -->
+        <article class="card">
+          <h2>Rede <span>05</span></h2>
+          <div class="stage">
+            <template>
+              <svg viewBox="0 0 100 100" aria-hidden="true">
+                <g class="float">
+                  <g fill="none" stroke-width="4" stroke-linecap="round">
+                    <path class="flow" d="M37 56 C30 66 26 72 18 78" stroke="var(--planner)" />
+                    <path class="flow" d="M45 61 C44 70 41 78 37 86" stroke="var(--octo-2)" />
+                    <path class="flow" d="M55 61 C56 70 59 78 63 86" stroke="var(--builder)" />
+                    <path class="flow" d="M63 56 C70 66 74 72 82 78" stroke="var(--reviewer)" />
+                  </g>
+                  <circle class="node" cx="18" cy="78" r="5" fill="var(--planner)" />
+                  <circle class="node d1" cx="37" cy="86" r="5" fill="var(--octo-2)" />
+                  <circle class="node d2" cx="63" cy="86" r="5" fill="var(--builder)" />
+                  <circle class="node d3" cx="82" cy="78" r="5" fill="var(--reviewer)" />
+                  <circle cx="50" cy="40" r="23" fill="var(--octo)" />
+                  <g class="blink">
+                    <ellipse cx="42.5" cy="40" rx="5" ry="6" fill="var(--eye)" />
+                    <ellipse cx="57.5" cy="40" rx="5" ry="6" fill="var(--eye)" />
+                    <g class="look">
+                      <circle cx="42.5" cy="41.2" r="2.7" fill="var(--pupil)" />
+                      <circle cx="57.5" cy="41.2" r="2.7" fill="var(--pupil)" />
+                    </g>
+                  </g>
+                </g>
+              </svg>
+            </template>
+          </div>
+          <div class="sizes"><span>150</span><span>48</span><span>24</span></div>
+          <p>
+            Os tentáculos viram as conexões com os agentes, cada um na cor do seu agente (Planner,
+            Orchestra, Builder, Reviewer), com dados correndo pelos fios. O mais ligado ao produto.
+          </p>
+        </article>
+      </div>
+    </div>
+    <script>
+      // Cada palco ganha o mesmo polvo em três tamanhos.
+      document.querySelectorAll('.stage').forEach(function (stage) {
+        var tpl = stage.querySelector('template');
+        ['lg', 'md', 'sm'].forEach(function (cls) {
+          var box = document.createElement('div');
+          box.className = cls;
+          box.appendChild(tpl.content.cloneNode(true));
+          box.querySelector('svg').setAttribute('width', '100%');
+          box.querySelector('svg').setAttribute('height', '100%');
+          stage.appendChild(box);
+        });
+      });
+      var params = new URLSearchParams(location.search);
+      var root = document.documentElement;
+      var themeBtn = document.getElementById('theme');
+      var pauseBtn = document.getElementById('pause');
+      function setDark(on) {
+        root.classList.toggle('dark', on);
+        themeBtn.setAttribute('aria-pressed', String(on));
+      }
+      if (params.get('theme') === 'dark') setDark(true);
+      themeBtn.addEventListener('click', function () {
+        setDark(!root.classList.contains('dark'));
+      });
+      pauseBtn.addEventListener('click', function () {
+        var on = !document.body.classList.contains('paused');
+        document.body.classList.toggle('paused', on);
+        pauseBtn.setAttribute('aria-pressed', String(on));
+        pauseBtn.textContent = on ? 'Animar' : 'Pausar';
+      });
+    </script>
+  </body>
+</html>

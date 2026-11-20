@@ -1,0 +1,411 @@
+/*
+ * Octo, o mascote do Agent Orchestra. Cores vêm dos tokens do tema
+ * (--accent troca entre claro e escuro), então o polvo acompanha o tema sozinho.
+ * Cada humor (classe octo--<humor>) troca olhos, boca e extras, e tem um loop leve.
+ */
+.octo {
+  --octo-body: var(--accent, #5a48d6);
+  --octo-back: color-mix(in srgb, var(--octo-body) 72%, #000);
+  --octo-eye: #ffffff;
+  --octo-pupil: #14121f;
+  --octo-drop: #6cc4ec;
+  display: block;
+  flex: none;
+  overflow: visible;
+}
+
+.octo-body {
+  fill: var(--octo-body);
+}
+.octo-arm,
+.octo-wave {
+  fill: none;
+  stroke: var(--octo-body);
+  stroke-width: 7.5;
+  stroke-linecap: round;
+}
+.octo-arm--back {
+  stroke: var(--octo-back);
+  stroke-width: 6.5;
+}
+.octo-eye {
+  fill: var(--octo-eye);
+}
+.octo-pupil {
+  fill: var(--octo-pupil);
+}
+.octo-mouth,
+.octo-line {
+  fill: none;
+  stroke: var(--octo-pupil);
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.octo-line {
+  stroke-width: 2.4;
+}
+.octo-mouth--big {
+  fill: var(--octo-pupil);
+  stroke-width: 1.4;
+}
+.octo-thought circle {
+  fill: var(--octo-body);
+  opacity: 0.55;
+}
+.octo-zzz path,
+.octo-spark path {
+  fill: none;
+  stroke: var(--octo-body);
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.octo-drop {
+  fill: var(--octo-drop);
+}
+
+/* ---------- o que cada humor mostra ---------- */
+.octo-wave,
+.octo-eyes-happy,
+.octo-eyes-closed,
+.octo-brows,
+.octo-mouth--big,
+.octo-mouth--worry,
+.octo-thought,
+.octo-zzz,
+.octo-drop,
+.octo-spark {
+  display: none;
+}
+.octo--waving .octo-wave,
+.octo--waving .octo-mouth--big,
+.octo--happy .octo-eyes-happy,
+.octo--happy .octo-mouth--big,
+.octo--happy .octo-spark,
+.octo--thinking .octo-thought,
+.octo--worried .octo-brows,
+.octo--worried .octo-mouth--worry,
+.octo--worried .octo-drop,
+.octo--sleeping .octo-eyes-closed,
+.octo--sleeping .octo-zzz {
+  display: inline;
+}
+.octo--waving .octo-arm--right,
+.octo--waving .octo-mouth--smile,
+.octo--happy .octo-eyes,
+.octo--happy .octo-mouth--smile,
+.octo--worried .octo-mouth--smile,
+.octo--sleeping .octo-eyes {
+  display: none;
+}
+/* Para onde os olhos apontam em cada humor (sem animação). */
+.octo--thinking .octo-look {
+  transform: translate(1.6px, -2.2px);
+}
+.octo--working .octo-look {
+  transform: translate(0, 1.4px);
+}
+.octo--worried .octo-look {
+  transform: translate(-0.6px, 1.8px);
+}
+
+/* ---------- movimento (octo--live) ---------- */
+.octo--live .octo-float {
+  transform-box: fill-box;
+  transform-origin: 50% 100%;
+  --octo-d: 3.6s;
+  animation: octo-float var(--octo-d) ease-in-out infinite;
+}
+.octo--live .octo-blink {
+  transform-box: fill-box;
+  transform-origin: center;
+  --octo-d: 4.6s;
+  animation: octo-blink var(--octo-d) infinite;
+}
+.octo--live .octo-look {
+  --octo-d: 7s;
+  animation: octo-look var(--octo-d) ease-in-out infinite;
+}
+.octo--live .octo-arm {
+  transform-box: fill-box;
+  transform-origin: 50% 0;
+  --octo-d: 2.8s;
+  animation: octo-sway var(--octo-d) ease-in-out infinite;
+}
+.octo--live .octo-arm--back {
+  --octo-d: 3.6s;
+  animation-duration: var(--octo-d);
+}
+.octo--live .octo-arm:nth-of-type(2) {
+  animation-delay: -0.4s;
+}
+.octo--live .octo-arm:nth-of-type(3) {
+  animation-delay: -0.9s;
+}
+.octo--live .octo-arm:nth-of-type(4) {
+  animation-delay: -1.4s;
+}
+.octo--live .octo-arm:nth-of-type(5) {
+  animation-delay: -1.9s;
+}
+.octo--live .octo-arm:nth-of-type(6) {
+  animation-delay: -2.3s;
+}
+
+/* acenando: um tentáculo levanta e balança */
+.octo--live.octo--waving .octo-wave {
+  transform-box: fill-box;
+  transform-origin: 0% 100%;
+  --octo-d: 0.7s;
+  animation: octo-wave var(--octo-d) ease-in-out infinite alternate;
+}
+
+/* pensando: olha para cima, os pontinhos acendem em sequência */
+.octo--live.octo--thinking .octo-look {
+  animation: none;
+}
+.octo--live.octo--thinking .octo-float {
+  --octo-d: 4.4s;
+  animation-duration: var(--octo-d);
+}
+.octo--live.octo--thinking .octo-thought circle {
+  --octo-d: 1.5s;
+  animation: octo-dot var(--octo-d) ease-in-out infinite;
+}
+.octo--live.octo--thinking .octo-thought circle:nth-child(2) {
+  animation-delay: 0.25s;
+}
+.octo--live.octo--thinking .octo-thought circle:nth-child(3) {
+  animation-delay: 0.5s;
+}
+
+/* trabalhando: tentáculos rápidos, corpo marcando o ritmo */
+.octo--live.octo--working .octo-look {
+  animation: none;
+}
+.octo--live.octo--working .octo-arm {
+  --octo-d: 0.9s;
+  animation-duration: var(--octo-d);
+}
+.octo--live.octo--working .octo-arm--back {
+  --octo-d: 1.2s;
+  animation-duration: var(--octo-d);
+}
+.octo--live.octo--working .octo-float {
+  --octo-d: 0.9s;
+  animation: octo-bob var(--octo-d) ease-in-out infinite;
+}
+
+/* feliz: pulinhos e brilhos */
+.octo--live.octo--happy .octo-float {
+  --octo-d: 0.9s;
+  animation: octo-hop var(--octo-d) cubic-bezier(0.3, 0, 0.3, 1) infinite;
+}
+.octo--live.octo--happy .octo-spark path {
+  transform-box: fill-box;
+  transform-origin: center;
+  --octo-d: 0.9s;
+  animation: octo-twinkle var(--octo-d) ease-in-out infinite;
+}
+.octo--live.octo--happy .octo-spark path:nth-child(2) {
+  animation-delay: 0.3s;
+}
+.octo--live.octo--happy .octo-spark path:nth-child(3) {
+  animation-delay: 0.6s;
+}
+
+/* preocupado: murcha devagar, gota escorrendo */
+.octo--live.octo--worried .octo-look {
+  animation: none;
+}
+.octo--live.octo--worried .octo-float {
+  --octo-d: 4s;
+  animation: octo-droop var(--octo-d) ease-in-out infinite;
+}
+.octo--live.octo--worried .octo-arm {
+  --octo-d: 4.5s;
+  animation-duration: var(--octo-d);
+}
+.octo--live.octo--worried .octo-drop {
+  --octo-d: 2.2s;
+  animation: octo-drip var(--octo-d) ease-in infinite;
+}
+
+/* dormindo: respiração lenta e zzz subindo */
+.octo--live.octo--sleeping .octo-float {
+  --octo-d: 4s;
+  animation: octo-breathe var(--octo-d) ease-in-out infinite;
+}
+.octo--live.octo--sleeping .octo-arm {
+  --octo-d: 6s;
+  animation-duration: var(--octo-d);
+}
+.octo--live.octo--sleeping .octo-zzz path {
+  --octo-d: 3s;
+  animation: octo-z var(--octo-d) ease-in-out infinite;
+}
+.octo--live.octo--sleeping .octo-zzz path:nth-child(2) {
+  animation-delay: 1s;
+}
+.octo--live.octo--sleeping .octo-zzz path:nth-child(3) {
+  animation-delay: 2s;
+}
+
+/* Em tamanho de ícone, só flutua e pisca: tentáculos balançando viram ruído. */
+.octo--small .octo-arm,
+.octo--small.octo--idle .octo-look {
+  animation: none !important;
+}
+
+/* Quem pede menos movimento no sistema vê o Octo parado, exceto no laboratório (octo--force). */
+@media (prefers-reduced-motion: reduce) {
+  .octo--live:not(.octo--force) * {
+    animation: none !important;
+  }
+  /* O index.css encurta toda animação para 0,01 ms nesse modo; o octo--force devolve o ritmo. */
+  .octo--force.octo--live * {
+    animation-duration: var(--octo-d) !important;
+    animation-iteration-count: infinite !important;
+  }
+}
+
+@keyframes octo-float {
+  0%,
+  100% {
+    transform: translateY(0) scale(1, 1);
+  }
+  50% {
+    transform: translateY(-3px) scale(1.02, 0.98);
+  }
+}
+@keyframes octo-bob {
+  0%,
+  100% {
+    transform: translateY(0) scale(1, 1);
+  }
+  50% {
+    transform: translateY(-2px) scale(0.98, 1.02);
+  }
+}
+@keyframes octo-hop {
+  0%,
+  100% {
+    transform: translateY(0) scale(1.06, 0.94);
+  }
+  20% {
+    transform: translateY(0) scale(1, 1);
+  }
+  50% {
+    transform: translateY(-9px) scale(0.97, 1.04);
+  }
+  80% {
+    transform: translateY(0) scale(1, 1);
+  }
+}
+@keyframes octo-droop {
+  0%,
+  100% {
+    transform: translateY(1px) scale(1.02, 0.97);
+  }
+  50% {
+    transform: translateY(2.5px) scale(1.03, 0.95);
+  }
+}
+@keyframes octo-breathe {
+  0%,
+  100% {
+    transform: translateY(2px) scale(1.03, 0.95);
+  }
+  50% {
+    transform: translateY(1px) scale(1, 0.99);
+  }
+}
+@keyframes octo-blink {
+  0%,
+  93%,
+  100% {
+    transform: scaleY(1);
+  }
+  96% {
+    transform: scaleY(0.1);
+  }
+}
+@keyframes octo-look {
+  0%,
+  18%,
+  100% {
+    transform: translate(0, 0);
+  }
+  28%,
+  44% {
+    transform: translate(1.6px, -0.6px);
+  }
+  56%,
+  72% {
+    transform: translate(-1.6px, 0.4px);
+  }
+}
+@keyframes octo-sway {
+  0%,
+  100% {
+    transform: rotate(-7deg);
+  }
+  50% {
+    transform: rotate(7deg);
+  }
+}
+@keyframes octo-wave {
+  from {
+    transform: rotate(-14deg);
+  }
+  to {
+    transform: rotate(16deg);
+  }
+}
+@keyframes octo-dot {
+  0%,
+  100% {
+    opacity: 0.2;
+  }
+  40% {
+    opacity: 0.9;
+  }
+}
+@keyframes octo-twinkle {
+  0%,
+  100% {
+    opacity: 0.2;
+    transform: scale(0.6);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.1);
+  }
+}
+@keyframes octo-drip {
+  0% {
+    opacity: 0;
+    transform: translateY(-2px);
+  }
+  20% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(7px);
+  }
+}
+@keyframes octo-z {
+  0% {
+    opacity: 0;
+    transform: translate(0, 4px);
+  }
+  30% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translate(3px, -6px);
+  }
+}
