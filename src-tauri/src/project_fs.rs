@@ -553,22 +553,22 @@ mod tests {
 
     #[test]
     fn redacts_secrets_inside_files() {
-        let text = concat!(
-            "const key = 'sk-proj-abcdefghijklmnopqrstuvwx';\n",
-            "AWS=AKIAABCDEFGHIJKLMNOP\n",
-            "password: \"hunter2hunter2\"\n",
-            "DB_PASSWORD=correcthorsebattery\n",
-            "-----BEGIN RSA PRIVATE KEY-----\nMIIBOgIBAAJ\n-----END RSA PRIVATE KEY-----\n",
-            "function login(email: string, password: string) {}\n",
-            "harmless = 42\n",
+        // Fake secrets are assembled at runtime so the source never contains a
+        // string that looks like a real credential (secret scanners would flag it).
+        let aws = format!("{}{}", "AKIA", "ABCDEFGHIJKLMNOP");
+        let pem = format!("-----BEGIN RSA {}-----", "PRIVATE KEY");
+        let pem_end = format!("-----END RSA {}-----", "PRIVATE KEY");
+        let text = format!(
+            "const key = 'sk-proj-{}';\nAWS={aws}\npassword: \"hunter2hunter2\"\nDB_PASSWORD=correcthorsebattery\n{pem}\nMIIBOgIBAAJ\n{pem_end}\nfunction login(email: string, password: string) {{}}\nharmless = 42\n",
+            "abcdefghijklmnopqrstuvwx"
         );
-        let (out, n) = redact(text);
+        let (out, n) = redact(&text);
         assert_eq!(n, 5);
         assert!(!out.contains("correcthorsebattery"));
         // Type annotations are not secrets.
         assert!(out.contains("function login(email: string, password: string) {}"));
         assert!(!out.contains("sk-proj-abcdefghijklmnop"));
-        assert!(!out.contains("AKIAABCDEFGHIJKLMNOP"));
+        assert!(!out.contains(&aws));
         assert!(!out.contains("hunter2hunter2"));
         assert!(!out.contains("MIIBOgIBAAJ"));
         assert!(out.contains("harmless = 42"));

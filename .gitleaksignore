@@ -1,0 +1,4 @@
+# Known false positives: a fake AWS-shaped key used as a fixture in the
+# redaction test of commit 1379c26. The test now builds fake secrets at runtime.
+1379c2619f5033af4a2ffe691488f6dde8e81db5:src-tauri/src/project_fs.rs:aws-access-token:558
+1379c2619f5033af4a2ffe691488f6dde8e81db5:src-tauri/src/project_fs.rs:aws-access-token:571
