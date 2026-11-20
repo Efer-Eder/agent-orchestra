@@ -2,6 +2,21 @@
 
 Registro das etapas de desenvolvimento, da mais recente para a mais antiga.
 
+## 2026-11-20 — Etapa 7: o Builder lê os arquivos do projeto
+
+**Status:** concluída no desktop Windows ([ADR 0009](docs/adr/0009-leitura-de-arquivos-do-projeto.md)).
+
+- Rust (`src-tauri/src/project_fs.rs`): `project_check_root`, `project_list_files` e `project_read_files`, somente leitura, com permissão explícita por comando.
+- Pasta autorizada validada ao criar o projeto (recusa raiz de disco, pasta do usuário e pastas do sistema). Caminhos canonicalizados, links não seguidos, lista de negação, limites (12 arquivos, 64 KiB cada, 200 KiB no total), binários pulados e redação de segredos.
+- Fluxo: o Planner recebe a lista de arquivos e escolhe até 12; o cartão do plano mostra quais serão lidos; depois da aprovação o Builder recebe o conteúdo (marcado como não confiável) e propõe diffs de modificação. A sessão guarda só metadados do que foi lido.
+- Modo demonstração também usa a pasta real: escolhe arquivos pelo pedido e propõe um comentário no topo deles.
+- Testes: 10 em Rust (incluindo uma junction real apontando para fora da pasta) e 88 em TypeScript.
+- Teste manual no app desktop com uma pasta de exemplo: leu `README.md`, `src/auth/login.ts` e `src/payments/config.ts`; ignorou `.env` e `node_modules`; ocultou uma chave `sk-proj-` falsa. O teste pegou um falso positivo (`password: string`), corrigido.
+
+### Próximo passo objetivo
+
+Fazer as chamadas HTTP do provedor pelo lado Rust, para que nem a chave nem o conteúdo dos arquivos passem pelo JavaScript.
+
 ## 2026-11-20 — Etapa 6: português e inglês, README com GIFs
 
 **Status:** concluída.

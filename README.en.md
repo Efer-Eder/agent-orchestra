@@ -19,7 +19,7 @@
 </p>
 
 > [!NOTE]
-> **In development.** The full flow works in the browser and in the desktop app (Windows), in demo mode or with a real AI provider. There is no published installer, no reading of project files and no command execution yet. Everything shown here exists and runs today.
+> **In development.** The full flow works in the browser and in the desktop app (Windows), in demo mode or with a real AI provider. On desktop, the Builder reads files from the project's authorized folder (read only, after your approval). There is no published installer and no command execution yet. Everything shown here exists and runs today.
 
 ## What it is
 
@@ -37,15 +37,16 @@ Agent Orchestra is a **local-first** desktop app for coordinating AI agents in y
 
 ## Features
 
-|                        |                                                                                                                                                           |
-| ---------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Approval flow**      | Request → plan → approval → execution → review, with rejection, adjustment requests and cancellation at any time.                                         |
-| **Diffs, not writes**  | The Builder only proposes changes, which you open in the side panel. Paths outside the project (`../`, absolute, `C:\`, `~`) are rejected.                |
-| **Real provider**      | OpenAI, OpenRouter, Groq, Ollama, LM Studio and friends, with a connection test and clear messages for 401, 429, timeouts and network errors.             |
-| **Agents with a face** | **Octo** conducts the orchestra and changes mood with the session; Planner, Builder and Reviewer come alive while they work. Chat with each one directly. |
-| **Two languages**      | UI, demo mode and model answers in **English (US)** or **Portuguese (Brazil)**.                                                                           |
-| **Light and dark**     | Light, dark or system theme, in the Grafite look described in [DESIGN.md](DESIGN.md).                                                                     |
-| **Local-first**        | Projects, sessions and chats are saved on your device. Interrupted sessions come back marked, nothing stays "running" forever.                            |
+|                        |                                                                                                                                                                                                             |
+| ---------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Approval flow**      | Request → plan → approval → execution → review, with rejection, adjustment requests and cancellation at any time.                                                                                           |
+| **Reads your code**    | In the desktop app, the Planner picks files from the authorized folder and the Builder reads them after your approval. `.env`, keys and `node_modules` are never read; secrets in code become `[REDACTED]`. |
+| **Diffs, not writes**  | The Builder only proposes changes, which you open in the side panel. Paths outside the project (`../`, absolute, `C:\`, `~`) are rejected.                                                                  |
+| **Real provider**      | OpenAI, OpenRouter, Groq, Ollama, LM Studio and friends, with a connection test and clear messages for 401, 429, timeouts and network errors.                                                               |
+| **Agents with a face** | **Octo** conducts the orchestra and changes mood with the session; Planner, Builder and Reviewer come alive while they work. Chat with each one directly.                                                   |
+| **Two languages**      | UI, demo mode and model answers in **English (US)** or **Portuguese (Brazil)**.                                                                                                                             |
+| **Light and dark**     | Light, dark or system theme, in the Grafite look described in [DESIGN.md](DESIGN.md).                                                                                                                       |
+| **Local-first**        | Projects, sessions and chats are saved on your device. Interrupted sessions come back marked, nothing stays "running" forever.                                                                              |
 
 ## How it works
 
@@ -157,7 +158,8 @@ The language follows your system the first time, can be changed in Settings and 
 
 - No telemetry. The network is only used when you configure a provider, and only for that address.
 - The key never goes into app files, logs or error messages.
-- The Tauri shell has no file system, shell or HTTP plugins. It has just three key commands, each with an explicit permission, plus a strict CSP.
+- The Tauri shell has no file system, shell or HTTP plugins. It has six commands (three for the key, three to read the project), each with an explicit permission, plus a strict CSP.
+- Files are only read inside the authorized folder: paths are canonicalized (symlinks and junctions included), with a deny list, size limits and secret redaction. Details in [ADR 0009](docs/adr/0009-leitura-de-arquivos-do-projeto.md) (Portuguese).
 - **There is no sandbox.** Command execution stays out until isolation is demonstrated.
 
 Read the [threat model](docs/threat-model.md) and the [security policy](SECURITY.md) (Portuguese). For vulnerabilities, use GitHub private reporting, not a public issue.
@@ -171,8 +173,8 @@ src/
   app/         state, local persistence, bridge to the Windows vault
   i18n/        pt-BR and en-US dictionaries, language detection
   components/  UI (sidebar, session, agents, mascots, settings)
-src-tauri/     Rust desktop shell (key vault)
-docs/          architecture, threat model, ADRs 0001 to 0008
+src-tauri/     Rust desktop shell (key vault, project reading)
+docs/          architecture, threat model, ADRs 0001 to 0009
 ```
 
 The domain is pure TypeScript with no I/O, with an injectable clock and ids for deterministic tests. Decisions live in [docs/adr](docs/adr/).
@@ -182,7 +184,7 @@ The domain is pure TypeScript with no I/O, with an injectable clock and ids for 
 - [x] Full approval flow, demo mode and OpenAI-compatible provider
 - [x] Windows desktop app with the key in the Credential Manager
 - [x] Mascots, light and dark themes, Portuguese and English
-- [ ] Read project files as context, with a directory allowlist
+- [x] Read project files as context, with an authorized folder, deny list and redaction
 - [ ] Apply approved diffs to disk, with per-file approval
 - [ ] HTTP calls from the Rust side, so the key never touches JavaScript
 - [ ] SQLite, session export and a published installer

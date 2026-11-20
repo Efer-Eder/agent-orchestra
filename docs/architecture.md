@@ -39,15 +39,16 @@ Agent Orchestra será um app desktop local-first (Tauri 2 + React) que coordena 
 
 ## Atualização 2026-11-20 — Grafite e provedor real
 
-| Camada                | Arquivos                                     | Notas                                                                                                                          |
-| --------------------- | -------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
-| Perfis de agentes     | `src/domain/agents.ts`                       | Orchestra, Planner, Builder, Reviewer: cor, persona e mascote (Octo e os outros em `src/components/octo/`).                    |
-| Provedor real         | `src/providers/openai-compatible.ts`         | Chat Completions; erros tipados (`ProviderError`); chave só em memória.                                                        |
-| Validação             | `src/providers/parse.ts`                     | JSON da resposta, plano, diffs (caminhos seguros), revisão, contagem de linhas do diff.                                        |
-| Estado e persistência | `src/app/state.ts`, `src/app/persistence.ts` | Reducer + snapshot versionado no `localStorage`, sem a chave.                                                                  |
-| i18n                  | `src/i18n/`                                  | Dicionários pt-BR e en-US com o mesmo formato garantido pelo TypeScript; idioma por `?lang=`, escolha salva ou sistema.        |
-| Orquestração          | `src/app/useOrchestra.ts`                    | Escolhe o provedor, roda as etapas com `AbortController` por sessão, chats por agente.                                         |
-| UI                    | `src/components/*`, `src/App.tsx`            | Sidebar, Home, Sessão, Painel de detalhes/diff, Agentes, Projetos, Configurações. Regras visuais em [DESIGN.md](../DESIGN.md). |
+| Camada                | Arquivos                                                 | Notas                                                                                                                                                  |
+| --------------------- | -------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Perfis de agentes     | `src/domain/agents.ts`                                   | Orchestra, Planner, Builder, Reviewer: cor, persona e mascote (Octo e os outros em `src/components/octo/`).                                            |
+| Provedor real         | `src/providers/openai-compatible.ts`                     | Chat Completions; erros tipados (`ProviderError`); chave só em memória.                                                                                |
+| Validação             | `src/providers/parse.ts`                                 | JSON da resposta, plano, diffs (caminhos seguros), revisão, contagem de linhas do diff.                                                                |
+| Estado e persistência | `src/app/state.ts`, `src/app/persistence.ts`             | Reducer + snapshot versionado no `localStorage`, sem a chave.                                                                                          |
+| i18n                  | `src/i18n/`                                              | Dicionários pt-BR e en-US com o mesmo formato garantido pelo TypeScript; idioma por `?lang=`, escolha salva ou sistema.                                |
+| Leitura do projeto    | `src-tauri/src/project_fs.rs`, `src/app/projectFiles.ts` | Só leitura, só desktop: pasta autorizada canonicalizada, lista de negação, limites e redação ([ADR 0009](adr/0009-leitura-de-arquivos-do-projeto.md)). |
+| Orquestração          | `src/app/useOrchestra.ts`                                | Escolhe o provedor, roda as etapas com `AbortController` por sessão, chats por agente.                                                                 |
+| UI                    | `src/components/*`, `src/App.tsx`                        | Sidebar, Home, Sessão, Painel de detalhes/diff, Agentes, Projetos, Configurações. Regras visuais em [DESIGN.md](../DESIGN.md).                         |
 
 ## Máquina de estados da sessão
 

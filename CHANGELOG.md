@@ -6,6 +6,7 @@ Todas as mudanças relevantes serão registradas aqui. O formato segue [Keep a C
 
 ### Adicionado
 
+- **Leitura dos arquivos do projeto** no app desktop: pasta autorizada validada em Rust, o Planner escolhe até 12 arquivos, você aprova, o Builder lê (somente leitura) e propõe diffs de modificação. Lista de negação (`.env`, chaves, `node_modules`…), limites de tamanho, binários pulados e redação de segredos no conteúdo.
 - Interface em **português (Brasil)** e **inglês (EUA)**, com detecção pelo idioma do sistema, escolha salva em Configurações e `?lang=` na URL. Modo demonstração e respostas dos modelos seguem o idioma.
 - READMEs novos em pt-BR e en-US com GIFs gravados do app real (`scripts/readme-media/`).
 - Mascotes animados: **Octo**, o polvo do Orchestra, com humores que acompanham a sessão, e mascotes para Planner, Builder e Reviewer.

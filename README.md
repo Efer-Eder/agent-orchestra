@@ -19,7 +19,7 @@
 </p>
 
 > [!NOTE]
-> **Em desenvolvimento.** O fluxo completo funciona no navegador e no app desktop (Windows), em modo demonstração ou com um provedor de IA de verdade. Ainda não há instalador publicado, leitura de arquivos do projeto nem execução de comandos. Tudo que aparece aqui existe e roda hoje.
+> **Em desenvolvimento.** O fluxo completo funciona no navegador e no app desktop (Windows), em modo demonstração ou com um provedor de IA de verdade. No desktop, o Builder lê os arquivos da pasta autorizada do projeto (só leitura, depois da sua aprovação). Ainda não há instalador publicado nem execução de comandos. Tudo que aparece aqui existe e roda hoje.
 
 ## O que é
 
@@ -37,15 +37,16 @@ Agent Orchestra é um app desktop **local-first** para coordenar agentes de IA n
 
 ## Recursos
 
-|                         |                                                                                                                                                    |
-| ----------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Fluxo com aprovação** | Solicitação → plano → aprovação → execução → revisão, com rejeição, pedido de ajuste e cancelamento a qualquer momento.                            |
-| **Diffs, não escrita**  | O Builder só propõe alterações, que você abre no painel lateral. Caminhos fora do projeto (`../`, absolutos, `C:\`, `~`) são recusados.            |
-| **Provedor real**       | OpenAI, OpenRouter, Groq, Ollama, LM Studio e afins, com teste de conexão e mensagens claras para 401, 429, timeout e rede.                        |
-| **Agentes com rosto**   | O **Octo** conduz a orquestra e muda de humor com a sessão; Planner, Builder e Reviewer se animam enquanto trabalham. Converse direto com cada um. |
-| **Dois idiomas**        | Interface, modo demonstração e respostas dos modelos em **português (Brasil)** ou **inglês (EUA)**.                                                |
-| **Claro e escuro**      | Tema claro, escuro ou do sistema, no visual Grafite descrito em [DESIGN.md](DESIGN.md).                                                            |
-| **Local-first**         | Projetos, sessões e conversas salvos no dispositivo. Sessões interrompidas voltam marcadas, nada fica "rodando" para sempre.                       |
+|                         |                                                                                                                                                                                                |
+| ----------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Fluxo com aprovação** | Solicitação → plano → aprovação → execução → revisão, com rejeição, pedido de ajuste e cancelamento a qualquer momento.                                                                        |
+| **Lê o seu código**     | No app desktop, o Planner escolhe arquivos da pasta autorizada e o Builder lê depois da sua aprovação. `.env`, chaves e `node_modules` nunca são lidos; segredos no código viram `[REDACTED]`. |
+| **Diffs, não escrita**  | O Builder só propõe alterações, que você abre no painel lateral. Caminhos fora do projeto (`../`, absolutos, `C:\`, `~`) são recusados.                                                        |
+| **Provedor real**       | OpenAI, OpenRouter, Groq, Ollama, LM Studio e afins, com teste de conexão e mensagens claras para 401, 429, timeout e rede.                                                                    |
+| **Agentes com rosto**   | O **Octo** conduz a orquestra e muda de humor com a sessão; Planner, Builder e Reviewer se animam enquanto trabalham. Converse direto com cada um.                                             |
+| **Dois idiomas**        | Interface, modo demonstração e respostas dos modelos em **português (Brasil)** ou **inglês (EUA)**.                                                                                            |
+| **Claro e escuro**      | Tema claro, escuro ou do sistema, no visual Grafite descrito em [DESIGN.md](DESIGN.md).                                                                                                        |
+| **Local-first**         | Projetos, sessões e conversas salvos no dispositivo. Sessões interrompidas voltam marcadas, nada fica "rodando" para sempre.                                                                   |
 
 ## Como funciona
 
@@ -157,7 +158,8 @@ O idioma segue o do sistema na primeira vez, pode ser trocado em Configurações
 
 - Sem telemetria. A rede só é usada quando você configura um provedor, e só para o endereço informado.
 - A chave nunca vai para arquivos do app, logs ou mensagens de erro.
-- O shell Tauri não tem plugins de sistema de arquivos, shell ou HTTP. São só três comandos de chave, cada um com permissão explícita, e uma CSP restritiva.
+- O shell Tauri não tem plugins de sistema de arquivos, shell ou HTTP. São seis comandos (três para a chave, três de leitura do projeto), cada um com permissão explícita, e uma CSP restritiva.
+- Leitura de arquivos só dentro da pasta autorizada: caminhos são canonicalizados (symlinks e junctions incluídos), há lista de negação, limites de tamanho e redação de segredos. Detalhes no [ADR 0009](docs/adr/0009-leitura-de-arquivos-do-projeto.md).
 - **Não há sandbox.** Execução de comandos fica fora até existir isolamento demonstrado.
 
 Leia o [modelo de ameaças](docs/threat-model.md) e a [política de segurança](SECURITY.md). Vulnerabilidade: use o relato privado do GitHub, não issue pública.
@@ -171,8 +173,8 @@ src/
   app/         estado, persistência local, ponte com o cofre do Windows
   i18n/        dicionários pt-BR e en-US, detecção de idioma
   components/  interface (sidebar, sessão, agentes, mascotes, configurações)
-src-tauri/     shell desktop em Rust (cofre de chaves)
-docs/          arquitetura, modelo de ameaças, ADRs 0001 a 0008
+src-tauri/     shell desktop em Rust (cofre de chaves, leitura do projeto)
+docs/          arquitetura, modelo de ameaças, ADRs 0001 a 0009
 ```
 
 O domínio é TypeScript puro, sem I/O, com relógio e ids injetáveis para testes determinísticos. Decisões estão em [docs/adr](docs/adr/).
@@ -182,7 +184,7 @@ O domínio é TypeScript puro, sem I/O, com relógio e ids injetáveis para test
 - [x] Fluxo completo com aprovação, modo demonstração e provedor OpenAI-compatível
 - [x] App desktop no Windows com a chave no Gerenciador de Credenciais
 - [x] Mascotes, temas claro e escuro, português e inglês
-- [ ] Ler arquivos do projeto como contexto, com allowlist de diretório
+- [x] Ler arquivos do projeto como contexto, com pasta autorizada, lista de negação e redação
 - [ ] Aplicar diffs aprovados no disco, com aprovação por arquivo
 - [ ] Chamadas HTTP pelo lado Rust, para a chave não passar pelo JavaScript
 - [ ] SQLite, exportação de sessão e instalador publicado
