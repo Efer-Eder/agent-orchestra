@@ -63,3 +63,22 @@ describe('mock chat', () => {
     expect(usage?.synthetic).toBe(true);
   });
 });
+
+describe('mock provider in English', () => {
+  it('plans, builds, reviews and chats in English', async () => {
+    const { AGENTS } = await import('../domain/agents.ts');
+    const p = createMockProvider({ locale: 'en-US' });
+    const { output: plan } = await p.plan('Add login. Write tests.');
+    expect(plan.summary).toBe('Mock plan generated from the request');
+    expect(plan.tasks[0]?.detail).toMatch(/^Step 1/);
+    const { output: changes } = await p.build(plan);
+    expect(changes[0]?.diff).toContain('not applied to disk');
+    const { output: review } = await p.review(changes);
+    expect(review.comments[0]).toBe('2 changes checked by the mock reviewer.');
+    const { output: reply } = await p.chat(AGENTS.builder, [
+      { id: '1', from: 'user', content: 'Hi', at: '' },
+    ]);
+    expect(reply).toContain("I'm the Builder");
+    expect(reply).toContain('Demo mode reply');
+  });
+});

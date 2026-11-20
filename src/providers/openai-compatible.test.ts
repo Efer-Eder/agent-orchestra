@@ -201,3 +201,25 @@ describe('parse helpers', () => {
     expect(diffStats('--- a\n+++ b\n@@\n+x\n+y\n-z\n z')).toEqual({ added: 2, removed: 1 });
   });
 });
+
+describe('OpenAI-compatible provider in English', () => {
+  it('asks the model to answer in English and reports errors in English', async () => {
+    const fetchMock = vi.fn<typeof fetch>(async () =>
+      jsonResponse({ error: { message: 'nope' } }, { status: 401 }),
+    );
+    const p = createOpenAICompatibleProvider({
+      baseUrl: 'https://api.example.test/v1',
+      apiKey: KEY,
+      model: 'm',
+      fetch: fetchMock,
+      locale: 'en-US',
+    });
+    await expect(p.plan('x')).rejects.toThrow(/API key rejected \(401\)/);
+    const body = JSON.parse(String(fetchMock.mock.calls[0]![1]?.body)) as {
+      messages: { content: string }[];
+    };
+    expect(body.messages[0]?.content).toContain('always answer in American English');
+    expect(() => normalizeBaseUrl('http://api.example.test', 'en-US')).toThrow(/Use https/);
+    expect(p.label).toBe('m (OpenAI-compatible)');
+  });
+});
