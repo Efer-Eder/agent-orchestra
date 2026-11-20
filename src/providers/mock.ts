@@ -1,3 +1,4 @@
+import type { AgentProfile } from '../domain/agents.ts';
 import type { AgentProvider, ProviderResult } from '../domain/provider.ts';
 import type { Plan, PlanTask, ProposedChange, Review, Usage } from '../domain/types.ts';
 
@@ -5,7 +6,7 @@ export interface MockProviderOptions {
   /** Artificial latency per call, to exercise loading and cancel states in the UI. */
   latencyMs?: number;
   /** Makes the given step throw, to exercise error handling. */
-  failOn?: 'plan' | 'build' | 'review';
+  failOn?: 'plan' | 'build' | 'review' | 'chat';
 }
 
 const MAX_TASKS = 5;
@@ -66,6 +67,27 @@ export function splitIntoTasks(request: string): PlanTask[] {
   }));
 }
 
+const MOCK_REPLIES: Record<AgentProfile['id'], string> = {
+  orchestra:
+    'Sou o Orchestra, o maestro. Quando você abrir uma sessão, eu chamo o Planner, espero a sua aprovação e só então passo a vez ao Builder e ao Reviewer.',
+  planner:
+    'Sou o Planner. Me conte o objetivo e eu devolvo uma lista curta de etapas verificáveis.',
+  builder:
+    'Sou o Builder. Eu proponho alterações em forma de diff. Aplicar no disco é sempre decisão sua.',
+  reviewer:
+    'Sou o Reviewer. Eu confiro as alterações propostas e aponto riscos, casos de borda e testes que faltam.',
+};
+
+/** Canned, clearly-labelled reply used by the offline mock. */
+export function mockReply(agent: AgentProfile, lastUserMessage: string): string {
+  const quote = lastUserMessage.trim().slice(0, 120);
+  return [
+    MOCK_REPLIES[agent.id],
+    '',
+    `(Resposta do modo demonstração, sem modelo de IA. Você disse: "${quote}". Configure um provedor real em Configurações para respostas de verdade.)`,
+  ].join('\n');
+}
+
 function changeFor(task: PlanTask, index: number): ProposedChange {
   const path = `notes/${String(index + 1).padStart(2, '0')}-${slug(task.title)}.md`;
   const diff = [
@@ -87,7 +109,7 @@ export function createMockProvider(options: MockProviderOptions = {}): AgentProv
   const latency = options.latencyMs ?? 0;
 
   async function step<T>(
-    name: 'plan' | 'build' | 'review',
+    name: 'plan' | 'build' | 'review' | 'chat',
     signal: AbortSignal | undefined,
     produce: () => { output: T; input: string; text: string },
   ): Promise<ProviderResult<T>> {
@@ -124,6 +146,13 @@ export function createMockProvider(options: MockProviderOptions = {}): AgentProv
               }
             : { verdict: 'request_changes', comments: ['Nenhuma alteração para revisar.'] };
         return { output: review, input: JSON.stringify(changes), text: JSON.stringify(review) };
+      }),
+    chat: (agent, history, signal) =>
+      step<string>('chat', signal, () => {
+        const last = [...history].reverse().find((m) => m.from === 'user')?.content ?? '';
+        const reply = mockReply(agent, last);
+        const input = history.map((m) => m.content).join('\n');
+        return { output: reply, input, text: reply };
       }),
   };
 }

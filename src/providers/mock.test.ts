@@ -51,3 +51,15 @@ describe('slug', () => {
     expect(slug('!!!')).toBe('tarefa');
   });
 });
+
+describe('mock chat', () => {
+  it('answers in persona and labels itself as demo', async () => {
+    const { AGENTS } = await import('../domain/agents.ts');
+    const { output, usage } = await createMockProvider().chat(AGENTS.builder, [
+      { id: '1', from: 'user', content: 'Oi', at: '' },
+    ]);
+    expect(output).toContain('Builder');
+    expect(output).toContain('modo demonstração');
+    expect(usage?.synthetic).toBe(true);
+  });
+});
