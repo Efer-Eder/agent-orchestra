@@ -15,7 +15,7 @@ export function ProjectsView({
   sessions: Session[];
   activeId: string | null;
   onSelect: (id: string) => void;
-  onCreate: (name: string, root: string) => string | null;
+  onCreate: (name: string, root: string) => Promise<string | null>;
 }) {
   const { t } = useI18n();
   return (

@@ -1,5 +1,6 @@
 import { FolderPlus } from 'lucide-react';
 import { useState, type FormEvent } from 'react';
+import { isDesktop } from '../app/secrets.ts';
 import { agentProfile } from '../domain/agents.ts';
 import type { Project } from '../domain/types.ts';
 import { useI18n } from '../i18n/I18n.tsx';
@@ -11,16 +12,20 @@ export function ProjectForm({
   onCreate,
   compact,
 }: {
-  onCreate: (name: string, root: string) => string | null;
+  onCreate: (name: string, root: string) => Promise<string | null>;
   compact?: boolean;
 }) {
   const { t } = useI18n();
   const [name, setName] = useState('');
   const [root, setRoot] = useState('');
   const [error, setError] = useState<string | null>(null);
-  const submit = (e: FormEvent) => {
+  const [busy, setBusy] = useState(false);
+  const desktop = isDesktop();
+  const submit = async (e: FormEvent) => {
     e.preventDefault();
-    const err = onCreate(name, root);
+    setBusy(true);
+    const err = await onCreate(name, root);
+    setBusy(false);
     setError(err);
     if (!err) {
       setName('');
@@ -37,7 +42,10 @@ export function ProjectForm({
             placeholder="meu-saas"
           />
         </Field>
-        <Field label={t.projectForm.folder} hint={t.projectForm.folderHint}>
+        <Field
+          label={t.projectForm.folder}
+          hint={desktop ? t.files.folderHintDesktop : t.files.folderHintWeb}
+        >
           <TextInput
             value={root}
             onChange={(e) => setRoot(e.target.value)}
@@ -51,7 +59,7 @@ export function ProjectForm({
         </p>
       )}
       <div>
-        <Button type="submit" variant="primary">
+        <Button type="submit" variant="primary" disabled={busy}>
           <FolderPlus size={15} />
           {t.projectForm.create}
         </Button>
@@ -68,7 +76,7 @@ export function HomeView({
 }: {
   project: Project | null;
   providerLabel: string;
-  onCreateProject: (name: string, root: string) => string | null;
+  onCreateProject: (name: string, root: string) => Promise<string | null>;
   onStart: (text: string) => string | null;
 }) {
   const { t, locale } = useI18n();

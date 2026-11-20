@@ -4,7 +4,9 @@ import type { Project, Session } from '../domain/types.ts';
 import { totalUsage } from '../domain/workflow.ts';
 import { useI18n } from '../i18n/I18n.tsx';
 import { diffStats } from '../providers/parse.ts';
+import { isDesktop } from '../app/secrets.ts';
 import { AgentAvatar } from './AgentAvatar.tsx';
+import { ContextList } from './SessionView.tsx';
 import { cn, IconButton, SectionTitle } from './primitives.tsx';
 
 const KIND_ICON = { create: FilePlus, modify: FilePen, delete: FileMinus } as const;
@@ -91,19 +93,19 @@ export function RightPanel({
       <div className="min-h-0 flex-1 overflow-x-hidden overflow-y-auto">
         <section className="border-b border-line px-4 py-3.5">
           <SectionTitle>{t.panel.environment}</SectionTitle>
-          <dl className="grid gap-2 text-[13px]">
-            <div className="flex items-center gap-2.5 text-ink-2">
+          <dl className="grid grid-cols-[minmax(0,1fr)] gap-2 text-[13px]">
+            <div className="flex min-w-0 items-center gap-2.5 text-ink-2">
               <Folder size={15} className="text-ink-3" />
               <dt className="sr-only">{t.panel.project}</dt>
               <dd className="min-w-0 flex-1 truncate">{project?.name ?? '—'}</dd>
               <dd
-                className="max-w-[55%] truncate text-[12px] text-ink-3"
+                className="max-w-[55%] min-w-0 truncate text-[12px] text-ink-3"
                 title={project?.rootLabel}
               >
                 {project?.rootLabel || t.panel.noFolder}
               </dd>
             </div>
-            <div className="flex items-center gap-2.5 text-ink-2">
+            <div className="flex min-w-0 items-center gap-2.5 text-ink-2">
               <Cpu size={15} className="text-ink-3" />
               <dt>{t.panel.provider}</dt>
               <dd className="ml-auto max-w-[60%] truncate text-[12.5px] text-ink">
@@ -137,6 +139,17 @@ export function RightPanel({
                 {usage.synthetic ? t.panel.synthetic : t.panel.reported} {t.panel.noCost}
               </p>
             </>
+          )}
+        </section>
+
+        <section className="border-b border-line px-4 py-3.5">
+          <SectionTitle>{t.files.panelTitle}</SectionTitle>
+          {session?.context?.length ? (
+            <ContextList files={session.context} />
+          ) : (
+            <p className="text-[12.5px] text-ink-3">
+              {isDesktop() ? t.files.panelEmpty : t.files.webOnly}
+            </p>
           )}
         </section>
 

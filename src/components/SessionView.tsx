@@ -5,6 +5,7 @@ import {
   FileMinus,
   FilePen,
   FilePlus,
+  FileSearch,
   PanelRight,
   Trash,
   TriangleExclamationPoint,
@@ -12,7 +13,7 @@ import {
 import { useEffect, useRef, useState } from 'react';
 import { STATUS_TONE, TONE_BADGE } from '../app/labels.ts';
 import { agentProfile, type AgentId } from '../domain/agents.ts';
-import type { ProposedChange, Session, TimelineEvent } from '../domain/types.ts';
+import type { ContextFile, ProposedChange, Session, TimelineEvent } from '../domain/types.ts';
 import { useI18n } from '../i18n/I18n.tsx';
 import type { Messages } from '../i18n/messages.ts';
 import { diffStats } from '../providers/parse.ts';
@@ -82,6 +83,44 @@ function SystemLine({ icon, children }: { icon: React.ReactNode; children: React
 
 const KIND_ICON = { create: FilePlus, modify: FilePen, delete: FileMinus } as const;
 
+/** Files given to the Builder, with why any of them was not read. */
+export function ContextList({ files }: { files: ContextFile[] }) {
+  const { t } = useI18n();
+  return (
+    <ul className="grid gap-1">
+      {files.map((f) => (
+        <li key={f.path} className="flex items-center gap-2 text-[12.5px]">
+          <FileSearch size={13} className="shrink-0 text-ink-3" />
+          <code
+            className={cn(
+              'min-w-0 flex-1 truncate font-mono text-[12px]',
+              f.skipped ? 'text-ink-3 line-through' : 'text-ink-2',
+            )}
+          >
+            {f.path}
+          </code>
+          {f.skipped ? (
+            <span className="shrink-0 text-[11.5px] text-warn">
+              {t.files.skipped[f.skipped as keyof typeof t.files.skipped] ?? f.skipped}
+            </span>
+          ) : (
+            <>
+              {f.truncated && (
+                <span className="shrink-0 text-[11.5px] text-ink-3">{t.files.truncated}</span>
+              )}
+              {f.redactions > 0 && (
+                <span className="shrink-0 text-[11.5px] text-warn">
+                  {t.files.redacted(f.redactions)}
+                </span>
+              )}
+            </>
+          )}
+        </li>
+      ))}
+    </ul>
+  );
+}
+
 function ChangeList({
   changes,
   onOpen,
@@ -145,6 +184,22 @@ function PlanCard({
           </li>
         ))}
       </ol>
+      {session.plan.files && session.plan.files.length > 0 && (
+        <div className="border-t border-line px-4 py-3">
+          <div className="mb-2 flex items-center gap-1.5 text-[12.5px] font-medium text-ink-2">
+            <FileSearch size={14} className="text-ink-3" />
+            {t.files.planTitle}
+          </div>
+          <ul className="grid gap-1">
+            {session.plan.files.map((f) => (
+              <li key={f}>
+                <code className="font-mono text-[12px] text-ink-2">{f}</code>
+              </li>
+            ))}
+          </ul>
+          <p className="mt-2 text-[12px] leading-relaxed text-ink-3">{t.files.planHint}</p>
+        </div>
+      )}
       {awaiting && (
         <div className="border-t border-line bg-surface-2 px-3 py-2.5">
           {rejecting ? (
@@ -230,6 +285,16 @@ function renderEvent(ev: TimelineEvent, props: Props, t: Messages, time: (iso: s
       return (
         <AgentTurn key={ev.id} agentId="builder" meta={`${t.session.changesMeta} · ${time(ev.at)}`}>
           {t.session.proposed(session.changes?.length ?? 0)}
+          {session.context && session.context.length > 0 && (
+            <details className="mt-2.5 rounded-xl border border-line bg-surface px-3.5 py-2.5">
+              <summary className="cursor-pointer text-[12.5px] text-ink-2 select-none">
+                {t.files.readTitle(session.context.filter((f) => !f.skipped).length)}
+              </summary>
+              <div className="mt-2">
+                <ContextList files={session.context} />
+              </div>
+            </details>
+          )}
           {session.changes && session.changes.length > 0 && (
             <ChangeList changes={session.changes} onOpen={props.onOpenChange} />
           )}

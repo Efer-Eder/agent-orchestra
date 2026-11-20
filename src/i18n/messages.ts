@@ -71,7 +71,6 @@ const pt = {
     aria: 'Novo projeto',
     name: 'Nome do projeto',
     folder: 'Pasta',
-    folderHint: 'Por enquanto é só um rótulo: nada é lido do disco.',
     create: 'Criar projeto',
   },
   projects: {
@@ -214,6 +213,36 @@ const pt = {
     reset: 'Apagar tudo',
     resetButton: 'Apagar dados locais',
   },
+  files: {
+    folderHintDesktop:
+      'Pasta autorizada: o Builder só lê arquivos dentro dela, depois da sua aprovação. Nada é gravado.',
+    folderHintWeb: 'No navegador é só um rótulo. A leitura de arquivos existe no app desktop.',
+    planTitle: 'Arquivos que o Builder vai ler',
+    planHint:
+      'Somente leitura, depois da sua aprovação. .env, chaves e pastas como node_modules nunca são lidos.',
+    readTitle: (n: number) =>
+      n === 1 ? 'Leu 1 arquivo do projeto' : `Leu ${n} arquivos do projeto`,
+    panelTitle: 'Arquivos lidos',
+    panelEmpty: 'Nenhum arquivo lido nesta sessão.',
+    webOnly: 'A leitura de arquivos só existe no app desktop.',
+    truncated: 'cortado',
+    redacted: (n: number) => (n === 1 ? '1 segredo ocultado' : `${n} segredos ocultados`),
+    skipped: {
+      denied: 'bloqueado',
+      outside: 'fora da pasta',
+      missing: 'não encontrado',
+      binary: 'binário',
+      budget: 'limite de tamanho',
+    },
+    errors: {
+      root_missing: (d: string) => `A pasta não existe ou não pode ser aberta: ${d}`,
+      root_not_dir: (d: string) => `Não é uma pasta: ${d}`,
+      root_too_broad: (d: string) =>
+        `Pasta ampla demais (${d}). Escolha a pasta do projeto, não a raiz do disco nem a pasta do usuário.`,
+      root_system: (d: string) => `Pastas do sistema não podem ser projeto: ${d}`,
+      unavailable: (d: string) => `Não foi possível acessar os arquivos do projeto (${d}).`,
+    },
+  },
   errors: {
     emptyProjectName: 'O nome do projeto é obrigatório.',
     emptyRequest: 'A solicitação não pode ficar vazia.',
@@ -292,7 +321,6 @@ const en: Shape<Messages> = {
     aria: 'New project',
     name: 'Project name',
     folder: 'Folder',
-    folderHint: 'Just a label for now: nothing is read from disk.',
     create: 'Create project',
   },
   projects: {
@@ -429,6 +457,35 @@ const en: Shape<Messages> = {
     confirmReset: 'Delete everything? This cannot be undone.',
     reset: 'Delete everything',
     resetButton: 'Delete local data',
+  },
+  files: {
+    folderHintDesktop:
+      'Authorized folder: the Builder only reads files inside it, after your approval. Nothing is written.',
+    folderHintWeb: 'Just a label in the browser. Reading files exists in the desktop app.',
+    planTitle: 'Files the Builder will read',
+    planHint:
+      'Read only, after your approval. .env, keys and folders like node_modules are never read.',
+    readTitle: (n: number) => (n === 1 ? 'Read 1 project file' : `Read ${n} project files`),
+    panelTitle: 'Files read',
+    panelEmpty: 'No files read in this session.',
+    webOnly: 'Reading files only exists in the desktop app.',
+    truncated: 'truncated',
+    redacted: (n: number) => (n === 1 ? '1 secret hidden' : `${n} secrets hidden`),
+    skipped: {
+      denied: 'blocked',
+      outside: 'outside the folder',
+      missing: 'not found',
+      binary: 'binary',
+      budget: 'size limit',
+    },
+    errors: {
+      root_missing: (d: string) => `The folder does not exist or cannot be opened: ${d}`,
+      root_not_dir: (d: string) => `Not a folder: ${d}`,
+      root_too_broad: (d: string) =>
+        `Folder too broad (${d}). Pick the project folder, not a drive root or your user folder.`,
+      root_system: (d: string) => `System folders cannot be a project: ${d}`,
+      unavailable: (d: string) => `Could not access the project files (${d}).`,
+    },
   },
   errors: {
     emptyProjectName: 'The project name is required.',

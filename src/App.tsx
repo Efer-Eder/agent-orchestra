@@ -124,8 +124,8 @@ export default function App() {
           o.dispatch({ type: 'selectProject', id });
           o.setView({ name: 'home' });
         }}
-        onCreate={(name, root) => {
-          const err = o.addProject(name, root);
+        onCreate={async (name, root) => {
+          const err = await o.addProject(name, root);
           if (!err) o.setView({ name: 'home' });
           return err;
         }}
