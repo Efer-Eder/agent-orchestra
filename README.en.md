@@ -19,7 +19,7 @@ Agent Orchestra aims to be a **local-first** desktop app (Tauri 2 + React) for c
 - **Offline demo mode**, no network and no key, with clearly labelled replies.
 - **Agents** section: chat directly with Orchestra, Planner, Builder and Reviewer. Mascots are still to be designed; placeholders for now.
 - The Builder only **proposes** diffs, shown in the side panel; nothing is written to disk. Paths outside the project are rejected.
-- Projects, sessions and chats are saved on this device. **The API key is never saved**: it lives in memory only.
+- Projects, sessions and chats are saved on this device. **The API key never goes into app files**: in the desktop app you can keep it in the **Windows Credential Manager**; in the browser it stays in memory only.
 - Token usage as reported by the provider (synthetic in demo mode). Cost is not estimated until a configurable price table exists.
 
 The UI is currently in Brazilian Portuguese.
@@ -56,12 +56,12 @@ No installer is published and there is no code signing.
 
 ## Not built yet
 
-Published installer, reading project files as context, applying diffs to disk, command execution, Windows Credential Manager for the key, SQLite persistence, session export and the mascots. See the [ROADMAP](ROADMAP.md) and [progress log](PROGRESS.md) (in Portuguese).
+Published installer, reading project files as context, applying diffs to disk, command execution, SQLite persistence, session export and the mascots. See the [ROADMAP](ROADMAP.md) and [progress log](PROGRESS.md) (in Portuguese).
 
 ## Security
 
 - No telemetry. Network is used only when you configure a real provider, and only to that address.
-- The API key stays in memory and is sent only to the configured provider.
+- The API key is sent only to the configured provider. On desktop it can live in the Windows Credential Manager; never in app files.
 - The project **does not provide a sandbox**; command execution is out of scope until isolation is demonstrated.
 - See the [threat model](docs/threat-model.md) and [security policy](SECURITY.md).
 

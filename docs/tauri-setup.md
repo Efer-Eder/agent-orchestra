@@ -44,7 +44,8 @@ Ainda não foi validado nem publicado nenhum instalador. **Não há assinatura d
 ## Segurança do shell
 
 - CSP em `src-tauri/tauri.conf.json`: `default-src 'self'`, scripts e estilos só do próprio app, `object-src 'none'`, `frame-ancestors 'none'`, `connect-src` limitado ao IPC do Tauri, a `https:` e a `localhost` (para o provedor de IA configurado pelo usuário, ver [ADR 0006](adr/0006-provedor-openai-compativel-com-chave-em-memoria.md)).
-- Capability única (`src-tauri/capabilities/default.json`) com `core:default` apenas, para a janela `main`.
+- Capability única (`src-tauri/capabilities/default.json`) para a janela `main`: `core:default` e só os comandos `secret_save`, `secret_load` e `secret_delete` (declarados em `build.rs`, então cada um precisa de permissão explícita).
+- Chaves de API no Gerenciador de Credenciais do Windows via `keyring-core` + `windows-native-keyring-store` (serviço `agent-orchestra`, uma entrada por endereço de provedor). Teste local contra o cofre real: `cargo test --test windows_credential_manager -- --ignored`.
 - Nenhum plugin instalado (`fs`, `shell`, `http` etc. ausentes de propósito).
 
 ## Pré-requisitos no Ubuntu/Debian

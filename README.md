@@ -19,7 +19,7 @@ Agent Orchestra será um app desktop **local-first** (Tauri 2 + React) para coor
 - **Modo demonstração offline**, sem rede e sem chave, com respostas rotuladas.
 - Seção **Agentes**: converse direto com Orchestra, Planner, Builder e Reviewer. Os mascotes ainda serão desenhados; por enquanto há marcadores.
 - O Builder apenas **propõe** diffs, que você vê no painel; nada é gravado no disco. Caminhos fora do projeto são recusados.
-- Projetos, sessões e conversas ficam salvos neste dispositivo. **A chave de API nunca é salva**: fica só na memória.
+- Projetos, sessões e conversas ficam salvos neste dispositivo. **A chave de API nunca vai para os arquivos do app**: no app desktop você pode guardá-la no **Gerenciador de Credenciais do Windows**; no navegador ela fica só na memória.
 - Uso de tokens reportado pelo provedor (ou sintético no modo demonstração). Custo não é estimado enquanto não houver tabela de preços configurável.
 
 ## Rodar localmente (Windows, macOS ou Linux)
@@ -56,12 +56,12 @@ Não há instalador publicado nem assinatura de código.
 
 ## Ainda não existe
 
-Instalador publicado, leitura dos arquivos do projeto como contexto, aplicação de diffs no disco, execução de comandos, chave no Gerenciador de Credenciais do Windows, persistência SQLite, exportação de sessões e os mascotes. Veja o [ROADMAP](ROADMAP.md) e o [progresso](PROGRESS.md).
+Instalador publicado, leitura dos arquivos do projeto como contexto, aplicação de diffs no disco, execução de comandos, persistência SQLite, exportação de sessões e os mascotes. Veja o [ROADMAP](ROADMAP.md) e o [progresso](PROGRESS.md).
 
 ## Segurança
 
 - Sem telemetria. Rede só é usada quando você configura um provedor real, e só para o endereço informado.
-- A chave de API fica apenas na memória e é enviada só ao provedor configurado.
+- A chave de API vai só para o provedor configurado. No desktop, pode ficar no Gerenciador de Credenciais do Windows; nunca em arquivos do app.
 - O projeto **não oferece sandbox**; execução de comandos está fora de escopo até existir isolamento demonstrado.
 - Leia o [modelo de ameaças](docs/threat-model.md) e a [política de segurança](SECURITY.md).
 
