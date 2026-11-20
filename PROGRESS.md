@@ -2,6 +2,34 @@
 
 Registro das etapas de desenvolvimento, da mais recente para a mais antiga.
 
+## 2026-11-20 — Etapa 2: interface Grafite e funcionalidades reais
+
+**Status:** concluída. O produto continua em desenvolvimento (sem acesso a arquivos, sem instalador).
+
+### Contexto
+
+A primeira UI de três painéis ficou simples demais. Troquei por uma interface no estilo de app desktop de chat, com tema claro/escuro/sistema, provedor real e uma seção de agentes com mascotes (estilo "companions"). Antes de implementar, comparei quatro direções visuais em `design-lab/temas/` (Grafite, Partitura, Palco, Console) e fiquei com **Grafite**, documentado em [DESIGN.md](DESIGN.md).
+
+### Feito
+
+- Redesenho completo: sidebar com sessões por data e busca, Home com o Orchestra, timeline com turnos dos agentes e cartão de aprovação, composer arredondado, painel de detalhes com diff, Projetos, Configurações. Fonte Inter local e ícones lucide (licenças OFL e ISC).
+- Provedor OpenAI-compatível real ([ADR 0006](docs/adr/0006-provedor-openai-compativel-com-chave-em-memoria.md)) com teste de conexão e validação da saída do modelo.
+- Seção Agentes com conversa direta e marcadores de mascote.
+- Persistência local sem a chave ([ADR 0007](docs/adr/0007-persistencia-local-antes-do-sqlite.md)); sessões interrompidas voltam como "falhou".
+- Pedido de ajuste de plano, cancelamento, apagar sessão e apagar dados locais.
+- CSP do Tauri liberando `https:` e `localhost` em `connect-src` para o provedor configurado.
+
+### Verificação
+
+- `npm run lint`, `npm run typecheck`, `npm test` (58 testes) e `npm run build`: OK.
+- Navegador (1440×900): criar projeto → sugestão → plano → aprovar → diffs → revisão; abrir diff; chat com o Orchestra; Configurações; tema claro; recarregar mantém projeto, sessão e tema.
+- `npm run tauri dev`: janela abriu com a nova UI, fonte e CSP ativas (screenshot em `docs/screenshots/`).
+- **Não testado**: chamada a um provedor real com chave. Os contratos 401, 429, timeout, rede e resposta malformada estão cobertos por testes com `fetch` simulado.
+
+### Próximo passo objetivo
+
+Guardar a chave de API no Gerenciador de Credenciais do Windows por um comando Rust (`keyring`), com testes, para não precisar digitá-la a cada abertura; depois, leitura controlada dos arquivos do projeto como contexto do Builder.
+
 ## 2026-11-20 — Etapa 1: shell desktop Tauri 2
 
 **Status:** concluída. O app ainda é protótipo (mock, sem persistência).

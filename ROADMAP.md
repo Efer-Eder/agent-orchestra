@@ -16,17 +16,28 @@ Nada aqui está pronto, exceto o que estiver marcado. Itens podem mudar de ordem
 - [x] `tauri init` com CSP restritiva e capability mínima
 - [x] CI compilando o shell em `windows-latest`
 
-## Próximo: persistência local
+## Interface Grafite e funcionalidades reais — concluído em 2026-11-20
 
-- [ ] SQLite no lado Rust (projetos, sessões, eventos) exposto por comandos Tauri específicos
+- [x] Redesenho no padrão Grafite ([DESIGN.md](DESIGN.md))
+- [x] Provedor OpenAI-compatível com tratamento de erros
+- [x] Seção Agentes com chat direto
+- [x] Persistência local (WebView) sem salvar a chave
+
+## Próximo
+
+- [ ] Chave de API no Gerenciador de Credenciais do Windows (comando Rust)
+- [ ] Ler arquivos do projeto autorizado como contexto do Builder (allowlist + negação de `.env`, chaves etc.)
+- [ ] Mascotes dos agentes e do Orchestra
+- [ ] Barra de título própria no desktop
+- [ ] SQLite no lado Rust, importando os dados do `localStorage`
 
 ## MVP v0.1.0 (critérios da especificação)
 
 - [x] App abre no Windows e permite criar projeto/sessão (em memória)
-- [ ] Persistência SQLite (projetos, sessões, eventos) que sobrevive a reinício
+- [x] Histórico sobrevive a reinício (localStorage do WebView; SQLite depois)
 - [ ] Allowlist de diretórios no lado Rust, com testes de `..`, caminhos absolutos, symlinks e junctions
 - [ ] Aplicar diffs aprovados apenas dentro do diretório autorizado (aprovação por alteração)
-- [ ] Provedor OpenAI-compatible opcional (chave no Credential Manager) com tratamento de 401, 429, timeout e rede
+- [x] Provedor OpenAI-compatible opcional com tratamento de 401, 429, timeout e rede (chave ainda só em memória)
 - [ ] Uso real do provedor separado de estimativa de custo, com preços configuráveis (moeda, unidade, data)
 - [ ] Exportar sessão em JSON/Markdown removendo segredos
 - [ ] Testes de sanitização de segredos e rejeição de ações não autorizadas
