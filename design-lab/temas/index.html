@@ -1,0 +1,1389 @@
+<!doctype html>
+<html lang="pt-BR" data-direction="grafite" data-theme="dark">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Agent Orchestra — exemplos de temática</title>
+    <link rel="stylesheet" href="/node_modules/@fontsource-variable/inter/index.css" />
+    <style>
+      /* ============ Direções ============ */
+      /* 1. Grafite — neutro quente, calmo, inspirado em apps de chat desktop */
+      [data-direction='grafite'][data-theme='light'] {
+        --app: #f5f4ef;
+        --side: #ecebe4;
+        --surface: #fff;
+        --s2: #f0eee8;
+        --s3: #e5e2d9;
+        --line: #dfdcd2;
+        --ink: #1d1c19;
+        --ink2: #4b4943;
+        --ink3: #7c796f;
+        --accent: #5a48d6;
+        --accent-soft: #ebe7ff;
+        --accent-ink: #fff;
+        --ok: #1f8a4c;
+        --warn: #a8620b;
+        --warn-soft: #fbefd9;
+        --code: #f7f6f2;
+      }
+      [data-direction='grafite'][data-theme='dark'] {
+        --app: #262624;
+        --side: #1d1d1b;
+        --surface: #2d2d2a;
+        --s2: #33332f;
+        --s3: #3c3c38;
+        --line: #3b3a37;
+        --ink: #eceae4;
+        --ink2: #c3c0b7;
+        --ink3: #95928a;
+        --accent: #8b7cff;
+        --accent-soft: #312b52;
+        --accent-ink: #15121f;
+        --ok: #5fd08f;
+        --warn: #f2b45a;
+        --warn-soft: #3e2f17;
+        --code: #1f1f1d;
+      }
+      [data-direction='grafite'] {
+        --radius: 12px;
+        --font: 'Inter Variable', 'Segoe UI', sans-serif;
+        --display: var(--font);
+        --density: 1;
+      }
+
+      /* 2. Partitura — papel creme, tinta, metais; tema de orquestra */
+      [data-direction='partitura'][data-theme='light'] {
+        --app: #f7f2e7;
+        --side: #efe7d6;
+        --surface: #fffcf5;
+        --s2: #f3ecdc;
+        --s3: #e8dec8;
+        --line: #ddd1b8;
+        --ink: #22201b;
+        --ink2: #514a3d;
+        --ink3: #857a64;
+        --accent: #a8741a;
+        --accent-soft: #f6e6c4;
+        --accent-ink: #fff;
+        --ok: #4b7a3a;
+        --warn: #9c4a1a;
+        --warn-soft: #f7dfcc;
+        --code: #f6efe0;
+      }
+      [data-direction='partitura'][data-theme='dark'] {
+        --app: #15171f;
+        --side: #10121a;
+        --surface: #1c1f2a;
+        --s2: #232736;
+        --s3: #2c3142;
+        --line: #2d3243;
+        --ink: #ece4d2;
+        --ink2: #c7bda6;
+        --ink3: #8f8774;
+        --accent: #e0b25a;
+        --accent-soft: #3a3020;
+        --accent-ink: #1a1408;
+        --ok: #9fcf7a;
+        --warn: #f0a46b;
+        --warn-soft: #3d2a1d;
+        --code: #12141c;
+      }
+      [data-direction='partitura'] {
+        --radius: 6px;
+        --font: 'Inter Variable', 'Segoe UI', sans-serif;
+        --display: 'Iowan Old Style', 'Palatino Linotype', Georgia, serif;
+        --density: 1;
+      }
+
+      /* 3. Palco — escuro primeiro, holofotes por agente, mascotes em destaque */
+      [data-direction='palco'][data-theme='light'] {
+        --app: #f4f5fb;
+        --side: #ffffff;
+        --surface: #ffffff;
+        --s2: #f0f1f8;
+        --s3: #e4e6f2;
+        --line: #e2e4ef;
+        --ink: #131528;
+        --ink2: #44475f;
+        --ink3: #7b7f98;
+        --accent: #6c4dff;
+        --accent-soft: #ece8ff;
+        --accent-ink: #fff;
+        --ok: #12a26a;
+        --warn: #c26a00;
+        --warn-soft: #fff0da;
+        --code: #f6f7fc;
+      }
+      [data-direction='palco'][data-theme='dark'] {
+        --app: #0b0b12;
+        --side: #0e0e17;
+        --surface: #15151f;
+        --s2: #1b1b28;
+        --s3: #252536;
+        --line: #232333;
+        --ink: #f1f0ff;
+        --ink2: #c3c1dc;
+        --ink3: #8a88a6;
+        --accent: #9b84ff;
+        --accent-soft: #241f45;
+        --accent-ink: #0d0a1f;
+        --ok: #4ee3a0;
+        --warn: #ffb547;
+        --warn-soft: #33260f;
+        --code: #0f0f18;
+      }
+      [data-direction='palco'] {
+        --radius: 18px;
+        --font: 'Inter Variable', 'Segoe UI', sans-serif;
+        --display: var(--font);
+        --density: 1.05;
+      }
+
+      /* 4. Console — denso, técnico, monoespaçado nos detalhes */
+      [data-direction='console'][data-theme='light'] {
+        --app: #f6f8f7;
+        --side: #eef2f0;
+        --surface: #fff;
+        --s2: #eef2f0;
+        --s3: #e1e8e4;
+        --line: #d9e1dc;
+        --ink: #101814;
+        --ink2: #3b4a42;
+        --ink3: #6c7d73;
+        --accent: #0f8f6a;
+        --accent-soft: #dcf3ea;
+        --accent-ink: #fff;
+        --ok: #0f8f6a;
+        --warn: #a86400;
+        --warn-soft: #fbedd5;
+        --code: #f1f5f3;
+      }
+      [data-direction='console'][data-theme='dark'] {
+        --app: #0f1412;
+        --side: #0b0f0d;
+        --surface: #141a17;
+        --s2: #19211d;
+        --s3: #222c27;
+        --line: #212b26;
+        --ink: #dfe9e3;
+        --ink2: #a9b8b0;
+        --ink3: #74857c;
+        --accent: #3ddc97;
+        --accent-soft: #15322a;
+        --accent-ink: #04140d;
+        --ok: #3ddc97;
+        --warn: #f5b84a;
+        --warn-soft: #33270f;
+        --code: #0b100e;
+      }
+      [data-direction='console'] {
+        --radius: 4px;
+        --font: 'Inter Variable', 'Segoe UI', sans-serif;
+        --display: 'Cascadia Code', Consolas, monospace;
+        --density: 0.88;
+      }
+
+      /* agentes */
+      :root {
+        --orchestra: #8b7cff;
+        --planner: #4fb6ff;
+        --builder: #ffb547;
+        --reviewer: #5fd08f;
+      }
+      [data-direction='partitura'] {
+        --orchestra: #e0b25a;
+        --planner: #7fa7d9;
+        --builder: #d98a5f;
+        --reviewer: #9fcf7a;
+      }
+      [data-direction='console'] {
+        --orchestra: #3ddc97;
+        --planner: #5cc8ff;
+        --builder: #f5b84a;
+        --reviewer: #c792ea;
+      }
+
+      /* ============ Base ============ */
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        font-family: 'Inter Variable', 'Segoe UI', sans-serif;
+        background: #0d0d0f;
+        color: #e8e8ea;
+        font-size: 14px;
+      }
+      .lab-bar {
+        position: sticky;
+        top: 0;
+        z-index: 10;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+        align-items: center;
+        justify-content: space-between;
+        padding: 12px 20px;
+        background: #0d0d0fee;
+        border-bottom: 1px solid #26262b;
+        backdrop-filter: blur(8px);
+      }
+      .lab-bar h1 {
+        font-size: 14px;
+        margin: 0;
+        font-weight: 600;
+      }
+      .lab-bar p {
+        margin: 2px 0 0;
+        font-size: 12px;
+        color: #9a9aa3;
+      }
+      .seg {
+        display: inline-flex;
+        background: #1b1b20;
+        border: 1px solid #2b2b31;
+        border-radius: 10px;
+        padding: 3px;
+        gap: 2px;
+      }
+      .seg button {
+        border: 0;
+        background: transparent;
+        color: #b9b9c2;
+        font: inherit;
+        font-size: 12.5px;
+        padding: 6px 12px;
+        border-radius: 7px;
+        cursor: pointer;
+      }
+      .seg button[aria-pressed='true'] {
+        background: #f1f1f4;
+        color: #111;
+        font-weight: 600;
+      }
+      .lab-desc {
+        max-width: 1320px;
+        margin: 18px auto 0;
+        padding: 0 20px;
+        display: grid;
+        grid-template-columns: 1fr auto;
+        gap: 16px;
+        align-items: end;
+      }
+      .lab-desc h2 {
+        margin: 0;
+        font-size: 22px;
+        letter-spacing: -0.02em;
+      }
+      .lab-desc p {
+        margin: 6px 0 0;
+        color: #a7a7b0;
+        max-width: 780px;
+        line-height: 1.55;
+      }
+      .chips {
+        display: flex;
+        gap: 6px;
+        flex-wrap: wrap;
+      }
+      .chips span {
+        font-size: 11.5px;
+        color: #c9c9d1;
+        border: 1px solid #2c2c33;
+        border-radius: 99px;
+        padding: 4px 9px;
+      }
+      .stage {
+        max-width: 1320px;
+        margin: 16px auto 40px;
+        padding: 0 20px;
+        overflow-x: auto;
+      }
+      .stage > * {
+        min-width: 1180px;
+      }
+      @media (max-width: 900px) {
+        .lab-desc {
+          grid-template-columns: 1fr;
+        }
+      }
+
+      /* ============ Janela do app (mockup) ============ */
+      .win {
+        font-family: var(--font);
+        background: var(--app);
+        color: var(--ink);
+        border-radius: 12px;
+        overflow: hidden;
+        border: 1px solid #303036;
+        box-shadow: 0 30px 80px #0008;
+        font-size: calc(13.5px * var(--density));
+      }
+      .titlebar {
+        height: 38px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding-left: 14px;
+        background: var(--side);
+        border-bottom: 1px solid var(--line);
+      }
+      .titlebar .t {
+        font-size: 12.5px;
+        color: var(--ink2);
+        font-weight: 500;
+      }
+      .titlebar .grow {
+        flex: 1;
+      }
+      .wc {
+        display: flex;
+        height: 100%;
+      }
+      .wc span {
+        width: 46px;
+        display: grid;
+        place-items: center;
+        color: var(--ink3);
+      }
+      .layout {
+        display: grid;
+        grid-template-columns: 264px minmax(0, 1fr) 300px;
+        height: 760px;
+      }
+      svg.i {
+        width: 16px;
+        height: 16px;
+        stroke: currentColor;
+        fill: none;
+        stroke-width: 1.8;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+        flex: none;
+      }
+
+      /* sidebar */
+      .side {
+        background: var(--side);
+        border-right: 1px solid var(--line);
+        display: flex;
+        flex-direction: column;
+        padding: 12px 10px;
+        min-height: 0;
+      }
+      .brand {
+        display: flex;
+        align-items: center;
+        gap: 9px;
+        padding: 4px 8px 14px;
+        font-family: var(--display);
+        font-weight: 650;
+        font-size: 15px;
+        letter-spacing: -0.01em;
+      }
+      .logo {
+        width: 26px;
+        height: 26px;
+        border-radius: 8px;
+        display: grid;
+        place-items: center;
+        background: var(--accent);
+        color: var(--accent-ink);
+      }
+      .nav a {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 7px 9px;
+        border-radius: 8px;
+        color: var(--ink2);
+        text-decoration: none;
+        font-size: 13.5px;
+      }
+      .nav a:hover {
+        background: var(--s2);
+      }
+      .nav a.on {
+        background: var(--s3);
+        color: var(--ink);
+        font-weight: 550;
+      }
+      .nav kbd {
+        margin-left: auto;
+        font: 11px var(--font);
+        color: var(--ink3);
+      }
+      .group {
+        margin: 16px 9px 6px;
+        font-size: 11.5px;
+        color: var(--ink3);
+        font-weight: 600;
+        display: flex;
+        justify-content: space-between;
+      }
+      .sess {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 7px 9px;
+        border-radius: 8px;
+        color: var(--ink2);
+        font-size: 13px;
+      }
+      .sess.on {
+        background: var(--s3);
+        color: var(--ink);
+      }
+      .sess .txt {
+        flex: 1;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .dot {
+        width: 7px;
+        height: 7px;
+        border-radius: 50%;
+        flex: none;
+      }
+      .side-foot {
+        margin-top: auto;
+        border-top: 1px solid var(--line);
+        padding: 10px 6px 2px;
+        display: flex;
+        align-items: center;
+        gap: 9px;
+        font-size: 13px;
+      }
+      .me {
+        width: 26px;
+        height: 26px;
+        border-radius: 50%;
+        display: grid;
+        place-items: center;
+        background: var(--accent-soft);
+        color: var(--accent);
+        font-weight: 700;
+        font-size: 12px;
+      }
+      .side-foot small {
+        color: var(--ink3);
+        display: block;
+        font-size: 11.5px;
+      }
+
+      /* main */
+      .main {
+        display: flex;
+        flex-direction: column;
+        min-width: 0;
+        min-height: 0;
+      }
+      .mhead {
+        height: 48px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 0 18px;
+        border-bottom: 1px solid var(--line);
+      }
+      .mhead h3 {
+        margin: 0;
+        font-size: 14px;
+        font-weight: 600;
+        font-family: var(--display);
+      }
+      .badge {
+        font-size: 11.5px;
+        padding: 3px 8px;
+        border-radius: 99px;
+        background: var(--warn-soft);
+        color: var(--warn);
+        font-weight: 600;
+      }
+      .mhead .grow {
+        flex: 1;
+      }
+      .iconbtn {
+        width: 30px;
+        height: 30px;
+        display: grid;
+        place-items: center;
+        border-radius: 8px;
+        color: var(--ink3);
+      }
+      .iconbtn.on {
+        background: var(--s3);
+        color: var(--ink);
+      }
+      .feed {
+        flex: 1;
+        overflow: auto;
+        padding: 22px 0 10px;
+      }
+      .col {
+        max-width: 720px;
+        margin: 0 auto;
+        padding: 0 24px;
+        display: grid;
+        gap: 16px;
+      }
+      .user {
+        justify-self: end;
+        max-width: 80%;
+        background: var(--s2);
+        border: 1px solid var(--line);
+        padding: 10px 14px;
+        border-radius: var(--radius);
+        line-height: 1.5;
+      }
+      .turn {
+        display: grid;
+        grid-template-columns: 34px 1fr;
+        gap: 12px;
+        align-items: start;
+      }
+      .turn .name {
+        font-weight: 600;
+        font-size: 13px;
+        display: flex;
+        gap: 8px;
+        align-items: baseline;
+      }
+      .turn .name small {
+        color: var(--ink3);
+        font-weight: 400;
+        font-size: 12px;
+      }
+      .turn p {
+        margin: 4px 0 0;
+        color: var(--ink2);
+        line-height: 1.55;
+      }
+      .step {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        margin-top: 8px;
+        color: var(--ink3);
+        font-size: 12.5px;
+      }
+      .card {
+        margin-top: 10px;
+        background: var(--surface);
+        border: 1px solid var(--line);
+        border-radius: var(--radius);
+        overflow: hidden;
+      }
+      .card ol {
+        margin: 0;
+        padding: 12px 16px 12px 34px;
+        display: grid;
+        gap: 6px;
+        color: var(--ink);
+        line-height: 1.45;
+      }
+      .card ol li::marker {
+        color: var(--ink3);
+        font-variant-numeric: tabular-nums;
+      }
+      .approve {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+        padding: 10px 12px;
+        border-top: 1px solid var(--line);
+        background: var(--s2);
+      }
+      .approve .q {
+        flex: 1;
+        font-size: 12.5px;
+        color: var(--ink2);
+      }
+      .btn {
+        border: 1px solid var(--line);
+        background: var(--surface);
+        color: var(--ink);
+        padding: 6px 12px;
+        border-radius: calc(var(--radius) - 4px);
+        font: inherit;
+        font-size: 12.5px;
+        font-weight: 550;
+      }
+      .btn.pri {
+        background: var(--accent);
+        color: var(--accent-ink);
+        border-color: transparent;
+      }
+
+      /* avatar / mascote placeholder */
+      .av {
+        width: 34px;
+        height: 34px;
+        border-radius: 50%;
+        display: grid;
+        place-items: center;
+        position: relative;
+        color: #fff;
+        background: radial-gradient(
+          circle at 30% 25%,
+          color-mix(in srgb, var(--h) 75%, #fff),
+          var(--h) 55%,
+          color-mix(in srgb, var(--h) 55%, #000)
+        );
+      }
+      .av svg {
+        width: 17px;
+        height: 17px;
+        stroke: #fff;
+      }
+      [data-direction='palco'] .av {
+        box-shadow:
+          0 0 0 2px var(--app),
+          0 0 0 3.5px color-mix(in srgb, var(--h) 70%, transparent),
+          0 0 18px color-mix(in srgb, var(--h) 45%, transparent);
+      }
+      [data-direction='console'] .av {
+        border-radius: 6px;
+      }
+      [data-direction='partitura'] .av {
+        box-shadow: inset 0 0 0 1.5px color-mix(in srgb, var(--h) 40%, #fff);
+      }
+
+      /* composer */
+      .composer {
+        padding: 10px 24px 18px;
+      }
+      .box {
+        max-width: 720px;
+        margin: 0 auto;
+        background: var(--surface);
+        border: 1px solid var(--line);
+        border-radius: calc(var(--radius) + 6px);
+        padding: 12px 12px 10px 16px;
+        box-shadow:
+          0 1px 0 #0000000a,
+          0 8px 24px #0000000d;
+      }
+      .box .ph {
+        color: var(--ink3);
+        min-height: 40px;
+      }
+      .box .row {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+      .chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 12.5px;
+        padding: 4px 9px 4px 4px;
+        border-radius: 99px;
+        background: var(--s2);
+        color: var(--ink2);
+      }
+      .chip .av {
+        width: 20px;
+        height: 20px;
+      }
+      .chip .av svg {
+        width: 11px;
+        height: 11px;
+      }
+      .send {
+        margin-left: auto;
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        display: grid;
+        place-items: center;
+        background: var(--accent);
+        color: var(--accent-ink);
+      }
+      .meta {
+        max-width: 720px;
+        margin: 8px auto 0;
+        display: flex;
+        justify-content: space-between;
+        color: var(--ink3);
+        font-size: 12px;
+      }
+
+      /* right panel */
+      .right {
+        border-left: 1px solid var(--line);
+        background: var(--side);
+        overflow: auto;
+        padding: 6px 0;
+      }
+      .sec {
+        padding: 12px 16px;
+        border-bottom: 1px solid var(--line);
+      }
+      .sec h4 {
+        margin: 0 0 10px;
+        font-size: 12px;
+        color: var(--ink3);
+        font-weight: 600;
+        letter-spacing: 0.01em;
+      }
+      .kv {
+        display: flex;
+        align-items: center;
+        gap: 9px;
+        padding: 5px 0;
+        color: var(--ink2);
+        font-size: 13px;
+      }
+      .kv b {
+        margin-left: auto;
+        font-weight: 500;
+        color: var(--ink);
+        font-size: 12.5px;
+      }
+      .bar {
+        height: 6px;
+        border-radius: 99px;
+        background: var(--s3);
+        overflow: hidden;
+        margin-top: 4px;
+      }
+      .bar i {
+        display: block;
+        height: 100%;
+        width: 21%;
+        background: var(--accent);
+      }
+      .file {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 5px 0;
+        font-size: 12.5px;
+        color: var(--ink2);
+      }
+      .file code {
+        font-family: 'Cascadia Code', Consolas, monospace;
+        font-size: 12px;
+        flex: 1;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .add {
+        color: var(--ok);
+      }
+      .del {
+        color: #e5534b;
+      }
+      .agent-row {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 6px 0;
+        font-size: 13px;
+      }
+      .agent-row .av {
+        width: 26px;
+        height: 26px;
+      }
+      .agent-row .av svg {
+        width: 13px;
+        height: 13px;
+      }
+      .agent-row small {
+        margin-left: auto;
+        color: var(--ink3);
+        font-size: 12px;
+      }
+
+      /* galeria de agentes */
+      .gallery {
+        margin-top: 18px;
+        font-family: var(--font);
+        background: var(--app);
+        color: var(--ink);
+        border-radius: 12px;
+        border: 1px solid #303036;
+        padding: 22px;
+      }
+      .gallery h3 {
+        margin: 0;
+        font-family: var(--display);
+        font-size: 18px;
+      }
+      .gallery > p {
+        margin: 4px 0 16px;
+        color: var(--ink3);
+      }
+      .cards {
+        display: grid;
+        grid-template-columns: 1.4fr 1fr 1fr 1fr;
+        gap: 14px;
+      }
+      .ag {
+        background: var(--surface);
+        border: 1px solid var(--line);
+        border-radius: var(--radius);
+        padding: 16px;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        position: relative;
+        overflow: hidden;
+      }
+      .ag .stagebg {
+        height: 150px;
+        border-radius: calc(var(--radius) - 4px);
+        display: grid;
+        place-items: center;
+        position: relative;
+        background:
+          radial-gradient(
+            ellipse at 50% 110%,
+            color-mix(in srgb, var(--h) 35%, transparent),
+            transparent 70%
+          ),
+          var(--s2);
+      }
+      [data-direction='palco'] .ag .stagebg {
+        background:
+          radial-gradient(
+            ellipse at 50% 0%,
+            color-mix(in srgb, var(--h) 45%, transparent),
+            transparent 65%
+          ),
+          radial-gradient(
+            ellipse at 50% 120%,
+            color-mix(in srgb, var(--h) 30%, transparent),
+            transparent 60%
+          ),
+          var(--s2);
+      }
+      [data-direction='partitura'] .ag .stagebg {
+        background:
+          repeating-linear-gradient(
+            to bottom,
+            transparent 0 17px,
+            color-mix(in srgb, var(--ink3) 22%, transparent) 17px 18px
+          ),
+          var(--s2);
+      }
+      [data-direction='console'] .ag .stagebg {
+        background:
+          linear-gradient(color-mix(in srgb, var(--h) 12%, transparent), transparent), var(--code);
+      }
+      .ag .big {
+        width: 92px;
+        height: 92px;
+      }
+      .ag .big svg {
+        width: 40px;
+        height: 40px;
+        stroke-width: 1.5;
+      }
+      .ag.lead .big {
+        width: 112px;
+        height: 112px;
+      }
+      .ag .soon {
+        position: absolute;
+        top: 8px;
+        right: 8px;
+        font-size: 10.5px;
+        background: var(--surface);
+        color: var(--ink3);
+        border: 1px solid var(--line);
+        border-radius: 99px;
+        padding: 2px 7px;
+      }
+      .ag h5 {
+        margin: 0;
+        font-size: 15px;
+        font-family: var(--display);
+      }
+      .ag p {
+        margin: 0;
+        color: var(--ink2);
+        font-size: 12.5px;
+        line-height: 1.5;
+      }
+      .ag .talk {
+        margin-top: auto;
+        display: flex;
+        gap: 8px;
+      }
+      [data-direction='palco'] .big {
+        animation: breathe 3.2s ease-in-out infinite;
+      }
+      @keyframes breathe {
+        50% {
+          transform: scale(1.05);
+        }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        .big {
+          animation: none !important;
+        }
+      }
+
+      /* detalhes por direção */
+      [data-direction='partitura'] .mhead h3,
+      [data-direction='partitura'] .brand {
+        font-weight: 600;
+      }
+      [data-direction='partitura'] .user {
+        background: transparent;
+        border-style: dashed;
+      }
+      [data-direction='console'] .user {
+        font-family: 'Cascadia Code', Consolas, monospace;
+        font-size: 12.5px;
+      }
+      [data-direction='console'] .nav a,
+      [data-direction='console'] .sess {
+        padding: 5px 8px;
+      }
+      [data-direction='console'] .group {
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        font-size: 10.5px;
+      }
+      [data-direction='palco'] .box {
+        box-shadow:
+          0 0 0 1px color-mix(in srgb, var(--accent) 25%, transparent),
+          0 10px 40px color-mix(in srgb, var(--accent) 18%, transparent);
+      }
+      [data-direction='palco'] .main {
+        background: radial-gradient(
+          ellipse 60% 40% at 50% 0%,
+          color-mix(in srgb, var(--accent) 10%, transparent),
+          transparent
+        );
+      }
+    </style>
+  </head>
+  <body>
+    <div class="lab-bar">
+      <div>
+        <h1>Agent Orchestra · exemplos de temática</h1>
+        <p>Protótipo estático com dados fictícios. Mascotes são marcadores até serem desenhados.</p>
+      </div>
+      <div style="display: flex; gap: 10px; flex-wrap: wrap">
+        <div class="seg" id="dirs" role="group" aria-label="Direção">
+          <button data-v="grafite">1 · Grafite</button>
+          <button data-v="partitura">2 · Partitura</button>
+          <button data-v="palco">3 · Palco</button>
+          <button data-v="console">4 · Console</button>
+        </div>
+        <div class="seg" id="themes" role="group" aria-label="Tema">
+          <button data-v="light">Claro</button>
+          <button data-v="dark">Escuro</button>
+          <button data-v="system">Sistema</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="lab-desc">
+      <div>
+        <h2 id="d-title"></h2>
+        <p id="d-text"></p>
+      </div>
+      <div class="chips" id="d-chips"></div>
+    </div>
+
+    <div class="stage">
+      <div class="win">
+        <div class="titlebar">
+          <span class="logo" style="width: 18px; height: 18px; border-radius: 5px"
+            ><svg class="i" style="width: 11px; height: 11px" viewBox="0 0 24 24">
+              <path d="M9 18V5l12-2v13" />
+              <circle cx="6" cy="18" r="3" />
+              <circle cx="18" cy="16" r="3" /></svg
+          ></span>
+          <span class="t">Agent Orchestra</span>
+          <span class="grow"></span>
+          <div class="wc">
+            <span
+              ><svg class="i" viewBox="0 0 24 24"><path d="M5 12h14" /></svg
+            ></span>
+            <span
+              ><svg class="i" viewBox="0 0 24 24">
+                <rect x="5" y="5" width="14" height="14" rx="1" /></svg
+            ></span>
+            <span
+              ><svg class="i" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18" /></svg
+            ></span>
+          </div>
+        </div>
+        <div class="layout">
+          <aside class="side">
+            <div class="brand">
+              <span class="logo"
+                ><svg class="i" viewBox="0 0 24 24">
+                  <path d="M9 18V5l12-2v13" />
+                  <circle cx="6" cy="18" r="3" />
+                  <circle cx="18" cy="16" r="3" /></svg></span
+              >Agent Orchestra
+            </div>
+            <nav class="nav">
+              <a
+                ><svg class="i" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14" /></svg>Nova
+                sessão<kbd>Ctrl N</kbd></a
+              >
+              <a
+                ><svg class="i" viewBox="0 0 24 24">
+                  <circle cx="11" cy="11" r="7" />
+                  <path d="m20 20-3.5-3.5" /></svg
+                >Procurar<kbd>Ctrl K</kbd></a
+              >
+              <a
+                ><svg class="i" viewBox="0 0 24 24">
+                  <circle cx="9" cy="8" r="3.5" />
+                  <path d="M2.5 20a6.5 6.5 0 0 1 13 0" />
+                  <circle cx="17.5" cy="9" r="2.5" />
+                  <path d="M16 14.2a5 5 0 0 1 5.5 5.8" /></svg
+                >Agentes</a
+              >
+              <a
+                ><svg class="i" viewBox="0 0 24 24">
+                  <path
+                    d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"
+                  /></svg
+                >Projetos</a
+              >
+            </nav>
+            <div class="group"><span>Hoje</span></div>
+            <div class="sess on">
+              <span class="dot" style="background: var(--warn)"></span
+              ><span class="txt">Login com OAuth no painel</span>
+            </div>
+            <div class="sess">
+              <span class="dot" style="background: var(--ok)"></span
+              ><span class="txt">Refatorar API de pagamentos</span>
+            </div>
+            <div class="sess">
+              <span class="dot" style="background: var(--accent)"></span
+              ><span class="txt">Testes do módulo de faturas</span>
+            </div>
+            <div class="group"><span>Ontem</span></div>
+            <div class="sess">
+              <span class="dot" style="background: var(--ok)"></span
+              ><span class="txt">Documentar endpoints públicos</span>
+            </div>
+            <div class="sess">
+              <span class="dot" style="background: var(--ink3)"></span
+              ><span class="txt">Migrar CI para Node 24</span>
+            </div>
+            <div class="group"><span>18 de nov.</span></div>
+            <div class="sess">
+              <span class="dot" style="background: var(--ok)"></span
+              ><span class="txt">Corrigir paginação da busca</span>
+            </div>
+            <div class="side-foot">
+              <span class="me">M</span>
+              <div>meu-saas<small>Mock offline</small></div>
+            </div>
+          </aside>
+
+          <section class="main">
+            <div class="mhead">
+              <h3>Login com OAuth no painel</h3>
+              <span class="badge">Aguardando aprovação</span>
+              <span class="grow"></span>
+              <span class="iconbtn"
+                ><svg class="i" viewBox="0 0 24 24"><path d="m4 17 6-6-6-6M12 19h8" /></svg
+              ></span>
+              <span class="iconbtn on"
+                ><svg class="i" viewBox="0 0 24 24">
+                  <rect x="3" y="4" width="18" height="16" rx="2" />
+                  <path d="M15 4v16" /></svg
+              ></span>
+            </div>
+            <div class="feed">
+              <div class="col">
+                <div class="user">
+                  Adicionar login com Google no painel admin. Manter o login por senha. Cobrir com
+                  testes.
+                </div>
+
+                <div class="turn">
+                  <span class="av" style="--h: var(--orchestra)"
+                    ><svg class="i" viewBox="0 0 24 24">
+                      <path d="M9 18V5l12-2v13" />
+                      <circle cx="6" cy="18" r="3" />
+                      <circle cx="18" cy="16" r="3" /></svg
+                  ></span>
+                  <div>
+                    <div class="name">Orchestra <small>maestro</small></div>
+                    <p>
+                      Entendi. Vou pedir um plano ao Planner. Nada será alterado antes da sua
+                      aprovação.
+                    </p>
+                  </div>
+                </div>
+
+                <div class="turn">
+                  <span class="av" style="--h: var(--planner)"
+                    ><svg class="i" viewBox="0 0 24 24">
+                      <path d="M9 6h11M9 12h11M9 18h11M4 6h.01M4 12h.01M4 18h.01" /></svg
+                  ></span>
+                  <div>
+                    <div class="name">Planner <small>plano em 3 etapas · 4 s</small></div>
+                    <div class="card">
+                      <ol>
+                        <li>Configurar provedor OAuth do Google com variáveis de ambiente.</li>
+                        <li>Adicionar botão "Entrar com Google" mantendo o login por senha.</li>
+                        <li>Criar testes do fluxo de callback e de conta inexistente.</li>
+                      </ol>
+                      <div class="approve">
+                        <span class="q"
+                          >Aprovar o plano libera o Builder para <b>propor</b> diffs.</span
+                        >
+                        <button class="btn">Rejeitar</button>
+                        <button class="btn pri">Aprovar plano</button>
+                      </div>
+                    </div>
+                    <span class="step"
+                      ><svg class="i" style="width: 13px" viewBox="0 0 24 24">
+                        <path d="m9 18 6-6-6-6" /></svg
+                      >Leu 6 arquivos do projeto</span
+                    >
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="composer">
+              <div class="box">
+                <div class="ph">Responda ao Orchestra ou peça um ajuste no plano…</div>
+                <div class="row">
+                  <span class="iconbtn"
+                    ><svg class="i" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14" /></svg
+                  ></span>
+                  <span class="chip"
+                    ><span class="av" style="--h: var(--orchestra)"
+                      ><svg class="i" viewBox="0 0 24 24">
+                        <path d="M9 18V5l12-2v13" />
+                        <circle cx="6" cy="18" r="3" />
+                        <circle cx="18" cy="16" r="3" /></svg></span
+                    >Orchestra</span
+                  >
+                  <span class="send"
+                    ><svg class="i" viewBox="0 0 24 24"><path d="M12 19V5M5 12l7-7 7 7" /></svg
+                  ></span>
+                </div>
+              </div>
+              <div class="meta">
+                <span>Mock offline · gpt-compatível desligado</span><span>Aprovação manual</span>
+              </div>
+            </div>
+          </section>
+
+          <aside class="right">
+            <div class="sec">
+              <h4>Ambiente</h4>
+              <div class="kv">
+                <svg class="i" viewBox="0 0 24 24">
+                  <path
+                    d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"
+                  /></svg
+                >meu-saas<b>C:\dev\meu-saas</b>
+              </div>
+              <div class="kv">
+                <svg class="i" viewBox="0 0 24 24">
+                  <circle cx="6" cy="6" r="2" />
+                  <circle cx="6" cy="18" r="2" />
+                  <circle cx="18" cy="9" r="2" />
+                  <path d="M6 8v8M18 11c0 4-6 3-6 7" /></svg
+                >Branch<b>main</b>
+              </div>
+              <div class="kv">
+                <svg class="i" viewBox="0 0 24 24">
+                  <rect x="4" y="4" width="16" height="16" rx="3" />
+                  <path d="M9 9h6v6H9z" /></svg
+                >Provedor<b>Mock offline</b>
+              </div>
+            </div>
+            <div class="sec">
+              <h4>Contexto</h4>
+              <div class="kv">Tokens usados<b>21%</b></div>
+              <div class="bar"><i></i></div>
+            </div>
+            <div class="sec">
+              <h4>Alterações propostas</h4>
+              <div class="file">
+                <svg class="i" viewBox="0 0 24 24">
+                  <path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z" />
+                  <path d="M14 3v6h6" /></svg
+                ><code>src/auth/google.ts</code><span class="add">+48</span>
+              </div>
+              <div class="file">
+                <svg class="i" viewBox="0 0 24 24">
+                  <path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z" />
+                  <path d="M14 3v6h6" /></svg
+                ><code>src/pages/Login.tsx</code><span class="add">+12</span>
+                <span class="del">−3</span>
+              </div>
+              <div class="file" style="color: var(--ink3)">Aguardando aprovação do plano</div>
+            </div>
+            <div class="sec">
+              <h4>Agentes nesta sessão</h4>
+              <div class="agent-row">
+                <span class="av" style="--h: var(--planner)"
+                  ><svg class="i" viewBox="0 0 24 24">
+                    <path d="M9 6h11M9 12h11M9 18h11M4 6h.01M4 12h.01M4 18h.01" /></svg></span
+                >Planner<small>concluiu</small>
+              </div>
+              <div class="agent-row">
+                <span class="av" style="--h: var(--builder)"
+                  ><svg class="i" viewBox="0 0 24 24">
+                    <path
+                      d="M14.7 6.3a4 4 0 0 0-5.4 5.4L3 18l3 3 6.3-6.3a4 4 0 0 0 5.4-5.4l-2.6 2.6-2.4-.6-.6-2.4z"
+                    /></svg></span
+                >Builder<small>aguardando</small>
+              </div>
+              <div class="agent-row">
+                <span class="av" style="--h: var(--reviewer)"
+                  ><svg class="i" viewBox="0 0 24 24">
+                    <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z" />
+                    <circle cx="12" cy="12" r="3" /></svg></span
+                >Reviewer<small>aguardando</small>
+              </div>
+            </div>
+          </aside>
+        </div>
+      </div>
+
+      <div class="gallery">
+        <h3>Agentes</h3>
+        <p>
+          Converse direto com cada agente. Os mascotes serão desenhados depois — aqui ficam os
+          espaços reservados.
+        </p>
+        <div class="cards">
+          <div class="ag lead" style="--h: var(--orchestra)">
+            <span class="soon">mascote em breve</span>
+            <div class="stagebg">
+              <span class="av big"
+                ><svg class="i" viewBox="0 0 24 24">
+                  <path d="M9 18V5l12-2v13" />
+                  <circle cx="6" cy="18" r="3" />
+                  <circle cx="18" cy="16" r="3" /></svg
+              ></span>
+            </div>
+            <h5>Orchestra</h5>
+            <p>
+              O maestro. Recebe seu pedido, chama os outros agentes na ordem certa e só segue com a
+              sua aprovação.
+            </p>
+            <div class="talk">
+              <button class="btn pri">Conversar</button><button class="btn">Perfil</button>
+            </div>
+          </div>
+          <div class="ag" style="--h: var(--planner)">
+            <span class="soon">mascote em breve</span>
+            <div class="stagebg">
+              <span class="av big"
+                ><svg class="i" viewBox="0 0 24 24">
+                  <path d="M9 6h11M9 12h11M9 18h11M4 6h.01M4 12h.01M4 18h.01" /></svg
+              ></span>
+            </div>
+            <h5>Planner</h5>
+            <p>Transforma ideias em tarefas pequenas e verificáveis.</p>
+            <div class="talk"><button class="btn">Conversar</button></div>
+          </div>
+          <div class="ag" style="--h: var(--builder)">
+            <span class="soon">mascote em breve</span>
+            <div class="stagebg">
+              <span class="av big"
+                ><svg class="i" viewBox="0 0 24 24">
+                  <path
+                    d="M14.7 6.3a4 4 0 0 0-5.4 5.4L3 18l3 3 6.3-6.3a4 4 0 0 0 5.4-5.4l-2.6 2.6-2.4-.6-.6-2.4z"
+                  /></svg
+              ></span>
+            </div>
+            <h5>Builder</h5>
+            <p>Propõe as alterações no código. Nunca aplica sozinho.</p>
+            <div class="talk"><button class="btn">Conversar</button></div>
+          </div>
+          <div class="ag" style="--h: var(--reviewer)">
+            <span class="soon">mascote em breve</span>
+            <div class="stagebg">
+              <span class="av big"
+                ><svg class="i" viewBox="0 0 24 24">
+                  <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z" />
+                  <circle cx="12" cy="12" r="3" /></svg
+              ></span>
+            </div>
+            <h5>Reviewer</h5>
+            <p>Confere tudo antes de chegar até você e aponta riscos.</p>
+            <div class="talk"><button class="btn">Conversar</button></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      const DIRS = {
+        grafite: {
+          title: '1 · Grafite',
+          text: 'Neutro quente, calmo e familiar — no padrão familiar de apps desktop de chat. Destaque violeta próprio do projeto. Melhor para uso longo e para não competir com os mascotes.',
+          chips: ['Inter', 'cantos 12px', 'neutro quente', 'violeta'],
+        },
+        partitura: {
+          title: '2 · Partitura',
+          text: 'Tema de orquestra: papel creme e tinta no claro, azul-noite e metais dourados no escuro. Títulos com serifa, linhas de pauta discretas no palco dos agentes. Mais identidade, um pouco mais "editorial".',
+          chips: ['serifa nos títulos', 'cantos 6px', 'creme / azul-noite', 'dourado'],
+        },
+        palco: {
+          title: '3 · Palco',
+          text: 'Escuro primeiro, com holofotes na cor de cada agente e mascotes em destaque, no espírito dos companions do Grok. Cantos generosos, brilho suave no composer. Mais chamativo e "produto de vitrine".',
+          chips: ['escuro primeiro', 'cantos 18px', 'holofotes por agente', 'mascote respira'],
+        },
+        console: {
+          title: '4 · Console',
+          text: 'Ferramenta técnica e densa: mais informação por tela, detalhes monoespaçados, verde-terminal. Ótimo para quem vive no terminal, menos acolhedor para os mascotes.',
+          chips: ['denso', 'cantos 4px', 'mono nos títulos', 'verde'],
+        },
+      };
+      const html = document.documentElement;
+      const params = new URLSearchParams(location.search);
+      let dir = DIRS[params.get('d')] ? params.get('d') : 'grafite';
+      let theme = ['light', 'dark', 'system'].includes(params.get('t'))
+        ? params.get('t')
+        : 'system';
+      const mq = matchMedia('(prefers-color-scheme: dark)');
+      function render() {
+        html.dataset.direction = dir;
+        html.dataset.theme = theme === 'system' ? (mq.matches ? 'dark' : 'light') : theme;
+        for (const b of document.querySelectorAll('#dirs button'))
+          b.setAttribute('aria-pressed', b.dataset.v === dir);
+        for (const b of document.querySelectorAll('#themes button'))
+          b.setAttribute('aria-pressed', b.dataset.v === theme);
+        const d = DIRS[dir];
+        document.getElementById('d-title').textContent = d.title;
+        document.getElementById('d-text').textContent = d.text;
+        document.getElementById('d-chips').innerHTML = d.chips
+          .map((c) => `<span>${c}</span>`)
+          .join('');
+        history.replaceState(null, '', `?d=${dir}&t=${theme}`);
+      }
+      document.getElementById('dirs').onclick = (e) => {
+        if (e.target.dataset.v) {
+          dir = e.target.dataset.v;
+          render();
+        }
+      };
+      document.getElementById('themes').onclick = (e) => {
+        if (e.target.dataset.v) {
+          theme = e.target.dataset.v;
+          render();
+        }
+      };
+      mq.addEventListener('change', render);
+      render();
+    </script>
+  </body>
+</html>
