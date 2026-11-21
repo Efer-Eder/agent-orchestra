@@ -1,0 +1,52 @@
+name: Bug
+description: Algo não funciona como deveria / Something is not working
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Não cole chaves de API, tokens nem conteúdo privado do seu projeto.
+        Do not paste API keys, tokens or private project content.
+        Vulnerabilidades: use o relato privado em Security, não uma issue pública.
+  - type: textarea
+    id: what
+    attributes:
+      label: O que aconteceu / What happened
+      description: E o que você esperava. / And what you expected.
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Como reproduzir / Steps to reproduce
+      placeholder: |
+        1. ...
+        2. ...
+    validations:
+      required: true
+  - type: dropdown
+    id: where
+    attributes:
+      label: Onde / Where
+      options:
+        - App desktop (Windows)
+        - Versão web / Web version
+    validations:
+      required: true
+  - type: dropdown
+    id: provider
+    attributes:
+      label: Provedor / Provider
+      options:
+        - Demonstração / Demo
+        - OpenAI-compatível / OpenAI-compatible
+  - type: input
+    id: version
+    attributes:
+      label: Versão / Version
+      placeholder: 0.1.0-alpha.1
+  - type: textarea
+    id: logs
+    attributes:
+      label: Mensagem de erro / Error message
+      render: text

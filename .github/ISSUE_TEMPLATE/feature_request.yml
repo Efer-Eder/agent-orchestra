@@ -1,0 +1,22 @@
+name: Ideia / Feature request
+description: Sugira uma melhoria / Suggest an improvement
+labels: [enhancement]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problema / Problem
+      description: O que fica difícil hoje? / What is hard today?
+    validations:
+      required: true
+  - type: textarea
+    id: idea
+    attributes:
+      label: Proposta / Proposal
+    validations:
+      required: true
+  - type: textarea
+    id: safety
+    attributes:
+      label: Segurança / Safety
+      description: A ideia lê ou escreve arquivos, roda comandos ou envia dados? / Does it read or write files, run commands or send data?
