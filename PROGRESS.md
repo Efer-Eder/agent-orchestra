@@ -2,6 +2,22 @@
 
 Registro das etapas de desenvolvimento, da mais recente para a mais antiga.
 
+## 2026-11-21 — Etapa 8: auditoria e alpha 0.1.0-alpha.1
+
+**Status:** concluída localmente, sem envio ao GitHub. Detalhes em [DEVELOPMENT_REPORT.md](DEVELOPMENT_REPORT.md).
+
+- Auditoria das 12 perguntas funcionais, com evidência. Nenhum P0; dois P1 corrigidos (o Reviewer não via o pedido nem o plano; faltava a aprovação final).
+- Aprovação humana final depois da revisão (`awaiting_final_approval`).
+- Provedor: nova tentativa em falhas passageiras (até 2, cancelável), modelo por agente e teste de contrato contra um servidor HTTP local.
+- Observabilidade: registro de cada passo (modelo, duração, tokens reais ou sintéticos, ferramentas, erro) na conversa e no painel; custo só como estimativa a partir de preços informados.
+- Octo: regendo, revisando com lupa, empilhando cubos, reverência, apontando o erro e cochilo por inatividade. Anima sempre (decisão registrada no DESIGN.md).
+- Formulários de issue, checklist de PR, "Limitações conhecidas" nos READMEs e guia de instalação no Windows (instalador sem assinatura).
+- Testes: 116 em TypeScript, 10 em Rust. `npx tauri build` gerou o instalador 0.1.0-alpha.1 (2,52 MiB) e o executável abriu sem servidor de desenvolvimento.
+
+### Próximo passo objetivo
+
+Rodada registrada com um provedor real e, em seguida, chamadas HTTP pelo lado Rust.
+
 ## 2026-11-20 — Etapa 7: o Builder lê os arquivos do projeto
 
 **Status:** concluída no desktop Windows ([ADR 0009](docs/adr/0009-leitura-de-arquivos-do-projeto.md)).
