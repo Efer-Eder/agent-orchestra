@@ -5,6 +5,7 @@ import type { ChatMessage, Session } from '../domain/types.ts';
 import { defaultIdFactory } from '../domain/ids.ts';
 import type { Locale } from '../domain/locale.ts';
 import {
+  approveFinal,
   approvePlan,
   cancelSession,
   createProject,
@@ -247,6 +248,8 @@ export function useOrchestra(locale: Locale, t: Messages) {
     [save, runSteps, provider, projectRoot, projectFiles, localized],
   );
 
+  const acceptFinal = useCallback((session: Session) => save(approveFinal(session)), [save]);
+
   const reject = useCallback(
     (session: Session, reason: string) => save(rejectPlan(session, reason)),
     [save],
@@ -376,6 +379,7 @@ export function useOrchestra(locale: Locale, t: Messages) {
     addProject,
     startSession,
     approve,
+    acceptFinal,
     reject,
     requestAdjustment,
     cancel,

@@ -88,6 +88,7 @@ export default function App() {
         rightOpen={rightOpen}
         onToggleRight={() => setRightOpen((v) => !v)}
         onApprove={() => o.approve(session)}
+        onApproveFinal={() => o.acceptFinal(session)}
         onReject={(r) => o.reject(session, r)}
         onAdjust={(note) => o.requestAdjustment(session, note)}
         onCancel={() => o.cancel(session)}

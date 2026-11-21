@@ -29,6 +29,7 @@ interface Props {
   rightOpen: boolean;
   onToggleRight: () => void;
   onApprove: () => void;
+  onApproveFinal: () => void;
   onReject: (reason: string) => void;
   onAdjust: (note: string) => string | null;
   onCancel: () => void;
@@ -246,6 +247,70 @@ function PlanCard({
   );
 }
 
+function FinalCard({
+  session,
+  onAccept,
+  onReject,
+}: {
+  session: Session;
+  onAccept: () => void;
+  onReject: (reason: string) => void;
+}) {
+  const { t } = useI18n();
+  const [rejecting, setRejecting] = useState(false);
+  const [reason, setReason] = useState('');
+  const asksChanges = session.review?.verdict === 'request_changes';
+  return (
+    <div
+      role="region"
+      aria-label={t.session.finalAria}
+      className="ml-[46px] animate-fade-up overflow-hidden rounded-xl border border-warn/40 bg-surface"
+    >
+      <div className="px-4 py-3">
+        <p className="text-[14px] font-semibold text-ink">{t.session.finalTitle}</p>
+        <p className="mt-1 text-[12.5px] leading-relaxed text-ink-3">
+          {asksChanges ? t.session.finalHintChanges : t.session.finalHint}
+        </p>
+      </div>
+      <div className="border-t border-line bg-surface-2 px-3 py-2.5">
+        {rejecting ? (
+          <form
+            className="flex flex-wrap items-center gap-2"
+            onSubmit={(e) => {
+              e.preventDefault();
+              onReject(reason);
+            }}
+          >
+            <input
+              autoFocus
+              value={reason}
+              onChange={(e) => setReason(e.target.value)}
+              placeholder={t.session.reasonPlaceholder}
+              aria-label={t.session.reasonAria}
+              className="h-8 min-w-0 flex-1 rounded-lg border border-line bg-surface px-2.5 text-[13px] focus:border-accent focus:outline-none"
+            />
+            <Button size="sm" variant="ghost" onClick={() => setRejecting(false)}>
+              {t.common.back}
+            </Button>
+            <Button size="sm" variant="danger" type="submit">
+              {t.session.confirmReject}
+            </Button>
+          </form>
+        ) : (
+          <div className="flex flex-wrap items-center justify-end gap-2">
+            <Button size="sm" onClick={() => setRejecting(true)}>
+              {t.session.reject}
+            </Button>
+            <Button size="sm" variant="primary" onClick={onAccept}>
+              {t.session.accept}
+            </Button>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 function renderEvent(ev: TimelineEvent, props: Props, t: Messages, time: (iso: string) => string) {
   const { session } = props;
   switch (ev.kind) {
@@ -327,6 +392,12 @@ function renderEvent(ev: TimelineEvent, props: Props, t: Messages, time: (iso: s
           )}
         </AgentTurn>
       );
+    case 'final_approval':
+      return (
+        <SystemLine key={ev.id} icon={<CircleCheck size={14} className="text-ok" />}>
+          {t.session.finalApproved} · {time(ev.at)}
+        </SystemLine>
+      );
     case 'cancelled':
       return (
         <SystemLine key={ev.id} icon={<CircleX size={14} />}>
@@ -366,7 +437,8 @@ export function SessionView(props: Props) {
     if (el) el.scrollTo({ top: el.scrollHeight, behavior: 'smooth' });
   }, [session.events.length, busy]);
 
-  const awaiting = session.status === 'awaiting_approval';
+  const awaitingFinal = session.status === 'awaiting_final_approval';
+  const awaiting = session.status === 'awaiting_approval' || awaitingFinal;
   const terminal = ['completed', 'rejected', 'cancelled', 'failed'].includes(session.status);
 
   return (
@@ -402,6 +474,13 @@ export function SessionView(props: Props) {
             {t.session.orchestraIntro}
           </AgentTurn>
           {session.events.slice(1).map((ev) => renderEvent(ev, props, t, time))}
+          {awaitingFinal && !busy && (
+            <FinalCard
+              session={session}
+              onAccept={props.onApproveFinal}
+              onReject={props.onReject}
+            />
+          )}
           {working && (
             <AgentTurn agentId={working} meta={t.session.working} working>
               <div className="grid gap-2 pt-1" aria-label={t.common.loading}>
