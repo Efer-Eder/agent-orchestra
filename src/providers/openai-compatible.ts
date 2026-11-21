@@ -170,7 +170,7 @@ Reply ONLY with JSON in this shape: {"changes": [{"path": string, "kind": "creat
 }
 
 function reviewerSystem(locale: Locale): string {
-  return `You are the Reviewer of Agent Orchestra. Review the proposed changes: risks, bugs, security and missing tests. ${safety(locale)}
+  return `You are the Reviewer of Agent Orchestra. Check whether the proposed changes actually fulfil the original request and the approved plan, then look for risks, bugs, security problems and missing tests. ${safety(locale)}
 Reply ONLY with JSON in this shape: {"verdict": "approve" | "request_changes", "comments": [string]}`;
 }
 
@@ -302,8 +302,19 @@ export function createOpenAICompatibleProvider(config: OpenAICompatibleConfig): 
       structured(plannerSystem(locale), plannerInput(requestText, tree), parsePlan, signal),
     build: (plan, signal, files): Promise<ProviderResult<ProposedChange[]>> =>
       structured(builderSystem(locale), builderInput(plan, files), parseChanges, signal),
-    review: (changes, signal): Promise<ProviderResult<Review>> =>
-      structured(reviewerSystem(locale), JSON.stringify(changes), parseReview, signal),
+    review: (changes, signal, context): Promise<ProviderResult<Review>> =>
+      structured(
+        reviewerSystem(locale),
+        JSON.stringify({
+          request: context?.request,
+          plan: context?.plan
+            ? { summary: context.plan.summary, tasks: context.plan.tasks }
+            : undefined,
+          changes,
+        }),
+        parseReview,
+        signal,
+      ),
     async chat(agent: AgentProfile, history: ChatMessage[], signal?: AbortSignal) {
       const messages: WireMessage[] = [
         { role: 'system', content: `${agent.persona} ${safety(locale)}` },
