@@ -26,7 +26,15 @@ export interface AgentProvider {
     signal?: AbortSignal,
     files?: FileContent[],
   ): Promise<ProviderResult<ProposedChange[]>>;
-  review(changes: ProposedChange[], signal?: AbortSignal): Promise<ProviderResult<Review>>;
+  /**
+   * `context` gives the Reviewer the original request and the approved plan, so
+   * it can check the changes against what was asked, not only read the diffs.
+   */
+  review(
+    changes: ProposedChange[],
+    signal?: AbortSignal,
+    context?: { request: string; plan?: Plan },
+  ): Promise<ProviderResult<Review>>;
   /** Direct conversation with one agent, using its persona. */
   chat(
     agent: AgentProfile,

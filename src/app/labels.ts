@@ -7,6 +7,7 @@ export const STATUS_TONE: Record<SessionStatus, 'accent' | 'warn' | 'ok' | 'bad'
   awaiting_approval: 'warn',
   executing: 'accent',
   reviewing: 'accent',
+  awaiting_final_approval: 'warn',
   completed: 'ok',
   rejected: 'muted',
   cancelled: 'muted',

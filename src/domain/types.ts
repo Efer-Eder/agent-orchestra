@@ -26,6 +26,7 @@ export type SessionStatus =
   | 'awaiting_approval'
   | 'executing'
   | 'reviewing'
+  | 'awaiting_final_approval'
   | 'completed'
   | 'rejected'
   | 'cancelled'
@@ -91,7 +92,15 @@ export interface Usage {
 }
 
 export type TimelineEventKind =
-  'request' | 'plan' | 'approval' | 'rejection' | 'execution' | 'review' | 'cancelled' | 'error';
+  | 'request'
+  | 'plan'
+  | 'approval'
+  | 'rejection'
+  | 'execution'
+  | 'review'
+  | 'final_approval'
+  | 'cancelled'
+  | 'error';
 
 export interface TimelineEvent {
   id: string;

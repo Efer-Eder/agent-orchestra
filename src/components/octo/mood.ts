@@ -30,6 +30,7 @@ export function octoMoodFor(status: SessionStatus, busy: boolean): OctoMood {
   }
   switch (status) {
     case 'completed':
+    case 'awaiting_final_approval':
       return 'happy';
     case 'failed':
       return 'worried';

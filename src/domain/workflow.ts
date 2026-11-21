@@ -31,15 +31,17 @@ export class WorkflowError extends Error {
 }
 
 /**
- * Explicit state machine: request → plan → human approval → execution → review.
- * Nothing can skip the approval step.
+ * Explicit state machine:
+ * request → plan → human approval → execution → review → final human approval.
+ * Nothing can skip either approval.
  */
 const TRANSITIONS: Record<SessionStatus, readonly SessionStatus[]> = {
   draft: ['planning', 'cancelled'],
   planning: ['awaiting_approval', 'cancelled', 'failed'],
   awaiting_approval: ['executing', 'rejected', 'cancelled'],
   executing: ['reviewing', 'cancelled', 'failed'],
-  reviewing: ['completed', 'cancelled', 'failed'],
+  reviewing: ['awaiting_final_approval', 'cancelled', 'failed'],
+  awaiting_final_approval: ['completed', 'rejected', 'cancelled'],
   completed: [],
   rejected: [],
   cancelled: [],
@@ -219,6 +221,15 @@ export function approvePlan(session: Session, deps?: WorkflowDeps): Session {
   return moveTo(session, 'executing', {}, [event(d, 'approval', 'Plano aprovado pelo usuário.')]);
 }
 
+/** Final human approval: accepts the reviewed proposal and closes the session. */
+export function approveFinal(session: Session, deps?: WorkflowDeps): Session {
+  const d = resolve(deps);
+  return moveTo(session, 'completed', {}, [
+    event(d, 'final_approval', 'Proposta aceita pelo usuário.'),
+  ]);
+}
+
+/** Rejects the plan (before execution) or the reviewed proposal (at the end). */
 export function rejectPlan(session: Session, reason: string, deps?: WorkflowDeps): Session {
   const d = resolve(deps);
   const detail = reason.trim();
@@ -273,7 +284,7 @@ export async function runExecution(
   }
 }
 
-/** Reviewer step. */
+/** Reviewer step. Ends in `awaiting_final_approval`: the human closes the session. */
 export async function runReview(
   session: Session,
   provider: AgentProvider,
@@ -284,11 +295,17 @@ export async function runReview(
     throw new WorkflowError('invalid_transition', 'A revisão exige uma execução concluída.');
   }
   try {
-    const { output, usage } = await provider.review(session.changes ?? [], options.signal);
+    const { output, usage } = await provider.review(session.changes ?? [], options.signal, {
+      request: session.request,
+      ...(session.plan ? { plan: session.plan } : {}),
+    });
     const label = output.verdict === 'approve' ? 'aprovado' : 'pede ajustes';
-    return moveTo(session, 'completed', { review: output, usage: addUsage(session, usage) }, [
-      event(d, 'review', `Revisão: ${label}. ${output.comments.join(' ')}`.trim(), 'reviewer'),
-    ]);
+    return moveTo(
+      session,
+      'awaiting_final_approval',
+      { review: output, usage: addUsage(session, usage) },
+      [event(d, 'review', `Revisão: ${label}. ${output.comments.join(' ')}`.trim(), 'reviewer')],
+    );
   } catch (error) {
     return fail(session, error, options.signal, d);
   }

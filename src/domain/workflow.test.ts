@@ -4,6 +4,7 @@ import { sequentialIds } from './ids.ts';
 import type { AgentProvider } from './provider.ts';
 import type { Session } from './types.ts';
 import {
+  approveFinal,
   approvePlan,
   canTransition,
   cancelSession,
@@ -103,8 +104,11 @@ describe('full mock flow: request → plan → approval → execution → review
     expect(session.changes?.every((c) => c.kind === 'create')).toBe(true);
 
     session = await runReview(session, provider, d);
-    expect(session.status).toBe('completed');
+    expect(session.status).toBe('awaiting_final_approval');
     expect(session.review?.verdict).toBe('approve');
+
+    session = approveFinal(session, d);
+    expect(session.status).toBe('completed');
 
     expect(session.events.map((e) => e.kind)).toEqual([
       'request',
@@ -112,6 +116,7 @@ describe('full mock flow: request → plan → approval → execution → review
       'approval',
       'execution',
       'review',
+      'final_approval',
     ]);
     expect(session.events.filter((e) => e.role).map((e) => e.role)).toEqual([
       'planner',
@@ -299,5 +304,41 @@ describe('project files as Builder context', () => {
     });
     expect(done.status).toBe('failed');
     expect(done.error).toBe('pasta não encontrada');
+  });
+});
+
+describe('final approval', () => {
+  async function reviewed(review?: AgentProvider['review']) {
+    const base = createMockProvider();
+    const provider = review ? { ...base, review } : base;
+    const planned = await runPlanning(newSession('Criar login. Testar.'), provider, deps());
+    const built = await runExecution(approvePlan(planned, deps()), provider, deps());
+    return { session: await runReview(built, provider, deps()), provider };
+  }
+
+  it('waits for the human after the review and cannot be skipped', async () => {
+    const { session } = await reviewed();
+    expect(session.status).toBe('awaiting_final_approval');
+    expect(canTransition('reviewing', 'completed')).toBe(false);
+    expect(canTransition('awaiting_final_approval', 'completed')).toBe(true);
+  });
+
+  it('can reject the reviewed proposal with a reason', async () => {
+    const { session } = await reviewed();
+    const rejected = rejectPlan(session, 'falta teste de erro', deps());
+    expect(rejected.status).toBe('rejected');
+    expect(rejected.events.at(-1)?.detail).toBe('falta teste de erro');
+  });
+
+  it('gives the Reviewer the request and the plan, not only the diffs', async () => {
+    let seen: unknown;
+    await reviewed(async (changes, _signal, context) => {
+      seen = context;
+      return { output: { verdict: 'approve', comments: [String(changes.length)] } };
+    });
+    expect(seen).toMatchObject({
+      request: 'Criar login. Testar.',
+      plan: { tasks: [{ title: 'Criar login.' }, { title: 'Testar.' }] },
+    });
   });
 });
