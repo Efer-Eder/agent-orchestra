@@ -1,7 +1,7 @@
 {
   "name": "agent-orchestra",
   "private": true,
-  "version": "0.0.0",
+  "version": "0.1.0-alpha.1",
   "description": "Local-first desktop app (in development) to coordinate Planner, Builder and Reviewer AI agents with human approval.",
   "license": "MIT",
   "type": "module",
