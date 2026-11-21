@@ -258,6 +258,7 @@ export function createMockProvider(options: MockProviderOptions = {}): AgentProv
     id: 'mock',
     label: 'Mock (offline)',
     offline: true,
+    modelFor: () => 'mock',
     plan: (request, signal, tree) =>
       step<Plan>('plan', signal, () => {
         const files = tree?.length ? pickFiles(request, tree) : [];

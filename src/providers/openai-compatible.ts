@@ -1,13 +1,15 @@
 import type { AgentProfile } from '../domain/agents.ts';
 import { LANGUAGE_NAME, type Locale } from '../domain/locale.ts';
 import type { AgentProvider, ProviderResult } from '../domain/provider.ts';
-import type {
-  ChatMessage,
-  FileContent,
-  Plan,
-  ProposedChange,
-  Review,
-  Usage,
+import {
+  AGENT_ROLES,
+  type AgentRole,
+  type ChatMessage,
+  type FileContent,
+  type Plan,
+  type ProposedChange,
+  type Review,
+  type Usage,
 } from '../domain/types.ts';
 import { extractJson, parseChanges, parsePlan, parseReview } from './parse.ts';
 
@@ -60,6 +62,8 @@ export interface OpenAICompatibleConfig {
   apiKey: string;
   model: string;
   timeoutMs?: number;
+  /** Optional model per agent role; empty or missing roles use `model`. */
+  agentModels?: Partial<Record<AgentRole, string>>;
   /** Extra attempts for transient failures (default 2). */
   maxRetries?: number;
   /** Base delay between attempts, doubled each time (default 600 ms). */
@@ -213,6 +217,7 @@ export function createOpenAICompatibleProvider(config: OpenAICompatibleConfig): 
   const apiKey = config.apiKey.trim();
   const model = config.model.trim();
   if (!model) throw new ProviderError('config', e.model);
+  const modelFor = (role: AgentRole): string => config.agentModels?.[role]?.trim() || model;
   const timeoutMs = config.timeoutMs ?? DEFAULT_TIMEOUT_MS;
   const doFetch = config.fetch ?? globalThis.fetch.bind(globalThis);
 
@@ -313,12 +318,16 @@ export function createOpenAICompatibleProvider(config: OpenAICompatibleConfig): 
   }
 
   async function complete(
+    useModel: string,
     messages: WireMessage[],
     signal?: AbortSignal,
   ): Promise<{ content: string; usage?: Usage }> {
     const body = await request(
       '/chat/completions',
-      { method: 'POST', body: JSON.stringify({ model, messages, temperature: 0.2 }) },
+      {
+        method: 'POST',
+        body: JSON.stringify({ model: useModel, messages, temperature: 0.2 }),
+      },
       signal,
     );
     const data = body as {
@@ -338,12 +347,14 @@ export function createOpenAICompatibleProvider(config: OpenAICompatibleConfig): 
   }
 
   async function structured<T>(
+    role: AgentRole,
     system: string,
     user: string,
     parse: (raw: unknown) => T,
     signal?: AbortSignal,
   ): Promise<ProviderResult<T>> {
     const { content, usage } = await complete(
+      modelFor(role),
       [
         { role: 'system', content: system },
         { role: 'user', content: user },
@@ -362,12 +373,20 @@ export function createOpenAICompatibleProvider(config: OpenAICompatibleConfig): 
     id: 'openai-compatible',
     label: e.label(model),
     offline: false,
+    modelFor,
     plan: (requestText, signal, tree): Promise<ProviderResult<Plan>> =>
-      structured(plannerSystem(locale), plannerInput(requestText, tree), parsePlan, signal),
+      structured(
+        'planner',
+        plannerSystem(locale),
+        plannerInput(requestText, tree),
+        parsePlan,
+        signal,
+      ),
     build: (plan, signal, files): Promise<ProviderResult<ProposedChange[]>> =>
-      structured(builderSystem(locale), builderInput(plan, files), parseChanges, signal),
+      structured('builder', builderSystem(locale), builderInput(plan, files), parseChanges, signal),
     review: (changes, signal, context): Promise<ProviderResult<Review>> =>
       structured(
+        'reviewer',
         reviewerSystem(locale),
         JSON.stringify({
           request: context?.request,
@@ -390,7 +409,8 @@ export function createOpenAICompatibleProvider(config: OpenAICompatibleConfig): 
             content: m.content,
           })),
       ];
-      const { content, usage } = await complete(messages, signal);
+      const role = AGENT_ROLES.find((r) => r === agent.id);
+      const { content, usage } = await complete(role ? modelFor(role) : model, messages, signal);
       return { output: content.trim(), ...(usage ? { usage } : {}) };
     },
     async testConnection(signal?: AbortSignal): Promise<string[]> {

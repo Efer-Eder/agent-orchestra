@@ -1,5 +1,13 @@
 import type { AgentProfile } from './agents.ts';
-import type { ChatMessage, FileContent, Plan, ProposedChange, Review, Usage } from './types.ts';
+import type {
+  AgentRole,
+  ChatMessage,
+  FileContent,
+  Plan,
+  ProposedChange,
+  Review,
+  Usage,
+} from './types.ts';
 
 export interface ProviderResult<T> {
   output: T;
@@ -18,6 +26,8 @@ export interface AgentProvider {
   readonly label: string;
   /** True for providers that never leave the machine (e.g. the mock). */
   readonly offline: boolean;
+  /** Model used for each agent role (shown in the timeline and run records). */
+  modelFor(role: AgentRole): string;
   /** `tree` lists the project's readable files, when a folder is authorized. */
   plan(request: string, signal?: AbortSignal, tree?: string[]): Promise<ProviderResult<Plan>>;
   /** `files` are the approved files' contents, already capped and redacted. */

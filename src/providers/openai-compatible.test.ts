@@ -357,3 +357,24 @@ describe('parseRetryAfter', () => {
     expect(parseRetryAfter('garbage')).toBeUndefined();
   });
 });
+
+describe('model per agent', () => {
+  it('sends each role its own model and falls back to the default', async () => {
+    const fetchMock = vi.fn<typeof fetch>(async () =>
+      completion('{"summary":"s","tasks":[{"title":"t","detail":"d"}]}'),
+    );
+    const p = createOpenAICompatibleProvider({
+      baseUrl: 'https://api.example.test/v1',
+      apiKey: KEY,
+      model: 'default-model',
+      agentModels: { planner: 'planner-model', builder: '  ' },
+      fetch: fetchMock,
+    });
+    expect(p.modelFor('planner')).toBe('planner-model');
+    expect(p.modelFor('builder')).toBe('default-model');
+    expect(p.modelFor('reviewer')).toBe('default-model');
+    await p.plan('x');
+    const body = JSON.parse(String(fetchMock.mock.calls[0]![1]?.body)) as { model: string };
+    expect(body.model).toBe('planner-model');
+  });
+});

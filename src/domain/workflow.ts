@@ -2,12 +2,14 @@ import { defaultIdFactory, systemClock, type Clock, type IdFactory } from './ids
 import type { AgentProvider } from './provider.ts';
 import type {
   AgentRole,
+  AgentRun,
   FileContent,
   Project,
   Session,
   SessionStatus,
   TimelineEvent,
   TimelineEventKind,
+  ToolCall,
   Usage,
 } from './types.ts';
 
@@ -103,6 +105,52 @@ function addUsage(session: Session, usage: Usage | undefined): Usage[] {
   return usage ? [...session.usage, usage] : session.usage;
 }
 
+/** Measures one agent step and records it, whether it succeeds or not. */
+class RunRecorder {
+  private readonly started: Date;
+  readonly tools: ToolCall[] = [];
+  constructor(
+    private readonly d: ResolvedDeps,
+    private readonly role: AgentRole,
+    private readonly provider: AgentProvider,
+  ) {
+    this.started = d.clock();
+  }
+
+  /** Runs a read-only tool and keeps how long it took and what it returned. */
+  async tool<T>(
+    tool: ToolCall['tool'],
+    run: () => Promise<T>,
+    measure: (result: T) => { count: number; skipped: number },
+  ): Promise<T> {
+    const at = this.d.clock().getTime();
+    const result = await run();
+    this.tools.push({ tool, ...measure(result), durationMs: this.d.clock().getTime() - at });
+    return result;
+  }
+
+  finish(status: AgentRun['status'], usage?: Usage, error?: string): AgentRun {
+    const finished = this.d.clock();
+    return {
+      id: this.d.ids(),
+      role: this.role,
+      provider: this.provider.id,
+      model: this.provider.modelFor(this.role),
+      startedAt: this.started.toISOString(),
+      finishedAt: finished.toISOString(),
+      durationMs: Math.max(0, finished.getTime() - this.started.getTime()),
+      status,
+      ...(usage ? { usage } : {}),
+      tools: this.tools,
+      ...(error ? { error } : {}),
+    };
+  }
+}
+
+function addRun(session: Session, run: AgentRun): AgentRun[] {
+  return [...(session.runs ?? []), run];
+}
+
 function isAbort(error: unknown, signal: AbortSignal | undefined): boolean {
   if (signal?.aborted === true) return true;
   return (
@@ -123,14 +171,19 @@ function fail(
   error: unknown,
   signal: AbortSignal | undefined,
   d: ResolvedDeps,
+  recorder?: RunRecorder,
 ): Session {
   if (isAbort(error, signal)) {
-    return moveTo(session, 'cancelled', {}, [
+    const runs = recorder ? { runs: addRun(session, recorder.finish('cancelled')) } : {};
+    return moveTo(session, 'cancelled', runs, [
       event(d, 'cancelled', 'Execução cancelada.', undefined, { code: 'cancelled' }),
     ]);
   }
   const message = errorMessage(error);
-  return moveTo(session, 'failed', { error: message }, [event(d, 'error', message)]);
+  const runs = recorder
+    ? { runs: addRun(session, recorder.finish('failed', undefined, message)) }
+    : {};
+  return moveTo(session, 'failed', { error: message, ...runs }, [event(d, 'error', message)]);
 }
 
 export function createProject(name: string, rootLabel: string, deps?: WorkflowDeps): Project {
@@ -196,8 +249,12 @@ export async function runPlanning(
 ): Promise<Session> {
   const d = resolve(options);
   const planning = moveTo(session, 'planning');
+  const rec = new RunRecorder(d, 'planner', provider);
   try {
-    const tree = options.loadTree ? await options.loadTree() : null;
+    const loadTree = options.loadTree;
+    const tree = loadTree
+      ? await rec.tool('list_files', loadTree, (t) => ({ count: t?.length ?? 0, skipped: 0 }))
+      : null;
     const { output, usage } = await provider.plan(
       planning.request,
       options.signal,
@@ -206,11 +263,15 @@ export async function runPlanning(
     return moveTo(
       planning,
       'awaiting_approval',
-      { plan: output, usage: addUsage(planning, usage) },
+      {
+        plan: output,
+        usage: addUsage(planning, usage),
+        runs: addRun(planning, rec.finish('ok', usage)),
+      },
       [event(d, 'plan', `${output.summary} (${output.tasks.length} tarefa(s)).`, 'planner')],
     );
   } catch (error) {
-    return fail(planning, error, options.signal, d);
+    return fail(planning, error, options.signal, d, rec);
   }
 }
 
@@ -249,9 +310,21 @@ export async function runExecution(
   if (session.status !== 'executing' || !session.plan) {
     throw new WorkflowError('invalid_transition', 'A execução exige um plano aprovado.');
   }
+  const rec = new RunRecorder(d, 'builder', provider);
   try {
     const wanted = session.plan.files ?? [];
-    const files = wanted.length && options.loadFiles ? await options.loadFiles(wanted) : [];
+    const loadFiles = options.loadFiles;
+    const files =
+      wanted.length && loadFiles
+        ? await rec.tool(
+            'read_files',
+            () => loadFiles(wanted),
+            (read) => ({
+              count: read.filter((f) => !f.skipped).length,
+              skipped: read.filter((f) => f.skipped).length,
+            }),
+          )
+        : [];
     const readable = files.filter((f) => !f.skipped);
     const { output, usage } = await provider.build(
       session.plan,
@@ -269,6 +342,7 @@ export async function runExecution(
     const patch = {
       changes: output,
       usage: addUsage(session, usage),
+      runs: addRun(session, rec.finish('ok', usage)),
       ...(context.length ? { context } : {}),
     };
     return moveTo(session, 'reviewing', patch, [
@@ -280,7 +354,7 @@ export async function runExecution(
       ),
     ]);
   } catch (error) {
-    return fail(session, error, options.signal, d);
+    return fail(session, error, options.signal, d, rec);
   }
 }
 
@@ -294,6 +368,7 @@ export async function runReview(
   if (session.status !== 'reviewing') {
     throw new WorkflowError('invalid_transition', 'A revisão exige uma execução concluída.');
   }
+  const rec = new RunRecorder(d, 'reviewer', provider);
   try {
     const { output, usage } = await provider.review(session.changes ?? [], options.signal, {
       request: session.request,
@@ -303,11 +378,15 @@ export async function runReview(
     return moveTo(
       session,
       'awaiting_final_approval',
-      { review: output, usage: addUsage(session, usage) },
+      {
+        review: output,
+        usage: addUsage(session, usage),
+        runs: addRun(session, rec.finish('ok', usage)),
+      },
       [event(d, 'review', `Revisão: ${label}. ${output.comments.join(' ')}`.trim(), 'reviewer')],
     );
   } catch (error) {
-    return fail(session, error, options.signal, d);
+    return fail(session, error, options.signal, d, rec);
   }
 }
 

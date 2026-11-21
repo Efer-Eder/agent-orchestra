@@ -91,6 +91,34 @@ export interface Usage {
   synthetic: boolean;
 }
 
+/** A tool the workflow ran for an agent (always read-only). */
+export interface ToolCall {
+  tool: 'list_files' | 'read_files';
+  /** Paths returned (list) or files actually read (read). */
+  count: number;
+  /** Files refused by the shell (denied, outside, binary, budget). */
+  skipped: number;
+  durationMs: number;
+}
+
+/**
+ * One agent step as it really ran: which model, how long, what it cost in
+ * tokens and which tools were used. Kept per step so the timeline can show it.
+ */
+export interface AgentRun {
+  id: string;
+  role: AgentRole;
+  provider: string;
+  model: string;
+  startedAt: string;
+  finishedAt: string;
+  durationMs: number;
+  status: 'ok' | 'failed' | 'cancelled';
+  usage?: Usage;
+  tools: ToolCall[];
+  error?: string;
+}
+
 export type TimelineEventKind =
   | 'request'
   | 'plan'
@@ -126,6 +154,8 @@ export interface Session {
   /** Files read for the Builder, without their contents. */
   context?: ContextFile[];
   usage: Usage[];
+  /** One record per agent step. Optional so data saved before it still loads. */
+  runs?: AgentRun[];
   events: TimelineEvent[];
   error?: string;
 }

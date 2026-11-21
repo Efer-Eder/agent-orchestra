@@ -342,3 +342,63 @@ describe('final approval', () => {
     });
   });
 });
+
+describe('agent run records', () => {
+  function tickingClock(stepMs = 250) {
+    let t = Date.parse('2026-11-20T12:00:00.000Z');
+    return () => new Date((t += stepMs));
+  }
+
+  it('records one run per step with model, duration, usage and tools', async () => {
+    const provider = createMockProvider();
+    const d = { ids: sequentialIds(), clock: tickingClock() };
+    const planned = await runPlanning(newSession('Criar página de login.'), provider, {
+      ...d,
+      loadTree: async () => ['README.md', 'src/login/LoginPage.tsx'],
+    });
+    const built = await runExecution(approvePlan(planned, d), provider, {
+      ...d,
+      loadFiles: async (paths) =>
+        paths.map((path, i) => ({
+          path,
+          content: 'x',
+          bytes: 1,
+          truncated: false,
+          redactions: 0,
+          skipped: i === 0 ? null : 'denied',
+        })),
+    });
+    const reviewed = await runReview(built, provider, d);
+
+    const runs = reviewed.runs ?? [];
+    expect(runs.map((r) => r.role)).toEqual(['planner', 'builder', 'reviewer']);
+    for (const run of runs) {
+      expect(run).toMatchObject({ provider: 'mock', model: 'mock', status: 'ok' });
+      expect(run.durationMs).toBeGreaterThan(0);
+      expect(run.usage?.synthetic).toBe(true);
+    }
+    expect(runs[0]?.tools).toEqual([
+      expect.objectContaining({ tool: 'list_files', count: 2, skipped: 0 }),
+    ]);
+    const read = runs[1]?.tools[0];
+    expect(read?.tool).toBe('read_files');
+    expect((read?.count ?? 0) + (read?.skipped ?? 0)).toBe(planned.plan?.files?.length);
+    expect(runs[2]?.tools).toEqual([]);
+  });
+
+  it('records failed and cancelled runs too', async () => {
+    const failed = await runPlanning(newSession(), createMockProvider({ failOn: 'plan' }), deps());
+    expect(failed.runs).toEqual([
+      expect.objectContaining({ role: 'planner', status: 'failed', error: failed.error }),
+    ]);
+
+    const controller = new AbortController();
+    const pending = runPlanning(newSession(), createMockProvider({ latencyMs: 1_000 }), {
+      ...deps(),
+      signal: controller.signal,
+    });
+    controller.abort();
+    const cancelled = await pending;
+    expect(cancelled.runs?.[0]?.status).toBe('cancelled');
+  });
+});
