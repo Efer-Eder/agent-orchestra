@@ -23,7 +23,8 @@ describe('OctoMascot', () => {
     }
     expect(renderToStaticMarkup(<OctoMascot />)).toContain('octo--live');
     expect(renderToStaticMarkup(<OctoMascot animated={false} />)).not.toContain('octo--live');
-    expect(renderToStaticMarkup(<OctoMascot motion="always" />)).toContain('octo--force');
+    expect(renderToStaticMarkup(<OctoMascot />)).toContain('octo--force');
+    expect(renderToStaticMarkup(<OctoMascot motion="auto" />)).not.toContain('octo--force');
     const small = renderToStaticMarkup(<OctoMascot size={24} />);
     expect(small).toContain('octo--small');
     expect(small).not.toContain('octo-thought');
@@ -34,7 +35,9 @@ describe('octoMoodFor', () => {
   it('acompanha o que os agentes estão fazendo', () => {
     expect(octoMoodFor('planning', true)).toBe('thinking');
     expect(octoMoodFor('executing', true)).toBe('working');
-    expect(octoMoodFor('reviewing', true)).toBe('working');
+    expect(octoMoodFor('reviewing', true)).toBe('reviewing');
+    expect(octoMoodFor('draft', true)).toBe('conducting');
+    expect(octoMoodFor('awaiting_final_approval', false)).toBe('happy');
     expect(octoMoodFor('awaiting_approval', false)).toBe('idle');
     expect(octoMoodFor('completed', false)).toBe('happy');
     expect(octoMoodFor('failed', false)).toBe('worried');

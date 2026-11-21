@@ -64,6 +64,34 @@
 .octo-drop {
   fill: var(--octo-drop);
 }
+.octo-baton,
+.octo-handle {
+  fill: none;
+  stroke: var(--octo-pupil);
+  stroke-width: 2.2;
+  stroke-linecap: round;
+}
+.octo-lens {
+  fill: color-mix(in srgb, var(--octo-drop) 35%, transparent);
+  stroke: var(--octo-pupil);
+  stroke-width: 2.2;
+}
+.octo-notes path,
+.octo-question {
+  fill: none;
+  stroke: var(--octo-body);
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.octo-notes circle {
+  fill: var(--octo-body);
+}
+.octo-cubes rect {
+  fill: var(--octo-drop);
+  stroke: color-mix(in srgb, var(--octo-drop) 60%, #000);
+  stroke-width: 1;
+}
 
 /* ---------- o que cada humor mostra ---------- */
 .octo-wave,
@@ -75,7 +103,13 @@
 .octo-thought,
 .octo-zzz,
 .octo-drop,
-.octo-spark {
+.octo-spark,
+.octo-conduct,
+.octo-magnifier,
+.octo-point,
+.octo-notes,
+.octo-question,
+.octo-cubes {
   display: none;
 }
 .octo--waving .octo-wave,
@@ -88,7 +122,14 @@
 .octo--worried .octo-mouth--worry,
 .octo--worried .octo-drop,
 .octo--sleeping .octo-eyes-closed,
-.octo--sleeping .octo-zzz {
+.octo--sleeping .octo-zzz,
+.octo--conducting .octo-conduct,
+.octo--conducting .octo-notes,
+.octo--conducting .octo-mouth--big,
+.octo--reviewing .octo-magnifier,
+.octo--worried .octo-point,
+.octo--worried .octo-question,
+.octo--downloading .octo-cubes {
   display: inline;
 }
 .octo--waving .octo-arm--right,
@@ -96,7 +137,11 @@
 .octo--happy .octo-eyes,
 .octo--happy .octo-mouth--smile,
 .octo--worried .octo-mouth--smile,
-.octo--sleeping .octo-eyes {
+.octo--sleeping .octo-eyes,
+.octo--conducting .octo-arm--right,
+.octo--conducting .octo-mouth--smile,
+.octo--reviewing .octo-arm--right,
+.octo--worried .octo-arm--left {
   display: none;
 }
 /* Para onde os olhos apontam em cada humor (sem animação). */
@@ -107,7 +152,16 @@
   transform: translate(0, 1.4px);
 }
 .octo--worried .octo-look {
-  transform: translate(-0.6px, 1.8px);
+  transform: translate(-1.8px, 1.8px);
+}
+.octo--reviewing .octo-look {
+  transform: translate(2px, -0.6px);
+}
+.octo--downloading .octo-look {
+  transform: translate(1.8px, 2px);
+}
+.octo--conducting .octo-look {
+  transform: translate(1.2px, -1.6px);
 }
 
 /* ---------- movimento (octo--live) ---------- */
@@ -197,10 +251,10 @@
   animation: octo-bob var(--octo-d) ease-in-out infinite;
 }
 
-/* feliz: pulinhos e brilhos */
+/* sucesso: reverência de maestro, discreta, e brilhos */
 .octo--live.octo--happy .octo-float {
-  --octo-d: 0.9s;
-  animation: octo-hop var(--octo-d) cubic-bezier(0.3, 0, 0.3, 1) infinite;
+  --octo-d: 2.8s;
+  animation: octo-bow var(--octo-d) ease-in-out infinite;
 }
 .octo--live.octo--happy .octo-spark path {
   transform-box: fill-box;
@@ -252,6 +306,63 @@
   animation-delay: 2s;
 }
 
+/* regendo (loading): a batuta marca o compasso e as notas sobem */
+.octo--live.octo--conducting .octo-look {
+  animation: none;
+}
+.octo--live.octo--conducting .octo-conduct {
+  transform-box: view-box;
+  transform-origin: 66px 52px;
+  --octo-d: 0.75s;
+  animation: octo-beat var(--octo-d) ease-in-out infinite alternate;
+}
+.octo--live.octo--conducting .octo-notes {
+  --octo-d: 2.4s;
+  animation: octo-z var(--octo-d) ease-in-out infinite;
+}
+
+/* revisando: a lupa varre o código devagar */
+.octo--live.octo--reviewing .octo-look {
+  animation: none;
+}
+.octo--live.octo--reviewing .octo-magnifier {
+  transform-box: view-box;
+  transform-origin: 67px 54px;
+  --octo-d: 3.2s;
+  animation: octo-scan var(--octo-d) ease-in-out infinite;
+}
+.octo--live.octo--reviewing .octo-float {
+  --octo-d: 4.4s;
+  animation-duration: var(--octo-d);
+}
+
+/* erro: aponta o problema com um cutucão curto */
+.octo--live.octo--worried .octo-point {
+  transform-box: view-box;
+  transform-origin: 33px 52px;
+  --octo-d: 1.6s;
+  animation: octo-poke var(--octo-d) ease-in-out infinite;
+}
+.octo--live.octo--worried .octo-question {
+  --octo-d: 2.4s;
+  animation: octo-dot var(--octo-d) ease-in-out infinite;
+}
+
+/* baixando: cubinhos caem e se empilham, em sequência */
+.octo--live.octo--downloading .octo-look {
+  animation: none;
+}
+.octo--live.octo--downloading .octo-cubes rect {
+  --octo-d: 2.4s;
+  animation: octo-stack var(--octo-d) ease-out infinite;
+}
+.octo--live.octo--downloading .octo-cubes rect:nth-child(2) {
+  animation-delay: 0.4s;
+}
+.octo--live.octo--downloading .octo-cubes rect:nth-child(3) {
+  animation-delay: 0.8s;
+}
+
 /* Em tamanho de ícone, só flutua e pisca: tentáculos balançando viram ruído. */
 .octo--small .octo-arm,
 .octo--small.octo--idle .octo-look {
@@ -301,6 +412,68 @@
   }
   80% {
     transform: translateY(0) scale(1, 1);
+  }
+}
+@keyframes octo-bow {
+  0%,
+  20%,
+  100% {
+    transform: translateY(0) scale(1, 1);
+  }
+  38%,
+  52% {
+    transform: translateY(4px) scale(1.04, 0.9);
+  }
+  68% {
+    transform: translateY(-4px) scale(0.98, 1.03);
+  }
+  80% {
+    transform: translateY(0) scale(1, 1);
+  }
+}
+@keyframes octo-beat {
+  from {
+    transform: rotate(-10deg);
+  }
+  to {
+    transform: rotate(14deg);
+  }
+}
+@keyframes octo-scan {
+  0%,
+  100% {
+    transform: rotate(-8deg);
+  }
+  50% {
+    transform: rotate(10deg);
+  }
+}
+@keyframes octo-poke {
+  0%,
+  60%,
+  100% {
+    transform: rotate(0deg);
+  }
+  70% {
+    transform: rotate(-8deg);
+  }
+  80% {
+    transform: rotate(3deg);
+  }
+}
+@keyframes octo-stack {
+  0% {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  25%,
+  80% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(0);
   }
 }
 @keyframes octo-droop {

@@ -1,6 +1,7 @@
 import { FolderPlus } from 'lucide-react';
 import { useState, type FormEvent } from 'react';
 import { isDesktop } from '../app/secrets.ts';
+import { useIdle } from '../app/useIdle.ts';
 import { agentProfile } from '../domain/agents.ts';
 import type { Project } from '../domain/types.ts';
 import { useI18n } from '../i18n/I18n.tsx';
@@ -81,12 +82,18 @@ export function HomeView({
 }) {
   const { t, locale } = useI18n();
   const orchestra = agentProfile('orchestra', locale);
+  // Octo naps after a few quiet minutes and wakes on the next input.
+  const idle = useIdle(3 * 60_000);
   return (
     <div className="flex h-full min-h-0 flex-col overflow-y-auto">
       <div className="mx-auto flex w-full max-w-[720px] flex-1 flex-col justify-center px-6 py-10">
         <div className="mb-7 flex flex-col items-center text-center">
           {/* Without a project Octo waves hello; with one it waits for the task. */}
-          <OctoMascot size={112} mood={project ? 'idle' : 'waving'} label={t.home.octoLabel} />
+          <OctoMascot
+            size={112}
+            mood={!project ? 'waving' : idle ? 'sleeping' : 'idle'}
+            label={t.home.octoLabel}
+          />
           <h1 className="mt-4 text-[26px] font-semibold tracking-[-0.02em] text-ink">
             {project ? t.home.prompt : t.home.welcome}
           </h1>

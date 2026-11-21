@@ -9,7 +9,10 @@ export interface OctoMascotProps {
   mood?: OctoMood;
   /** Liga o movimento. Respeita "reduzir movimento" do sistema. */
   animated?: boolean;
-  /** `always` ignora "reduzir movimento" do sistema. Só para laboratório e demonstrações. */
+  /**
+   * `always` (padrão) anima mesmo com "reduzir movimento" ligado: decisão do
+   * dono do projeto, igual ao mascote dos sites. `auto` respeita o sistema.
+   */
   motion?: 'auto' | 'always';
   className?: string;
   /** Texto para leitor de tela. Use `null` quando o Octo for só decorativo. */
@@ -24,7 +27,7 @@ export function OctoMascot({
   size = 120,
   mood = 'idle',
   animated = true,
-  motion = 'auto',
+  motion = 'always',
   className = '',
   label,
 }: OctoMascotProps) {
@@ -49,7 +52,7 @@ export function OctoMascot({
           <path className="octo-arm octo-arm--back" d="M69 48C78 50 86 46 87 39" />
         </g>
         <g>
-          <path className="octo-arm" d="M33 54C25 62 18 64 15 57" />
+          <path className="octo-arm octo-arm--left" d="M33 54C25 62 18 64 15 57" />
           <path className="octo-arm" d="M40 58C38 70 31 77 26 74" />
           <path className="octo-arm" d="M46.5 60C46.5 72 43 81 38 82" />
           <path className="octo-arm" d="M53.5 60C53.5 72 57 81 62 82" />
@@ -58,6 +61,19 @@ export function OctoMascot({
         </g>
         {/* Tentáculo que acena (só no humor "waving"). */}
         <path className="octo-wave" d="M66 52C76 48 81 38 79 27" />
+        {/* Batuta de maestro (loading). */}
+        <g className="octo-conduct">
+          <path className="octo-wave" d="M66 52C76 48 81 38 79 27" />
+          <path className="octo-baton" d="M79 27L91 12" />
+        </g>
+        {/* Lupa (reviewing). */}
+        <g className="octo-magnifier">
+          <path className="octo-wave" d="M67 54C72 57 76 54 77 49" />
+          <path className="octo-handle" d="M77 49L80.5 43.5" />
+          <circle className="octo-lens" cx="85" cy="37.5" r="7" />
+        </g>
+        {/* Tentáculo que aponta o problema (error). */}
+        <path className="octo-wave octo-point" d="M33 52C25 53 17 57 11 63" />
         <ellipse className="octo-body" cx="50" cy="40" rx="25" ry="23" />
 
         {/* Olhos abertos */}
@@ -111,6 +127,20 @@ export function OctoMascot({
             className="octo-drop"
             d="M77 24C77 24 73.5 29 73.5 31.2A3.5 3.5 0 0 0 80.5 31.2C80.5 29 77 24 77 24Z"
           />
+          <g className="octo-notes">
+            <path d="M14 24V14L22 12V22" />
+            <circle cx="12.3" cy="24" r="2.1" />
+            <circle cx="20.3" cy="22" r="2.1" />
+          </g>
+          <path
+            className="octo-question"
+            d="M19 14.5Q19 9 24.5 9Q30 9 30 14Q30 17.5 25 19.5V22.5M25 26.6V26.8"
+          />
+          <g className="octo-cubes">
+            <rect x="78" y="74" width="7" height="7" rx="1.6" />
+            <rect x="86.5" y="74" width="7" height="7" rx="1.6" />
+            <rect x="82.2" y="65.5" width="7" height="7" rx="1.6" />
+          </g>
           <g className="octo-spark">
             <path d="M16 20V28M12 24H20" />
             <path d="M84 16V22M81 19H87" />

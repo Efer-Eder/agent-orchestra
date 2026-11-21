@@ -136,6 +136,9 @@ const pt = {
     happy: 'comemorando',
     worried: 'preocupado',
     sleeping: 'descansando',
+    conducting: 'regendo',
+    reviewing: 'revisando',
+    downloading: 'baixando',
   },
   panel: {
     details: 'Detalhes',
@@ -418,6 +421,9 @@ const en: Shape<Messages> = {
     happy: 'celebrating',
     worried: 'worried',
     sleeping: 'resting',
+    conducting: 'conducting',
+    reviewing: 'reviewing',
+    downloading: 'downloading',
   },
   panel: {
     details: 'Details',

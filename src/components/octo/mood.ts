@@ -8,6 +8,9 @@ export const OCTO_MOODS = [
   'happy',
   'worried',
   'sleeping',
+  'conducting',
+  'reviewing',
+  'downloading',
 ] as const;
 export type OctoMood = (typeof OCTO_MOODS)[number];
 
@@ -20,13 +23,22 @@ export const OCTO_MOOD_LABEL: Record<OctoMood, string> = {
   happy: 'comemorando',
   worried: 'preocupado',
   sleeping: 'descansando',
+  conducting: 'regendo',
+  reviewing: 'revisando',
+  downloading: 'baixando',
 };
 
-/** Humor do Octo para o estado real da sessão. */
+/**
+ * Humor do Octo para o estado real da sessão (controle central dos estados).
+ * planejando → pensando, Builder → coordenando (working), Reviewer → lupa,
+ * concluída → reverência, falha → aponta o problema, encerrada → descansa.
+ */
 export function octoMoodFor(status: SessionStatus, busy: boolean): OctoMood {
   if (busy) {
+    if (status === 'draft') return 'conducting';
     if (status === 'planning') return 'thinking';
-    if (status === 'executing' || status === 'reviewing') return 'working';
+    if (status === 'executing') return 'working';
+    if (status === 'reviewing') return 'reviewing';
   }
   switch (status) {
     case 'completed':

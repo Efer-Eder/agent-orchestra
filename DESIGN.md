@@ -55,7 +55,7 @@ Os componentes usam apenas nomes semânticos (`bg-surface`, `text-ink-2`…), de
 - Raio: 8px em itens de lista e botões, 12px em cards, 18px no composer, círculo nos avatares.
 - Espaçamento em múltiplos de 4px. Coluna de conversa com no máximo 720px.
 - Sombra só no composer e em menus flutuantes. Todo o resto usa borda de 1px.
-- Animações curtas (150–220ms) para entrada de mensagens e hover. Respeitar `prefers-reduced-motion`.
+- Animações curtas (150–220ms) para entrada de mensagens e hover. Respeitar `prefers-reduced-motion`, com uma exceção: o Octo (ver abaixo).
 
 ## Layout
 
@@ -90,9 +90,25 @@ Os componentes usam apenas nomes semânticos (`bg-surface`, `text-ink-2`…), de
 
 - Seção **Agentes** no estilo "companions": cards com palco (fundo com brilho na cor do agente), mascote grande, nome, uma frase e **Conversar**.
 - O **Orchestra** tem o card maior e é o agente padrão do composer.
-- **Octo**, o polvo, é o mascote oficial do Orchestra (`src/components/octo/OctoMascot.tsx`). Tem humores (`mood.ts`) que acompanham a sessão: ocioso, pensando, esperando aprovação, feliz, preocupado.
+- **Octo**, o polvo, é o mascote oficial do Orchestra (`src/components/octo/OctoMascot.tsx`). Os humores ficam em `mood.ts`, e `octoMoodFor` é o único lugar que decide o humor a partir do estado da sessão.
+
+| Estado (spec) | Humor         | Quando aparece                                    | Visual                              |
+| ------------- | ------------- | ------------------------------------------------- | ----------------------------------- |
+| Idle          | `idle`        | Início com projeto, esperando aprovação           | Flutua, respira e pisca             |
+| Welcome       | `waving`      | Primeira abertura, sem projeto                    | Acena com um tentáculo              |
+| Loading       | `conducting`  | Sessão sendo criada                               | Rege com a batuta, notas subindo    |
+| Thinking      | `thinking`    | Planner trabalhando                               | Olha para cima, pontinhos acendendo |
+| Orchestrating | `working`     | Builder trabalhando                               | Vários tentáculos no ritmo          |
+| Reviewing     | `reviewing`   | Reviewer trabalhando                              | Varre com uma lupa                  |
+| Success       | `happy`       | Revisão concluída e sessão aceita                 | Reverência de maestro e brilhos     |
+| Error         | `worried`     | Sessão com falha                                  | Confuso, aponta o problema, "?"     |
+| Sleeping      | `sleeping`    | Sessão encerrada ou 3 min sem uso na tela inicial | Respira devagar, zzz                |
+| Downloading   | `downloading` | Preparado: o app ainda não baixa recursos         | Empilha cubinhos                    |
+
+- **Decisão do dono do projeto (2026-11-21): o Octo anima sempre**, mesmo com "reduzir movimento" ligado no sistema, igual ao mascote dos sites. O padrão do componente é `motion="always"`; `motion="auto"` volta a respeitar o sistema. Os mascotes dos outros agentes continuam respeitando `prefers-reduced-motion`.
+- Só um Octo grande anima por tela; em tamanho de ícone (menos de 40px) os tentáculos param e os extras somem.
 - Planner, Builder e Reviewer têm mascotes mais simples na cor de cada um (`AgentMascot.tsx`), que se animam enquanto trabalham e sorriem quando terminam.
-- Tudo em SVG e CSS, sem imagem externa; animações respeitam `prefers-reduced-motion`. Laboratório em `design-lab/octo/` e `octo.html`.
+- Tudo em SVG e CSS, sem imagem externa nem vídeo. Os mascotes dos agentes respeitam `prefers-reduced-motion`; o Octo segue a decisão acima. Laboratório em `design-lab/octo/` e `octo.html`.
 - Um mascote em imagem (`public/mascots/<agente>.webp`, campo `mascot` do perfil) ainda tem prioridade, se um dia for usado.
 
 ## Temas
