@@ -25,19 +25,45 @@ export type ProviderErrorKind =
 export class ProviderError extends Error {
   readonly kind: ProviderErrorKind;
   readonly status: number | undefined;
-  constructor(kind: ProviderErrorKind, message: string, status?: number) {
+  /** From `Retry-After`, when the provider sent one. */
+  readonly retryAfterMs: number | undefined;
+  constructor(kind: ProviderErrorKind, message: string, status?: number, retryAfterMs?: number) {
     super(message);
     this.name = 'ProviderError';
     this.kind = kind;
     this.status = status;
+    this.retryAfterMs = retryAfterMs;
   }
 }
+
+/** Parses `Retry-After` (seconds or HTTP date) into milliseconds. */
+export function parseRetryAfter(value: string | null, now = Date.now()): number | undefined {
+  if (!value) return undefined;
+  const seconds = Number(value);
+  if (Number.isFinite(seconds)) return Math.max(0, seconds * 1000);
+  const at = Date.parse(value);
+  return Number.isNaN(at) ? undefined : Math.max(0, at - now);
+}
+
+/** Errors worth one more try: rate limits, gateway hiccups and dropped connections. */
+function isTransient(e: unknown): e is ProviderError {
+  if (!(e instanceof ProviderError)) return false;
+  if (e.kind === 'rate_limited' || e.kind === 'network') return true;
+  return e.kind === 'http' && (e.status === 502 || e.status === 503 || e.status === 504);
+}
+
+/** Longest wait accepted before giving up, so the UI never hangs silently. */
+const MAX_RETRY_WAIT_MS = 10_000;
 
 export interface OpenAICompatibleConfig {
   baseUrl: string;
   apiKey: string;
   model: string;
   timeoutMs?: number;
+  /** Extra attempts for transient failures (default 2). */
+  maxRetries?: number;
+  /** Base delay between attempts, doubled each time (default 600 ms). */
+  retryDelayMs?: number;
   fetch?: typeof fetch;
   /** Language of error messages and of the model's answers. Defaults to pt-BR. */
   locale?: Locale;
@@ -190,7 +216,45 @@ export function createOpenAICompatibleProvider(config: OpenAICompatibleConfig): 
   const timeoutMs = config.timeoutMs ?? DEFAULT_TIMEOUT_MS;
   const doFetch = config.fetch ?? globalThis.fetch.bind(globalThis);
 
+  const maxRetries = config.maxRetries ?? 2;
+  const retryDelayMs = config.retryDelayMs ?? 600;
+
+  function wait(ms: number, signal?: AbortSignal): Promise<void> {
+    return new Promise((resolve, reject) => {
+      const onAbort = () => {
+        clearTimeout(timer);
+        const abort = new Error(e.aborted);
+        abort.name = 'AbortError';
+        reject(abort);
+      };
+      const timer = setTimeout(() => {
+        signal?.removeEventListener('abort', onAbort);
+        resolve();
+      }, ms);
+      if (signal?.aborted) onAbort();
+      else signal?.addEventListener('abort', onAbort, { once: true });
+    });
+  }
+
+  /** Retries transient failures with exponential backoff; cancellable at any point. */
   async function request(path: string, init: RequestInit, signal?: AbortSignal): Promise<unknown> {
+    for (let attempt = 0; ; attempt++) {
+      try {
+        return await requestOnce(path, init, signal);
+      } catch (err) {
+        if (attempt >= maxRetries || signal?.aborted || !isTransient(err)) throw err;
+        const delay = err.retryAfterMs ?? retryDelayMs * 2 ** attempt;
+        if (delay > MAX_RETRY_WAIT_MS) throw err;
+        await wait(delay, signal);
+      }
+    }
+  }
+
+  async function requestOnce(
+    path: string,
+    init: RequestInit,
+    signal?: AbortSignal,
+  ): Promise<unknown> {
     const timeout = new AbortController();
     const timer = setTimeout(() => timeout.abort(), timeoutMs);
     const onAbort = () => timeout.abort();
@@ -228,7 +292,7 @@ export function createOpenAICompatibleProvider(config: OpenAICompatibleConfig): 
     }
     if (response.status === 429) {
       const retry = response.headers.get('retry-after');
-      throw new ProviderError('rate_limited', e.rateLimited(retry), 429);
+      throw new ProviderError('rate_limited', e.rateLimited(retry), 429, parseRetryAfter(retry));
     }
     if (!response.ok) {
       let detail = '';
