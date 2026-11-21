@@ -12,6 +12,9 @@ import {
 } from 'lucide-react';
 import { useState } from 'react';
 import type { ProviderSettings } from '../app/state.ts';
+import { agentProfile } from '../domain/agents.ts';
+import type { Pricing } from '../domain/cost.ts';
+import { AGENT_ROLES } from '../domain/types.ts';
 import type { VaultState } from '../app/useOrchestra.ts';
 import type { ThemePreference } from '../app/theme.ts';
 import { useI18n } from '../i18n/I18n.tsx';
@@ -57,6 +60,13 @@ export function SettingsView({
   const [test, setTest] = useState<{ ok: boolean; text: string } | null>(null);
   const [testing, setTesting] = useState(false);
   const [confirmReset, setConfirmReset] = useState(false);
+  const pricing: Pricing = settings.pricing ?? {
+    inputPerMillion: 0,
+    outputPerMillion: 0,
+    currency: 'USD',
+    asOf: new Date().toISOString().slice(0, 10),
+  };
+  const setPricing = (patch: Partial<Pricing>) => onSettings({ pricing: { ...pricing, ...patch } });
 
   const runTest = async () => {
     setTesting(true);
@@ -150,6 +160,89 @@ export function SettingsView({
                     spellCheck={false}
                   />
                 </Field>
+                <fieldset className="grid gap-2">
+                  <legend className="text-[12.5px] font-medium text-ink-2">
+                    {t.settings.agentModels}
+                  </legend>
+                  <p className="-mt-1 text-[12px] text-ink-3">{t.settings.agentModelsHint}</p>
+                  <div className="grid gap-2 sm:grid-cols-3">
+                    {AGENT_ROLES.map((role) => (
+                      <label key={role} className="grid gap-1 text-[12px] text-ink-3">
+                        {agentProfile(role, locale).name}
+                        <TextInput
+                          value={settings.agentModels[role] ?? ''}
+                          onChange={(e) =>
+                            onSettings({
+                              agentModels: { ...settings.agentModels, [role]: e.target.value },
+                            })
+                          }
+                          placeholder={settings.model || t.settings.modelPlaceholder}
+                          spellCheck={false}
+                        />
+                      </label>
+                    ))}
+                  </div>
+                </fieldset>
+                <fieldset className="grid gap-2">
+                  <legend className="text-[12.5px] font-medium text-ink-2">
+                    {t.settings.pricing}
+                  </legend>
+                  <p className="-mt-1 text-[12px] leading-relaxed text-ink-3">
+                    {t.settings.pricingHint}
+                  </p>
+                  <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+                    <label className="grid gap-1 text-[12px] text-ink-3">
+                      {t.settings.inputPrice}
+                      <TextInput
+                        type="number"
+                        min={0}
+                        step="any"
+                        inputMode="decimal"
+                        value={pricing.inputPerMillion || ''}
+                        onChange={(e) => setPricing({ inputPerMillion: Number(e.target.value) })}
+                      />
+                    </label>
+                    <label className="grid gap-1 text-[12px] text-ink-3">
+                      {t.settings.outputPrice}
+                      <TextInput
+                        type="number"
+                        min={0}
+                        step="any"
+                        inputMode="decimal"
+                        value={pricing.outputPerMillion || ''}
+                        onChange={(e) => setPricing({ outputPerMillion: Number(e.target.value) })}
+                      />
+                    </label>
+                    <label className="grid gap-1 text-[12px] text-ink-3">
+                      {t.settings.currency}
+                      <TextInput
+                        value={pricing.currency}
+                        maxLength={3}
+                        onChange={(e) => setPricing({ currency: e.target.value.toUpperCase() })}
+                        spellCheck={false}
+                      />
+                    </label>
+                    <label className="grid gap-1 text-[12px] text-ink-3">
+                      {t.settings.asOf}
+                      <TextInput
+                        type="date"
+                        value={pricing.asOf}
+                        onChange={(e) => setPricing({ asOf: e.target.value })}
+                      />
+                    </label>
+                  </div>
+                  {settings.pricing && (
+                    <div>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => onSettings({ pricing: null })}
+                      >
+                        {t.settings.clearPricing}
+                      </Button>
+                    </div>
+                  )}
+                </fieldset>
                 <Field label={t.settings.apiKey} hint={t.settings.apiKeyHint}>
                   <div className="relative">
                     <KeyRound

@@ -114,6 +114,7 @@ export function useOrchestra(locale: Locale, t: Messages) {
           baseUrl: s.baseUrl,
           apiKey,
           model: s.model,
+          agentModels: s.agentModels,
           locale,
         }),
         problem: null,

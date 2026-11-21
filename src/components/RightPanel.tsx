@@ -1,9 +1,11 @@
 import { ArrowLeft, Cpu, FileMinus, FilePen, FilePlus, Folder, X } from 'lucide-react';
-import { agentList } from '../domain/agents.ts';
+import { agentList, agentProfile } from '../domain/agents.ts';
+import { estimateCost, type Pricing } from '../domain/cost.ts';
 import type { Project, Session } from '../domain/types.ts';
 import { totalUsage } from '../domain/workflow.ts';
 import { useI18n } from '../i18n/I18n.tsx';
 import { diffStats } from '../providers/parse.ts';
+import { formatDuration, formatMoney } from '../app/format.ts';
 import { isDesktop } from '../app/secrets.ts';
 import { AgentAvatar } from './AgentAvatar.tsx';
 import { ContextList } from './SessionView.tsx';
@@ -38,6 +40,7 @@ export function RightPanel({
   project,
   session,
   providerLabel,
+  pricing,
   openPath,
   onOpenPath,
   onClose,
@@ -45,6 +48,7 @@ export function RightPanel({
   project: Project | null;
   session: Session | null;
   providerLabel: string;
+  pricing: Pricing | null;
   openPath: string | null;
   onOpenPath: (path: string | null) => void;
   onClose: () => void;
@@ -81,6 +85,13 @@ export function RightPanel({
   const usage = session ? totalUsage(session) : null;
   const used = usage ? usage.inputTokens + usage.outputTokens : 0;
   const pct = Math.min(100, Math.round((used / CONTEXT_REFERENCE_TOKENS) * 100));
+  const cost = session ? estimateCost(session.usage, pricing) : null;
+  const loc = t.meta.dateLocale;
+  const costLine = usage?.synthetic
+    ? t.panel.syntheticCost
+    : cost !== null && pricing
+      ? t.panel.estimate(formatMoney(cost, pricing.currency, loc), pricing.asOf)
+      : t.panel.noCost;
 
   return (
     <div className="flex h-full min-h-0 flex-col">
@@ -136,9 +147,64 @@ export function RightPanel({
                 />
               </div>
               <p className="mt-2 text-[12px] leading-relaxed text-ink-3">
-                {usage.synthetic ? t.panel.synthetic : t.panel.reported} {t.panel.noCost}
+                {usage.synthetic ? t.panel.synthetic : t.panel.reported} {costLine}
               </p>
             </>
+          )}
+        </section>
+
+        <section className="border-b border-line px-4 py-3.5">
+          <SectionTitle>{t.panel.runs}</SectionTitle>
+          {!session?.runs?.length ? (
+            <p className="text-[12.5px] text-ink-3">{t.panel.noRuns}</p>
+          ) : (
+            <ol className="grid gap-2.5">
+              {session.runs.map((r) => {
+                const tokens = r.usage ? r.usage.inputTokens + r.usage.outputTokens : null;
+                return (
+                  <li key={r.id} className="min-w-0 text-[12.5px]">
+                    <div className="flex min-w-0 items-center gap-2">
+                      <span className="font-medium text-ink">
+                        {agentProfile(r.role, locale).name}
+                      </span>
+                      <code className="min-w-0 flex-1 truncate font-mono text-[11.5px] text-ink-3">
+                        {r.model}
+                      </code>
+                      <span
+                        className={cn(
+                          'shrink-0 text-[11.5px]',
+                          r.status === 'ok'
+                            ? 'text-ok'
+                            : r.status === 'failed'
+                              ? 'text-bad'
+                              : 'text-ink-3',
+                        )}
+                      >
+                        {t.panel.runStatus[r.status]}
+                      </span>
+                    </div>
+                    <p className="mt-0.5 text-ink-3">
+                      {formatDuration(r.durationMs, loc)}
+                      {tokens !== null &&
+                        ` · ${tokens.toLocaleString(loc)} tokens${r.usage?.synthetic ? ` ${t.panel.syntheticShort}` : ''}`}
+                      {r.tools.map((tool) => (
+                        <span key={tool.tool}>
+                          {' · '}
+                          {t.panel.tool[tool.tool](tool.count.toLocaleString(loc))}
+                          {tool.skipped > 0 &&
+                            `, ${t.panel.toolSkipped(tool.skipped.toLocaleString(loc))}`}
+                        </span>
+                      ))}
+                    </p>
+                    {r.error && (
+                      <p className="mt-0.5 line-clamp-2 text-bad" title={r.error}>
+                        {r.error}
+                      </p>
+                    )}
+                  </li>
+                );
+              })}
+            </ol>
           )}
         </section>
 

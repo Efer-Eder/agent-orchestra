@@ -68,6 +68,31 @@ describe('persistence', () => {
     expect(restored.activeProjectId).toBe(state.activeProjectId);
   });
 
+  it('keeps per-agent models and prices, dropping junk', () => {
+    const pricing = {
+      inputPerMillion: 2,
+      outputPerMillion: 8,
+      currency: 'USD',
+      asOf: '2026-11-21',
+    };
+    const state = appReducer(initialState, {
+      type: 'updateSettings',
+      settings: { agentModels: { planner: ' big-model ', builder: '' }, pricing },
+    });
+    const restored = deserialize(serialize(state));
+    expect(restored.settings.agentModels).toEqual({ planner: 'big-model' });
+    expect(restored.settings.pricing).toEqual(pricing);
+
+    const odd = deserialize(
+      JSON.stringify({
+        version: 1,
+        settings: { agentModels: { hacker: 'x', planner: 42 }, pricing: { inputPerMillion: '1' } },
+      }),
+    );
+    expect(odd.settings.agentModels).toEqual({});
+    expect(odd.settings.pricing).toBeNull();
+  });
+
   it('never writes an API key, even if one sneaks into settings', () => {
     const state = appReducer(initialState, {
       type: 'updateSettings',

@@ -217,6 +217,7 @@ export default function App() {
               project={project}
               session={session}
               providerLabel={providerLabel}
+              pricing={state.settings.pricing}
               openPath={openPath}
               onOpenPath={setOpenPath}
               onClose={() => {

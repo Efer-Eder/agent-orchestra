@@ -1,5 +1,6 @@
 import type { AgentId } from '../domain/agents.ts';
-import type { ChatMessage, Project, Session } from '../domain/types.ts';
+import type { Pricing } from '../domain/cost.ts';
+import type { AgentRole, ChatMessage, Project, Session } from '../domain/types.ts';
 
 export type View =
   | { name: 'home' }
@@ -14,6 +15,10 @@ export interface ProviderSettings {
   kind: 'mock' | 'openai';
   baseUrl: string;
   model: string;
+  /** Optional model per agent; empty means the default model. */
+  agentModels: Partial<Record<AgentRole, string>>;
+  /** Prices typed by the user for cost estimates; null means no estimate. */
+  pricing: Pricing | null;
 }
 
 export interface AppState {
@@ -40,6 +45,8 @@ export const DEFAULT_SETTINGS: ProviderSettings = {
   kind: 'mock',
   baseUrl: 'https://api.openai.com/v1',
   model: '',
+  agentModels: {},
+  pricing: null,
 };
 
 export const initialState: AppState = {

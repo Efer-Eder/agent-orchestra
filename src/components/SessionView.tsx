@@ -11,7 +11,9 @@ import {
   TriangleExclamationPoint,
 } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
+import { runSummary } from '../app/format.ts';
 import { STATUS_TONE, TONE_BADGE } from '../app/labels.ts';
+import { runForEvent } from '../domain/cost.ts';
 import { agentProfile, type AgentId } from '../domain/agents.ts';
 import type { ContextFile, ProposedChange, Session, TimelineEvent } from '../domain/types.ts';
 import { useI18n } from '../i18n/I18n.tsx';
@@ -63,7 +65,7 @@ function AgentTurn({
     <div className="grid animate-fade-up grid-cols-[34px_minmax(0,1fr)] gap-3">
       <AgentAvatar agent={agent} working={working ?? false} {...(mood ? { mood } : {})} />
       <div className="min-w-0 pt-0.5">
-        <div className="flex items-baseline gap-2 text-[13px] font-semibold">
+        <div className="flex flex-wrap items-baseline gap-x-2 text-[13px] font-semibold">
           {agent.name}
           {meta && <span className="text-[12px] font-normal text-ink-3">{meta}</span>}
         </div>
@@ -313,6 +315,8 @@ function FinalCard({
 
 function renderEvent(ev: TimelineEvent, props: Props, t: Messages, time: (iso: string) => string) {
   const { session } = props;
+  const run = runForEvent(session, ev);
+  const extra = run ? ` · ${runSummary(run, t.meta.dateLocale, t.panel.syntheticShort)}` : '';
   switch (ev.kind) {
     case 'request':
       return (
@@ -324,7 +328,11 @@ function renderEvent(ev: TimelineEvent, props: Props, t: Messages, time: (iso: s
       );
     case 'plan':
       return (
-        <AgentTurn key={ev.id} agentId="planner" meta={`${t.session.planMeta} · ${time(ev.at)}`}>
+        <AgentTurn
+          key={ev.id}
+          agentId="planner"
+          meta={`${t.session.planMeta} · ${time(ev.at)}${extra}`}
+        >
           {session.plan?.summary}
           <PlanCard
             session={session}
@@ -348,7 +356,11 @@ function renderEvent(ev: TimelineEvent, props: Props, t: Messages, time: (iso: s
       );
     case 'execution':
       return (
-        <AgentTurn key={ev.id} agentId="builder" meta={`${t.session.changesMeta} · ${time(ev.at)}`}>
+        <AgentTurn
+          key={ev.id}
+          agentId="builder"
+          meta={`${t.session.changesMeta} · ${time(ev.at)}${extra}`}
+        >
           {t.session.proposed(session.changes?.length ?? 0)}
           {session.context && session.context.length > 0 && (
             <details className="mt-2.5 rounded-xl border border-line bg-surface px-3.5 py-2.5">
@@ -367,7 +379,11 @@ function renderEvent(ev: TimelineEvent, props: Props, t: Messages, time: (iso: s
       );
     case 'review':
       return (
-        <AgentTurn key={ev.id} agentId="reviewer" meta={`${t.session.reviewMeta} · ${time(ev.at)}`}>
+        <AgentTurn
+          key={ev.id}
+          agentId="reviewer"
+          meta={`${t.session.reviewMeta} · ${time(ev.at)}${extra}`}
+        >
           <span
             className={cn(
               'inline-flex items-center gap-1.5 font-medium',

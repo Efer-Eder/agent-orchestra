@@ -1,5 +1,12 @@
 import { isAgentId, type AgentId } from '../domain/agents.ts';
-import type { ChatMessage, Project, Session } from '../domain/types.ts';
+import type { Pricing } from '../domain/cost.ts';
+import {
+  AGENT_ROLES,
+  type AgentRole,
+  type ChatMessage,
+  type Project,
+  type Session,
+} from '../domain/types.ts';
 import { recoverInterrupted } from '../domain/workflow.ts';
 import { DEFAULT_SETTINGS, initialState, type AppState, type ProviderSettings } from './state.ts';
 
@@ -32,6 +39,8 @@ export function serialize(state: AppState): string {
       kind: state.settings.kind,
       baseUrl: state.settings.baseUrl,
       model: state.settings.model,
+      agentModels: state.settings.agentModels,
+      pricing: state.settings.pricing,
     },
   };
   return JSON.stringify(snapshot);
@@ -39,6 +48,24 @@ export function serialize(state: AppState): string {
 
 function isRecord(v: unknown): v is Record<string, unknown> {
   return typeof v === 'object' && v !== null && !Array.isArray(v);
+}
+
+function readAgentModels(v: unknown): Partial<Record<AgentRole, string>> {
+  const out: Partial<Record<AgentRole, string>> = {};
+  if (!isRecord(v)) return out;
+  for (const role of AGENT_ROLES) {
+    const model = v[role];
+    if (typeof model === 'string' && model.trim()) out[role] = model.trim().slice(0, 200);
+  }
+  return out;
+}
+
+function readPricing(v: unknown): Pricing | null {
+  if (!isRecord(v)) return null;
+  const { inputPerMillion, outputPerMillion, currency, asOf } = v;
+  if (typeof inputPerMillion !== 'number' || typeof outputPerMillion !== 'number') return null;
+  if (typeof currency !== 'string' || typeof asOf !== 'string') return null;
+  return { inputPerMillion, outputPerMillion, currency, asOf };
 }
 
 function looksLikeProject(v: unknown): v is Project {
@@ -97,6 +124,8 @@ export function deserialize(text: string | null): AppState {
     kind: s.kind === 'openai' ? 'openai' : 'mock',
     baseUrl: typeof s.baseUrl === 'string' ? s.baseUrl : DEFAULT_SETTINGS.baseUrl,
     model: typeof s.model === 'string' ? s.model : DEFAULT_SETTINGS.model,
+    agentModels: readAgentModels(s.agentModels),
+    pricing: readPricing(s.pricing),
   };
 
   const active = typeof raw.activeProjectId === 'string' ? raw.activeProjectId : null;
