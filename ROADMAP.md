@@ -37,18 +37,22 @@ Nada aqui está pronto, exceto o que estiver marcado. Itens podem mudar de ordem
 
 - [x] App abre no Windows e permite criar projeto/sessão (em memória)
 - [x] Histórico sobrevive a reinício (localStorage do WebView; SQLite depois)
-- [ ] Allowlist de diretórios no lado Rust, com testes de `..`, caminhos absolutos, symlinks e junctions
+- [x] Pasta autorizada no lado Rust, com testes de `..`, caminhos absolutos, symlinks e junctions (leitura; ADR 0009)
 - [ ] Aplicar diffs aprovados apenas dentro do diretório autorizado (aprovação por alteração)
-- [x] Provedor OpenAI-compatible opcional com tratamento de 401, 429, timeout e rede (chave ainda só em memória)
-- [ ] Uso real do provedor separado de estimativa de custo, com preços configuráveis (moeda, unidade, data)
+- [x] Provedor OpenAI-compatible opcional com tratamento de 401, 429, timeout e rede, nova tentativa em falhas passageiras e chave no cofre do Windows
+- [x] Uso real do provedor separado de estimativa de custo, com preços configuráveis (moeda, unidade, data)
+- [x] Registro de cada passo dos agentes (modelo, duração, tokens, ferramentas) e modelo por agente
+- [x] Aprovação humana final depois da revisão
 - [ ] Exportar sessão em JSON/Markdown removendo segredos
-- [ ] Testes de sanitização de segredos e rejeição de ações não autorizadas
-- [ ] Release Windows documentada (sem afirmar assinatura de código inexistente)
+- [x] Testes de sanitização de segredos e rejeição de ações não autorizadas
+- [x] Instalação no Windows documentada, sem assinatura de código ([docs/instalacao-windows.md](docs/instalacao-windows.md))
+- [ ] Assinatura de código do instalador
+- [ ] Rodada registrada com provedor real (chave e modelo de verdade)
 
 ## Depois do MVP
 
 - Painéis redimensionáveis e atalhos de teclado
-- Internacionalização (UI hoje em pt-BR)
+- Mais idiomas além de pt-BR e en-US
 - MCP com permissões por ferramenta
 - Múltiplos modelos simultâneos, filas de tarefas
 - Branches Git temporárias, snapshots/rollback

@@ -4,7 +4,26 @@ Todas as mudanças relevantes serão registradas aqui. O formato segue [Keep a C
 
 ## [Não lançado]
 
+## [0.1.0-alpha.1] - 2026-11-21
+
+Primeira versão alpha. Ainda não publicada como release.
+
 ### Adicionado
+
+- **Aprovação final**: depois da revisão a sessão para em "Aguardando aprovação final" e só fecha quando você aceita a proposta. O Reviewer agora recebe a solicitação e o plano aprovado, não só os diffs.
+- **Registro de cada passo dos agentes**: modelo, duração, tokens (reais ou sintéticos), ferramentas usadas (listar e ler arquivos) e erro, na conversa e no painel de detalhes.
+- **Modelo por agente** e **tabela de preços** em Configurações; o custo aparece sempre como estimativa feita com os preços informados, nunca para o modo demonstração.
+- **Nova tentativa** em falhas passageiras do provedor (429 com espera curta, 502, 503, 504 e queda de conexão), até duas vezes, cancelável.
+- Teste de contrato do provedor contra um servidor HTTP local real.
+- Novos estados do Octo: regendo com batuta, revisando com lupa, empilhando cubos, reverência no sucesso, apontando o erro e cochilo depois de 3 minutos parado. O Octo anima mesmo com "reduzir movimento".
+- Formulários de issue, checklist de PR e guia de instalação no Windows ([docs/instalacao-windows.md](docs/instalacao-windows.md)).
+- Seção "Limitações conhecidas" nos READMEs.
+
+### Alterado
+
+- Versão `0.1.0-alpha.1` no app, no `package.json` e no shell Tauri.
+
+### Anterior
 
 - **Leitura dos arquivos do projeto** no app desktop: pasta autorizada validada em Rust, o Planner escolhe até 12 arquivos, você aprova, o Builder lê (somente leitura) e propõe diffs de modificação. Lista de negação (`.env`, chaves, `node_modules`…), limites de tamanho, binários pulados e redação de segredos no conteúdo.
 - Interface em **português (Brasil)** e **inglês (EUA)**, com detecção pelo idioma do sistema, escolha salva em Configurações e `?lang=` na URL. Modo demonstração e respostas dos modelos seguem o idioma.

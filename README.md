@@ -37,16 +37,17 @@ Agent Orchestra é um app desktop **local-first** para coordenar agentes de IA n
 
 ## Recursos
 
-|                         |                                                                                                                                                                                                |
-| ----------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Fluxo com aprovação** | Solicitação → plano → aprovação → execução → revisão, com rejeição, pedido de ajuste e cancelamento a qualquer momento.                                                                        |
-| **Lê o seu código**     | No app desktop, o Planner escolhe arquivos da pasta autorizada e o Builder lê depois da sua aprovação. `.env`, chaves e `node_modules` nunca são lidos; segredos no código viram `[REDACTED]`. |
-| **Diffs, não escrita**  | O Builder só propõe alterações, que você abre no painel lateral. Caminhos fora do projeto (`../`, absolutos, `C:\`, `~`) são recusados.                                                        |
-| **Provedor real**       | OpenAI, OpenRouter, Groq, Ollama, LM Studio e afins, com teste de conexão e mensagens claras para 401, 429, timeout e rede.                                                                    |
-| **Agentes com rosto**   | O **Octo** conduz a orquestra e muda de humor com a sessão; Planner, Builder e Reviewer se animam enquanto trabalham. Converse direto com cada um.                                             |
-| **Dois idiomas**        | Interface, modo demonstração e respostas dos modelos em **português (Brasil)** ou **inglês (EUA)**.                                                                                            |
-| **Claro e escuro**      | Tema claro, escuro ou do sistema, no visual Grafite descrito em [DESIGN.md](DESIGN.md).                                                                                                        |
-| **Local-first**         | Projetos, sessões e conversas salvos no dispositivo. Sessões interrompidas voltam marcadas, nada fica "rodando" para sempre.                                                                   |
+|                           |                                                                                                                                                                                                |
+| ------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Fluxo com aprovação**   | Solicitação → plano → aprovação → execução → revisão → aprovação final, com rejeição, pedido de ajuste e cancelamento a qualquer momento.                                                      |
+| **Lê o seu código**       | No app desktop, o Planner escolhe arquivos da pasta autorizada e o Builder lê depois da sua aprovação. `.env`, chaves e `node_modules` nunca são lidos; segredos no código viram `[REDACTED]`. |
+| **Diffs, não escrita**    | O Builder só propõe alterações, que você abre no painel lateral. Caminhos fora do projeto (`../`, absolutos, `C:\`, `~`) são recusados.                                                        |
+| **Provedor real**         | OpenAI, OpenRouter, Groq, Ollama, LM Studio e afins, com modelo por agente, teste de conexão, nova tentativa em falhas passageiras e mensagens claras para 401, 429, timeout e rede.           |
+| **O que cada agente fez** | Cada passo registra modelo, duração, tokens e arquivos lidos. Tokens do modo demonstração aparecem como sintéticos; custo só como estimativa, com os preços que você informa.                  |
+| **Agentes com rosto**     | O **Octo** conduz a orquestra e muda de humor com a sessão; Planner, Builder e Reviewer se animam enquanto trabalham. Converse direto com cada um.                                             |
+| **Dois idiomas**          | Interface, modo demonstração e respostas dos modelos em **português (Brasil)** ou **inglês (EUA)**.                                                                                            |
+| **Claro e escuro**        | Tema claro, escuro ou do sistema, no visual Grafite descrito em [DESIGN.md](DESIGN.md).                                                                                                        |
+| **Local-first**           | Projetos, sessões e conversas salvos no dispositivo. Sessões interrompidas voltam marcadas, nada fica "rodando" para sempre.                                                                   |
 
 ## Como funciona
 
@@ -163,6 +164,19 @@ O idioma segue o do sistema na primeira vez, pode ser trocado em Configurações
 - **Não há sandbox.** Execução de comandos fica fora até existir isolamento demonstrado.
 
 Leia o [modelo de ameaças](docs/threat-model.md) e a [política de segurança](SECURITY.md). Vulnerabilidade: use o relato privado do GitHub, não issue pública.
+
+## Limitações conhecidas
+
+Isto é uma versão alpha. O que ainda não existe ou não foi validado:
+
+- **Nada é gravado no disco.** O Builder só propõe diffs; aplicar alterações ainda não existe.
+- **Sem execução de comandos e sem sandbox.** Testes, builds e scripts do projeto não rodam pelo app.
+- **Provedor real validado por contrato.** Os testes sobem um servidor HTTP local compatível com a API; uma rodada registrada com chave e modelo reais de cada provedor ainda não existe.
+- **Sem streaming.** A resposta aparece inteira quando o modelo termina.
+- **A chave passa pelo JavaScript** na hora da chamada. Mover as chamadas HTTP para o lado Rust está no roadmap.
+- **Dados em `localStorage`**, não em SQLite. Limpar os dados do app apaga projetos e sessões.
+- **Instalador Windows sem assinatura de código.** O SmartScreen avisa na primeira execução; veja [docs/instalacao-windows.md](docs/instalacao-windows.md).
+- **Só Windows** foi testado no app desktop. A versão web roda em navegador moderno, sem leitura de arquivos.
 
 ## Arquitetura
 

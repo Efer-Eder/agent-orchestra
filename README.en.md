@@ -37,16 +37,17 @@ Agent Orchestra is a **local-first** desktop app for coordinating AI agents in y
 
 ## Features
 
-|                        |                                                                                                                                                                                                             |
-| ---------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Approval flow**      | Request → plan → approval → execution → review, with rejection, adjustment requests and cancellation at any time.                                                                                           |
-| **Reads your code**    | In the desktop app, the Planner picks files from the authorized folder and the Builder reads them after your approval. `.env`, keys and `node_modules` are never read; secrets in code become `[REDACTED]`. |
-| **Diffs, not writes**  | The Builder only proposes changes, which you open in the side panel. Paths outside the project (`../`, absolute, `C:\`, `~`) are rejected.                                                                  |
-| **Real provider**      | OpenAI, OpenRouter, Groq, Ollama, LM Studio and friends, with a connection test and clear messages for 401, 429, timeouts and network errors.                                                               |
-| **Agents with a face** | **Octo** conducts the orchestra and changes mood with the session; Planner, Builder and Reviewer come alive while they work. Chat with each one directly.                                                   |
-| **Two languages**      | UI, demo mode and model answers in **English (US)** or **Portuguese (Brazil)**.                                                                                                                             |
-| **Light and dark**     | Light, dark or system theme, in the Grafite look described in [DESIGN.md](DESIGN.md).                                                                                                                       |
-| **Local-first**        | Projects, sessions and chats are saved on your device. Interrupted sessions come back marked, nothing stays "running" forever.                                                                              |
+|                         |                                                                                                                                                                                                             |
+| ----------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Approval flow**       | Request → plan → approval → execution → review → final approval, with rejection, adjustment requests and cancellation at any time.                                                                          |
+| **Reads your code**     | In the desktop app, the Planner picks files from the authorized folder and the Builder reads them after your approval. `.env`, keys and `node_modules` are never read; secrets in code become `[REDACTED]`. |
+| **Diffs, not writes**   | The Builder only proposes changes, which you open in the side panel. Paths outside the project (`../`, absolute, `C:\`, `~`) are rejected.                                                                  |
+| **Real provider**       | OpenAI, OpenRouter, Groq, Ollama, LM Studio and friends, with a model per agent, a connection test, retries on transient failures and clear messages for 401, 429, timeouts and network errors.             |
+| **What each agent did** | Every step records model, duration, tokens and files read. Demo-mode tokens are marked as synthetic; cost only as an estimate, from prices you enter.                                                       |
+| **Agents with a face**  | **Octo** conducts the orchestra and changes mood with the session; Planner, Builder and Reviewer come alive while they work. Chat with each one directly.                                                   |
+| **Two languages**       | UI, demo mode and model answers in **English (US)** or **Portuguese (Brazil)**.                                                                                                                             |
+| **Light and dark**      | Light, dark or system theme, in the Grafite look described in [DESIGN.md](DESIGN.md).                                                                                                                       |
+| **Local-first**         | Projects, sessions and chats are saved on your device. Interrupted sessions come back marked, nothing stays "running" forever.                                                                              |
 
 ## How it works
 
@@ -163,6 +164,19 @@ The language follows your system the first time, can be changed in Settings and 
 - **There is no sandbox.** Command execution stays out until isolation is demonstrated.
 
 Read the [threat model](docs/threat-model.md) and the [security policy](SECURITY.md) (Portuguese). For vulnerabilities, use GitHub private reporting, not a public issue.
+
+## Known limitations
+
+This is an alpha. What does not exist yet or has not been validated:
+
+- **Nothing is written to disk.** The Builder only proposes diffs; applying changes does not exist yet.
+- **No command execution and no sandbox.** Tests, builds and project scripts do not run from the app.
+- **Real providers validated by contract.** Tests run a local HTTP server compatible with the API; a recorded run with a real key and model for each provider does not exist yet.
+- **No streaming.** The answer shows up whole when the model finishes.
+- **The key goes through JavaScript** at call time. Moving HTTP calls to the Rust side is on the roadmap.
+- **Data in `localStorage`**, not SQLite. Clearing the app data deletes projects and sessions.
+- **Unsigned Windows installer.** SmartScreen warns on first run; see [docs/instalacao-windows.md](docs/instalacao-windows.md) (Portuguese).
+- **Only Windows** was tested for the desktop app. The web version runs in a modern browser, without file reading.
 
 ## Architecture
 
