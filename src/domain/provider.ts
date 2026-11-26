@@ -2,6 +2,7 @@ import type { AgentProfile } from './agents.ts';
 import type {
   AgentRole,
   ChatMessage,
+  ContextFile,
   FileContent,
   Plan,
   ProposedChange,
@@ -12,6 +13,14 @@ import type {
 export interface ProviderResult<T> {
   output: T;
   usage?: Usage;
+}
+
+/** Optional extras for one call. */
+export interface CallExtras {
+  /** Receives text as it arrives, when the provider streams. */
+  onDelta?: (text: string) => void;
+  /** Authorized project folder, for files the shell reads itself (desktop). */
+  root?: string;
 }
 
 /**
@@ -29,12 +38,22 @@ export interface AgentProvider {
   /** Model used for each agent role (shown in the timeline and run records). */
   modelFor(role: AgentRole): string;
   /** `tree` lists the project's readable files, when a folder is authorized. */
-  plan(request: string, signal?: AbortSignal, tree?: string[]): Promise<ProviderResult<Plan>>;
-  /** `files` are the approved files' contents, already capped and redacted. */
+  plan(
+    request: string,
+    signal?: AbortSignal,
+    tree?: string[],
+    extra?: CallExtras,
+  ): Promise<ProviderResult<Plan>>;
+  /**
+   * `files` are the approved files. With contents (capped and redacted) they go
+   * into the prompt as given; without contents, the desktop shell reads them
+   * from `extra.root` so the contents never pass through the web UI.
+   */
   build(
     plan: Plan,
     signal?: AbortSignal,
-    files?: FileContent[],
+    files?: (FileContent | ContextFile)[],
+    extra?: CallExtras,
   ): Promise<ProviderResult<ProposedChange[]>>;
   /**
    * `context` gives the Reviewer the original request and the approved plan, so
@@ -44,11 +63,13 @@ export interface AgentProvider {
     changes: ProposedChange[],
     signal?: AbortSignal,
     context?: { request: string; plan?: Plan },
+    extra?: CallExtras,
   ): Promise<ProviderResult<Review>>;
   /** Direct conversation with one agent, using its persona. */
   chat(
     agent: AgentProfile,
     history: ChatMessage[],
     signal?: AbortSignal,
+    extra?: CallExtras,
   ): Promise<ProviderResult<string>>;
 }

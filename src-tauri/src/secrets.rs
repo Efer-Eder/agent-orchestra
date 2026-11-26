@@ -100,18 +100,27 @@ pub fn init_store() -> bool {
     }
 }
 
+/// Saves the key typed in this session (held in Rust memory) to the OS store.
+/// The key itself never crosses the IPC boundary again: there is no load command.
 #[tauri::command]
-pub fn secret_save(account: String, secret: String) -> Result<(), SecretError> {
-    save(&account, &secret)
+pub fn secret_save(
+    state: tauri::State<'_, crate::provider_http::ProviderState>,
+    account: String,
+) -> Result<(), SecretError> {
+    let account = validate_account(&account)?;
+    let key = state
+        .session_key(account)
+        .ok_or_else(|| SecretError::new("Digite a chave antes de salvar no Windows."))?;
+    save(account, &key)
 }
 
+/// Removes the key from the OS store and from this session.
 #[tauri::command]
-pub fn secret_load(account: String) -> Result<Option<String>, SecretError> {
-    load(&account)
-}
-
-#[tauri::command]
-pub fn secret_delete(account: String) -> Result<(), SecretError> {
+pub fn secret_delete(
+    state: tauri::State<'_, crate::provider_http::ProviderState>,
+    account: String,
+) -> Result<(), SecretError> {
+    state.set_session_key(validate_account(&account)?, None);
     delete(&account)
 }
 

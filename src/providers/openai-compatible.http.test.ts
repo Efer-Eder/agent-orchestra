@@ -105,4 +105,65 @@ describe('OpenAI-compatible contract over real HTTP', () => {
     handler = () => undefined;
     await expect(provider(100).plan('x')).rejects.toMatchObject({ kind: 'timeout' });
   });
+
+  it('streams server-sent events as they arrive', async () => {
+    handler = (_req, _b, res) => {
+      res.writeHead(200, { 'Content-Type': 'text/event-stream' });
+      const events = [
+        { choices: [{ delta: { content: '{"verdict":' } }] },
+        { choices: [{ delta: { content: '"approve","comments":[]}' } }] },
+        { choices: [], usage: { prompt_tokens: 9, completion_tokens: 4 } },
+      ];
+      let i = 0;
+      const tick = setInterval(() => {
+        if (i < events.length) res.write(`data: ${JSON.stringify(events[i++])}\n\n`);
+        else {
+          res.end('data: [DONE]\n\n');
+          clearInterval(tick);
+        }
+      }, 15);
+    };
+    const deltas: string[] = [];
+    const result = await provider().review([], undefined, undefined, {
+      onDelta: (t) => deltas.push(t),
+    });
+    expect(result.output.verdict).toBe('approve');
+    expect(result.usage).toMatchObject({ inputTokens: 9, outputTokens: 4 });
+    expect(deltas).toEqual(['{"verdict":', '"approve","comments":[]}']);
+    const body = JSON.parse(seen[0]!.body) as { stream?: boolean };
+    expect(body.stream).toBe(true);
+  });
+
+  it('falls back to a normal answer when the server rejects streaming', async () => {
+    handler = (_req, body, res) =>
+      (JSON.parse(body) as { stream?: boolean }).stream
+        ? reply(res, 400, { error: { message: 'stream_options not supported' } })
+        : reply(res, 200, completion('{"verdict":"approve","comments":[]}'));
+    const result = await provider().review([], undefined, undefined, { onDelta: () => undefined });
+    expect(result.output.verdict).toBe('approve');
+    expect(seen).toHaveLength(2);
+  });
+
+  it('stops a stream in the middle when cancelled', async () => {
+    handler = (_req, _b, res) => {
+      res.writeHead(200, { 'Content-Type': 'text/event-stream' });
+      res.write(`data: ${JSON.stringify({ choices: [{ delta: { content: 'parte' } }] })}\n\n`);
+      // never finishes
+    };
+    const controller = new AbortController();
+    const deltas: string[] = [];
+    const pending = provider().chat(
+      { id: 'planner', name: 'Planner', persona: 'p' } as never,
+      [{ id: '1', from: 'user', content: 'oi', at: '' }],
+      controller.signal,
+      {
+        onDelta: (t) => {
+          deltas.push(t);
+          controller.abort();
+        },
+      },
+    );
+    await expect(pending).rejects.toMatchObject({ name: 'AbortError' });
+    expect(deltas).toEqual(['parte']);
+  });
 });

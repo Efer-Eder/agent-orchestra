@@ -1,4 +1,4 @@
-import type { FileContent } from '../domain/types.ts';
+import type { ContextFile } from '../domain/types.ts';
 import { isDesktop } from './secrets.ts';
 
 /**
@@ -55,8 +55,12 @@ export function createProjectFiles(invoke: Invoke = defaultInvoke, desktop = isD
     /** Validates the folder and returns its canonical path. */
     checkRoot: (root: string) => call<string>('project_check_root', { root }),
     list: (root: string) => call<FileList>('project_list_files', { root }),
-    read: (root: string, paths: string[]) =>
-      call<FileContent[]>('project_read_files', { root, paths }),
+    /**
+     * What reading these files gives (size, truncation, redactions, refusals),
+     * without the contents: Rust reads them itself for the Builder's prompt.
+     */
+    inspect: (root: string, paths: string[]) =>
+      call<ContextFile[]>('project_inspect_files', { root, paths }),
   };
 }
 

@@ -225,10 +225,15 @@ const pt = {
     apiKeyHint:
       'Nunca vai para os arquivos do app. Sem salvar no Windows, fica só na memória e some ao fechar. É enviada apenas ao endereço acima. O uso é cobrado pelo provedor, separado de qualquer assinatura de chat.',
     apiKeyPlaceholder: 'cole sua chave aqui',
+    apiKeyHintDesktop:
+      'A chave vai uma única vez para o lado Rust do app e não volta para a interface: as chamadas ao provedor saem do Rust. Sem salvar no Windows, ela some ao fechar o app. O uso é cobrado pelo provedor.',
+    apiKeyReplace: 'chave definida; cole outra para trocar',
+    useKey: 'Usar chave',
+    keyInSession: 'Chave ativa nesta sessão, guardada no Rust, fora da interface.',
     vaultUnavailable:
       'Para lembrar a chave com segurança, use o app desktop: ela fica no Gerenciador de Credenciais do Windows.',
     vaultSaved:
-      'Chave guardada no Gerenciador de Credenciais do Windows para este endereço. Ela é carregada ao abrir o app.',
+      'Chave guardada no Gerenciador de Credenciais do Windows para este endereço. Só o lado Rust do app a lê.',
     vaultHint:
       'Guarde a chave no Gerenciador de Credenciais do Windows para não precisar digitá-la de novo.',
     vaultRemove: 'Remover do Windows',
@@ -504,10 +509,15 @@ const en: Shape<Messages> = {
     apiKeyHint:
       'Never written to app files. Unless saved in Windows, it lives in memory only and is gone when the app closes. It is sent only to the address above. Usage is billed by the provider, separately from any chat subscription.',
     apiKeyPlaceholder: 'paste your key here',
+    apiKeyHintDesktop:
+      'The key goes to the Rust side of the app once and never comes back to the UI: provider calls are made from Rust. Unless saved in Windows, it is gone when the app closes. Usage is billed by the provider.',
+    apiKeyReplace: 'key set; paste another to replace it',
+    useKey: 'Use key',
+    keyInSession: 'Key active in this session, held by Rust, outside the UI.',
     vaultUnavailable:
       'To remember the key safely, use the desktop app: it is kept in the Windows Credential Manager.',
     vaultSaved:
-      'Key stored in the Windows Credential Manager for this address. It is loaded when the app opens.',
+      'Key stored in the Windows Credential Manager for this address. Only the Rust side of the app reads it.',
     vaultHint:
       'Store the key in the Windows Credential Manager so you do not have to type it again.',
     vaultRemove: 'Remove from Windows',

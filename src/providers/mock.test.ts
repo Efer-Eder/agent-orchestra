@@ -123,6 +123,8 @@ describe('mock provider with project files', () => {
     expect(output).toHaveLength(1); // JSON has no comments, so it is left alone
     expect(output[0]?.kind).toBe('modify');
     expect(output[0]?.diff).toContain('+// Agent Orchestra (demo): Improve the login.');
-    expect(output[0]?.diff).toContain(' export {}');
+    // No context lines: the mock never needs the file contents.
+    expect(output[0]?.diff).toContain('@@ -0,0 +1 @@');
+    expect(output[0]?.diff).not.toContain('export {}');
   });
 });

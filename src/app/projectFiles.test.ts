@@ -8,11 +8,11 @@ describe('project files bridge', () => {
     ) as never;
     const files = createProjectFiles(invoke, true);
     await files.list('C:/p');
-    await files.read('C:/p', ['a.ts']);
+    await files.inspect('C:/p', ['a.ts']);
     await files.checkRoot('C:/p');
     expect((invoke as ReturnType<typeof vi.fn>).mock.calls).toEqual([
       ['project_list_files', { root: 'C:/p' }],
-      ['project_read_files', { root: 'C:/p', paths: ['a.ts'] }],
+      ['project_inspect_files', { root: 'C:/p', paths: ['a.ts'] }],
       ['project_check_root', { root: 'C:/p' }],
     ]);
   });

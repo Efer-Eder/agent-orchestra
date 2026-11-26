@@ -144,6 +144,8 @@ export default function App() {
         providerProblem={o.providerProblem}
         onResetAll={o.resetAll}
         vault={o.vault}
+        onApplyKey={() => void o.applyKey()}
+        onTestConnection={() => o.testConnection()}
         onSaveToVault={() => void o.saveKeyToVault()}
         onRemoveFromVault={() => void o.removeKeyFromVault()}
       />

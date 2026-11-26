@@ -2,7 +2,7 @@ import type { AgentProfile } from '../domain/agents.ts';
 import type { Locale } from '../domain/locale.ts';
 import type { AgentProvider, ProviderResult } from '../domain/provider.ts';
 import type {
-  FileContent,
+  ContextFile,
   Plan,
   PlanTask,
   ProposedChange,
@@ -206,17 +206,14 @@ export function mockReply(
   return [TEXT[locale].replies[agent.id], '', TEXT[locale].demoNote(quote)].join('\n');
 }
 
-function modifyFor(file: FileContent, task: PlanTask, locale: Locale): ProposedChange | null {
+/**
+ * Inserts a comment at the top of the file. The hunk has no context lines, so
+ * the mock never needs the file's contents (they stay on the Rust side).
+ */
+function modifyFor(file: ContextFile, task: PlanTask, locale: Locale): ProposedChange | null {
   const note = commentFor(file.path, TEXT[locale].fileNote(task.title));
   if (!note) return null;
-  const first = file.content.split('\n')[0] ?? '';
-  const diff = [
-    `--- a/${file.path}`,
-    `+++ b/${file.path}`,
-    '@@ -1,1 +1,2 @@',
-    `+${note}`,
-    ` ${first}`,
-  ].join('\n');
+  const diff = [`--- a/${file.path}`, `+++ b/${file.path}`, '@@ -0,0 +1 @@', `+${note}`].join('\n');
   return { path: file.path, kind: 'modify', diff };
 }
 
@@ -288,12 +285,23 @@ export function createMockProvider(options: MockProviderOptions = {}): AgentProv
             : { verdict: 'request_changes', comments: [t.nothing] };
         return { output: review, input: JSON.stringify(changes), text: JSON.stringify(review) };
       }),
-    chat: (agent, history, signal) =>
-      step<string>('chat', signal, () => {
+    async chat(agent, history, signal, extra) {
+      const result = await step<string>('chat', signal, () => {
         const last = [...history].reverse().find((m) => m.from === 'user')?.content ?? '';
         const reply = mockReply(agent, last, locale);
         const input = history.map((m) => m.content).join('\n');
         return { output: reply, input, text: reply };
-      }),
+      });
+      // Streams the canned reply word by word, like a real provider would.
+      if (extra?.onDelta) {
+        const pieces = result.output.match(/\S+\s*/g) ?? [result.output];
+        const gap = Math.min(40, latency / Math.max(1, pieces.length));
+        for (const piece of pieces) {
+          await delay(gap, t.aborted, signal);
+          extra.onDelta(piece);
+        }
+      }
+      return result;
+    },
   };
 }

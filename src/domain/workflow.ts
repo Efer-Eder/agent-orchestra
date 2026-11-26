@@ -1,8 +1,9 @@
 import { defaultIdFactory, systemClock, type Clock, type IdFactory } from './ids.ts';
-import type { AgentProvider } from './provider.ts';
+import type { AgentProvider, CallExtras } from './provider.ts';
 import type {
   AgentRole,
   AgentRun,
+  ContextFile,
   FileContent,
   Project,
   Session,
@@ -147,6 +148,13 @@ class RunRecorder {
   }
 }
 
+function extras(options: RunOptions): CallExtras {
+  return {
+    ...(options.onDelta ? { onDelta: options.onDelta } : {}),
+    ...(options.projectRoot ? { root: options.projectRoot } : {}),
+  };
+}
+
 function addRun(session: Session, run: AgentRun): AgentRun[] {
   return [...(session.runs ?? []), run];
 }
@@ -237,8 +245,16 @@ export interface RunOptions extends WorkflowDeps {
   signal?: AbortSignal;
   /** Lists the readable files of the authorized project (desktop only). */
   loadTree?: () => Promise<string[] | null>;
-  /** Reads the approved files (desktop only). Errors fail the session. */
-  loadFiles?: (paths: string[]) => Promise<FileContent[]>;
+  /**
+   * Checks the approved files (desktop only). On desktop it returns metadata
+   * only; the shell reads the contents itself when it builds the prompt.
+   * Errors fail the session.
+   */
+  loadFiles?: (paths: string[]) => Promise<(FileContent | ContextFile)[]>;
+  /** Authorized project folder, passed to the provider with file references. */
+  projectRoot?: string;
+  /** Receives model text as it streams in. */
+  onDelta?: (text: string) => void;
 }
 
 /** Planner step. Ends in `awaiting_approval`: a human must decide what happens next. */
@@ -259,6 +275,7 @@ export async function runPlanning(
       planning.request,
       options.signal,
       tree ?? undefined,
+      extras(options),
     );
     return moveTo(
       planning,
@@ -330,6 +347,7 @@ export async function runExecution(
       session.plan,
       options.signal,
       readable.length ? readable : undefined,
+      extras(options),
     );
     // Keep only metadata of what was read: contents never go into saved data.
     const context = files.map((f) => ({
@@ -370,10 +388,12 @@ export async function runReview(
   }
   const rec = new RunRecorder(d, 'reviewer', provider);
   try {
-    const { output, usage } = await provider.review(session.changes ?? [], options.signal, {
-      request: session.request,
-      ...(session.plan ? { plan: session.plan } : {}),
-    });
+    const { output, usage } = await provider.review(
+      session.changes ?? [],
+      options.signal,
+      { request: session.request, ...(session.plan ? { plan: session.plan } : {}) },
+      extras(options),
+    );
     const label = output.verdict === 'approve' ? 'aprovado' : 'pede ajustes';
     return moveTo(
       session,

@@ -420,9 +420,17 @@ pub fn project_list_files(root: String) -> Result<FileList, FsError> {
     list_files(&root)
 }
 
+/// What reading these files would give, without the contents: the contents are
+/// only read again in Rust when the Builder's prompt is assembled.
 #[tauri::command]
-pub fn project_read_files(root: String, paths: Vec<String>) -> Result<Vec<FileContent>, FsError> {
-    read_files(&root, &paths)
+pub fn project_inspect_files(
+    root: String,
+    paths: Vec<String>,
+) -> Result<Vec<crate::provider_http::FileMeta>, FsError> {
+    Ok(read_files(&root, &paths)?
+        .iter()
+        .map(crate::provider_http::FileMeta::from)
+        .collect())
 }
 
 #[cfg(test)]

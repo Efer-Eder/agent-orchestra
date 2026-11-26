@@ -19,7 +19,6 @@ import type { VaultState } from '../app/useOrchestra.ts';
 import type { ThemePreference } from '../app/theme.ts';
 import { useI18n } from '../i18n/I18n.tsx';
 import { LOCALES, MESSAGES, type Locale } from '../i18n/messages.ts';
-import { createOpenAICompatibleProvider } from '../providers/openai-compatible.ts';
 import { Button, Field, Segmented, TextInput } from './primitives.tsx';
 
 function Card({ title, children }: { title: string; children: React.ReactNode }) {
@@ -41,6 +40,8 @@ export function SettingsView({
   providerProblem,
   onResetAll,
   vault,
+  onApplyKey,
+  onTestConnection,
   onSaveToVault,
   onRemoveFromVault,
 }: {
@@ -53,6 +54,9 @@ export function SettingsView({
   providerProblem: string | null;
   onResetAll: () => void;
   vault: VaultState;
+  /** Desktop: hands the typed key to Rust. */
+  onApplyKey: () => void;
+  onTestConnection: () => Promise<string[]>;
   onSaveToVault: () => void;
   onRemoveFromVault: () => void;
 }) {
@@ -72,14 +76,7 @@ export function SettingsView({
     setTesting(true);
     setTest(null);
     try {
-      const provider = createOpenAICompatibleProvider({
-        baseUrl: settings.baseUrl,
-        apiKey,
-        model: settings.model || 'test',
-        timeoutMs: 15_000,
-        locale,
-      });
-      const models = await provider.testConnection();
+      const models = await onTestConnection();
       const has = settings.model && models.includes(settings.model);
       setTest({
         ok: true,
@@ -243,21 +240,44 @@ export function SettingsView({
                     </div>
                   )}
                 </fieldset>
-                <Field label={t.settings.apiKey} hint={t.settings.apiKeyHint}>
-                  <div className="relative">
-                    <KeyRound
-                      size={15}
-                      className="pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 text-ink-3"
-                    />
-                    <TextInput
-                      type="password"
-                      autoComplete="off"
-                      value={apiKey}
-                      onChange={(e) => onApiKey(e.target.value)}
-                      placeholder={t.settings.apiKeyPlaceholder}
-                      className="pl-9"
-                    />
-                  </div>
+                <Field
+                  label={t.settings.apiKey}
+                  hint={vault.available ? t.settings.apiKeyHintDesktop : t.settings.apiKeyHint}
+                >
+                  <form
+                    className="flex gap-2"
+                    onSubmit={(e) => {
+                      e.preventDefault();
+                      if (vault.available) onApplyKey();
+                    }}
+                  >
+                    <div className="relative min-w-0 flex-1">
+                      <KeyRound
+                        size={15}
+                        className="pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 text-ink-3"
+                      />
+                      <TextInput
+                        type="password"
+                        autoComplete="off"
+                        value={apiKey}
+                        onChange={(e) => onApiKey(e.target.value)}
+                        placeholder={
+                          vault.available && (vault.session || vault.saved)
+                            ? t.settings.apiKeyReplace
+                            : t.settings.apiKeyPlaceholder
+                        }
+                        className="pl-9"
+                      />
+                    </div>
+                    {vault.available && (
+                      <Button type="submit" disabled={vault.busy || !apiKey.trim()}>
+                        {t.settings.useKey}
+                      </Button>
+                    )}
+                  </form>
+                  {vault.available && vault.session && (
+                    <p className="mt-1.5 text-[12px] text-ok">{t.settings.keyInSession}</p>
+                  )}
                 </Field>
                 <div className="rounded-xl border border-line bg-surface-2 px-3.5 py-3">
                   <div className="flex flex-wrap items-center gap-3">
@@ -282,7 +302,7 @@ export function SettingsView({
                       ) : (
                         <Button
                           size="sm"
-                          disabled={vault.busy || !apiKey.trim()}
+                          disabled={vault.busy || !(apiKey.trim() || vault.session)}
                           onClick={onSaveToVault}
                         >
                           {t.settings.vaultSave}

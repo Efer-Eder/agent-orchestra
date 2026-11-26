@@ -19,18 +19,27 @@ import {
 } from '../domain/workflow.ts';
 import type { Messages } from '../i18n/messages.ts';
 import { createMockProvider } from '../providers/mock.ts';
-import { createOpenAICompatibleProvider } from '../providers/openai-compatible.ts';
+import { createOpenAICompatibleProvider, isLocalUrl } from '../providers/openai-compatible.ts';
+import { createTauriTransport } from '../providers/tauri-transport.ts';
 import { clearSavedState, loadState, saveState } from './persistence.ts';
 import { createProjectFiles, ProjectFsError } from './projectFiles.ts';
 import { accountFor, createSecretStore, isDesktop } from './secrets.ts';
 import { appReducer, type View } from './state.ts';
+import { useLiveText } from './useLiveText.ts';
 
-type Step = (session: Session, signal: AbortSignal) => Promise<Session>;
+type Step = (
+  session: Session,
+  signal: AbortSignal,
+  onDelta: (text: string) => void,
+) => Promise<Session>;
 
 /** Where the API key lives right now. */
 export interface VaultState {
   available: boolean;
+  /** Saved in the Windows Credential Manager. */
   saved: boolean;
+  /** Typed in this session and held by Rust. */
+  session: boolean;
   busy: boolean;
   message: string | null;
 }
@@ -57,7 +66,8 @@ function errorText(e: unknown, t?: Messages): string {
  */
 export function useOrchestra(locale: Locale, t: Messages) {
   const [state, dispatch] = useReducer(appReducer, undefined, loadState);
-  // API key lives only in memory: never persisted, gone when the app closes.
+  // Browser: the key lives only here, in memory. Desktop: this is only the draft
+  // typed in Settings; "Use key" hands it to Rust and clears it.
   const [apiKey, setApiKey] = useState('');
   const [busySessions, setBusySessions] = useState<ReadonlySet<string>>(new Set());
   const [busyAgents, setBusyAgents] = useState<ReadonlySet<AgentId>>(new Set());
@@ -68,32 +78,27 @@ export function useOrchestra(locale: Locale, t: Messages) {
   const [vault, setVault] = useState<VaultState>({
     available: desktop,
     saved: false,
+    session: false,
     busy: false,
     message: null,
   });
-  const loadedAccount = useRef<string | null>(null);
+  const live = useLiveText();
 
-  // Desktop only: load the key for the configured provider from the Windows
-  // Credential Manager, once per provider address.
+  // Desktop only: ask Rust whether a key exists for this provider (it never
+  // sends the key back).
   const account = state.settings.kind === 'openai' ? accountFor(state.settings.baseUrl) : null;
-  useEffect(() => {
-    if (!desktop || !account || loadedAccount.current === account) return;
-    loadedAccount.current = account;
-    let alive = true;
-    secretStore
-      .load(account)
-      .then((key) => {
-        if (!alive) return;
-        if (key) setApiKey(key);
-        setVault((v) => ({ ...v, saved: Boolean(key), message: null }));
-      })
-      .catch((e: unknown) => {
-        if (alive) setVault((v) => ({ ...v, saved: false, message: errorText(e) }));
-      });
-    return () => {
-      alive = false;
-    };
+  const refreshKeyStatus = useCallback(async () => {
+    if (!desktop || !account) return;
+    try {
+      const status = await secretStore.status(account);
+      setVault((v) => ({ ...v, saved: status.vault, session: status.session, message: null }));
+    } catch (e) {
+      setVault((v) => ({ ...v, saved: false, message: errorText(e) }));
+    }
   }, [desktop, account, secretStore]);
+  useEffect(() => {
+    void refreshKeyStatus();
+  }, [refreshKeyStatus]);
 
   useEffect(() => {
     const t = setTimeout(() => saveState(state), 250);
@@ -105,24 +110,29 @@ export function useOrchestra(locale: Locale, t: Messages) {
   const providerStatus = useMemo<ProviderStatus>(() => {
     const s = state.settings;
     if (s.kind === 'mock') return { provider: mock, problem: null };
-    if (!apiKey.trim()) {
+    // Local servers (Ollama, LM Studio) usually need no key.
+    const hasKey = desktop ? vault.session || vault.saved : Boolean(apiKey.trim());
+    if (!hasKey && !isLocalUrl(s.baseUrl)) {
       return { provider: mock, problem: t.settings.needKey };
     }
     try {
       return {
         provider: createOpenAICompatibleProvider({
           baseUrl: s.baseUrl,
-          apiKey,
           model: s.model,
           agentModels: s.agentModels,
           locale,
+          // Desktop: Rust makes the call with the key it holds.
+          ...(desktop
+            ? { transport: createTauriTransport({ baseUrl: s.baseUrl, locale }) }
+            : { apiKey }),
         }),
         problem: null,
       };
     } catch (e) {
       return { provider: mock, problem: errorText(e) };
     }
-  }, [state.settings, apiKey, mock, locale, t]);
+  }, [state.settings, apiKey, mock, locale, t, desktop, vault.session, vault.saved]);
   const provider = providerStatus.provider;
 
   const save = useCallback((s: Session) => dispatch({ type: 'upsertSession', session: s }), []);
@@ -142,19 +152,22 @@ export function useOrchestra(locale: Locale, t: Messages) {
       controllers.current.set(start.id, ctrl);
       setBusy(start.id, true);
       let current = start;
+      const onDelta = (text: string) => live.append(start.id, text);
       try {
         for (const step of steps) {
           const before = current.status;
-          current = await step(current, ctrl.signal);
+          live.clear(start.id);
+          current = await step(current, ctrl.signal, onDelta);
           save(current);
           if (current.status === before || ['failed', 'cancelled'].includes(current.status)) break;
         }
       } finally {
         controllers.current.delete(start.id);
+        live.clear(start.id);
         setBusy(start.id, false);
       }
     },
-    [save, setBusy],
+    [save, setBusy, live],
   );
 
   const setView = useCallback((view: View) => dispatch({ type: 'setView', view }), []);
@@ -215,7 +228,8 @@ export function useOrchestra(locale: Locale, t: Messages) {
         ? () => localized(async () => (await projectFiles.list(root)).files)
         : undefined;
       void runSteps(draft, [
-        (s, signal) => runPlanning(s, provider, { signal, ...(loadTree ? { loadTree } : {}) }),
+        (s, signal, onDelta) =>
+          runPlanning(s, provider, { signal, onDelta, ...(loadTree ? { loadTree } : {}) }),
       ]);
       return null;
     },
@@ -238,12 +252,19 @@ export function useOrchestra(locale: Locale, t: Messages) {
       const approved = approvePlan(session);
       save(approved);
       const root = projectRoot(session.projectId);
+      // Only metadata comes back: Rust reads the contents again when it builds
+      // the Builder's prompt, so they never pass through the UI.
       const loadFiles = root
-        ? (paths: string[]) => localized(() => projectFiles.read(root, paths))
+        ? (paths: string[]) => localized(() => projectFiles.inspect(root, paths))
         : undefined;
       void runSteps(approved, [
-        (s, signal) => runExecution(s, provider, { signal, ...(loadFiles ? { loadFiles } : {}) }),
-        (s, signal) => runReview(s, provider, { signal }),
+        (s, signal, onDelta) =>
+          runExecution(s, provider, {
+            signal,
+            onDelta,
+            ...(loadFiles && root ? { loadFiles, projectRoot: root } : {}),
+          }),
+        (s, signal, onDelta) => runReview(s, provider, { signal, onDelta }),
       ]);
     },
     [save, runSteps, provider, projectRoot, projectFiles, localized],
@@ -292,11 +313,14 @@ export function useOrchestra(locale: Locale, t: Messages) {
       const ctrl = new AbortController();
       controllers.current.set(`chat:${agentId}`, ctrl);
       setBusyAgents((prev) => new Set(prev).add(agentId));
+      const liveId = `chat:${agentId}`;
+      live.clear(liveId);
       try {
         const { output, usage } = await provider.chat(
           agentProfile(agentId, locale),
           history,
           ctrl.signal,
+          { onDelta: (text) => live.append(liveId, text) },
         );
         dispatch({
           type: 'appendChat',
@@ -324,6 +348,7 @@ export function useOrchestra(locale: Locale, t: Messages) {
         });
       } finally {
         controllers.current.delete(`chat:${agentId}`);
+        live.clear(liveId);
         setBusyAgents((prev) => {
           const next = new Set(prev);
           next.delete(agentId);
@@ -331,23 +356,43 @@ export function useOrchestra(locale: Locale, t: Messages) {
         });
       }
     },
-    [provider, state.chats, locale, t],
+    [provider, state.chats, locale, t, live],
   );
 
   const stopChat = useCallback((agentId: AgentId) => {
     controllers.current.get(`chat:${agentId}`)?.abort();
   }, []);
 
+  /** Desktop: hands the typed key to Rust and forgets it on this side. */
+  const applyKey = useCallback(async () => {
+    if (!desktop || !account || !apiKey.trim()) return;
+    setVault((v) => ({ ...v, busy: true, message: null }));
+    try {
+      await secretStore.use(account, apiKey);
+      setApiKey('');
+      await refreshKeyStatus();
+      setVault((v) => ({ ...v, busy: false }));
+    } catch (e) {
+      setVault((v) => ({ ...v, busy: false, message: errorText(e, t) }));
+    }
+  }, [desktop, account, apiKey, secretStore, refreshKeyStatus, t]);
+
   const saveKeyToVault = useCallback(async () => {
     if (!account) return;
     setVault((v) => ({ ...v, busy: true, message: null }));
     try {
-      await secretStore.save(account, apiKey);
-      setVault((v) => ({ ...v, busy: false, saved: true }));
+      // A key still in the field goes to Rust first; Rust copies it to Windows.
+      if (apiKey.trim()) {
+        await secretStore.use(account, apiKey);
+        setApiKey('');
+      }
+      await secretStore.save(account);
+      await refreshKeyStatus();
+      setVault((v) => ({ ...v, busy: false }));
     } catch (e) {
       setVault((v) => ({ ...v, busy: false, message: errorText(e, t) }));
     }
-  }, [account, apiKey, secretStore, t]);
+  }, [account, apiKey, secretStore, refreshKeyStatus, t]);
 
   const removeKeyFromVault = useCallback(async () => {
     if (!account) return;
@@ -355,11 +400,35 @@ export function useOrchestra(locale: Locale, t: Messages) {
     try {
       await secretStore.remove(account);
       setApiKey('');
-      setVault((v) => ({ ...v, busy: false, saved: false }));
+      await refreshKeyStatus();
+      setVault((v) => ({ ...v, busy: false }));
     } catch (e) {
       setVault((v) => ({ ...v, busy: false, message: errorText(e) }));
     }
-  }, [account, secretStore]);
+  }, [account, secretStore, refreshKeyStatus]);
+
+  /** Lists the provider's models with the current settings (through Rust on desktop). */
+  const testConnection = useCallback(
+    async (signal?: AbortSignal): Promise<string[]> => {
+      const s = state.settings;
+      if (desktop && apiKey.trim() && account) {
+        await secretStore.use(account, apiKey);
+        setApiKey('');
+        await refreshKeyStatus();
+      }
+      const tester = createOpenAICompatibleProvider({
+        baseUrl: s.baseUrl,
+        model: s.model || 'test',
+        timeoutMs: 15_000,
+        locale,
+        ...(desktop
+          ? { transport: createTauriTransport({ baseUrl: s.baseUrl, timeoutMs: 15_000, locale }) }
+          : { apiKey }),
+      });
+      return tester.testConnection(signal);
+    },
+    [state.settings, desktop, apiKey, account, secretStore, refreshKeyStatus, locale],
+  );
 
   const resetAll = useCallback(() => {
     for (const c of controllers.current.values()) c.abort();
@@ -389,6 +458,9 @@ export function useOrchestra(locale: Locale, t: Messages) {
     stopChat,
     resetAll,
     vault,
+    applyKey,
+    testConnection,
+    liveText: live.texts,
     saveKeyToVault,
     removeKeyFromVault,
     filesAvailable: projectFiles.available,

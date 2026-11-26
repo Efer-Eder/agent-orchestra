@@ -402,3 +402,36 @@ describe('agent run records', () => {
     expect(cancelled.runs?.[0]?.status).toBe('cancelled');
   });
 });
+
+describe('files by reference and streaming', () => {
+  it('passes the project root and onDelta to the provider, without file contents', async () => {
+    const base = createMockProvider();
+    const seen: { files?: unknown; root?: string; streamed: boolean } = { streamed: false };
+    const spy: AgentProvider = {
+      ...base,
+      build: (plan, signal, files, extra) => {
+        seen.files = files;
+        if (extra?.root) seen.root = extra.root;
+        extra?.onDelta?.('{');
+        return base.build(plan, signal, files, extra);
+      },
+    };
+    const planned = await runPlanning(newSession('Criar página de login.'), spy, {
+      ...deps(),
+      loadTree: async () => ['src/login/LoginPage.tsx'],
+    });
+    const deltas: string[] = [];
+    const done = await runExecution(approvePlan(planned, deps()), spy, {
+      ...deps(),
+      projectRoot: 'C:/projetos/demo',
+      onDelta: (t) => deltas.push(t),
+      loadFiles: async (paths) =>
+        paths.map((path) => ({ path, bytes: 12, truncated: false, redactions: 0, skipped: null })),
+    });
+    expect(done.status).toBe('reviewing');
+    expect(seen.root).toBe('C:/projetos/demo');
+    expect(JSON.stringify(seen.files)).not.toContain('content');
+    expect(deltas).toEqual(['{']);
+    expect(done.changes?.[0]?.diff).toContain('@@ -0,0 +1 @@');
+  });
+});
