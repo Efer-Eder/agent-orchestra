@@ -8,6 +8,8 @@ import { diffStats } from '../providers/parse.ts';
 import { formatDuration, formatMoney } from '../app/format.ts';
 import { isDesktop } from '../app/secrets.ts';
 import { AgentAvatar } from './AgentAvatar.tsx';
+import { CodeText } from './code/Code.tsx';
+import { languageForPath } from './code/lang.ts';
 import { ContextList } from './SessionView.tsx';
 import { cn, IconButton, SectionTitle } from './primitives.tsx';
 
@@ -21,6 +23,20 @@ function lineClass(line: string): string {
   if (line.startsWith('-')) return 'bg-bad-soft text-bad';
   if (line.startsWith('@@')) return 'text-accent';
   return 'text-ink-2';
+}
+
+/** Diff markers keep their colour; the code after them is highlighted. */
+function DiffLine({ line, language }: { line: string; language: string | null }) {
+  if (!line) return <> </>;
+  const header = line.startsWith('+++') || line.startsWith('---') || line.startsWith('@@');
+  const marker = line[0];
+  if (header || (marker !== '+' && marker !== '-' && marker !== ' ')) return <>{line}</>;
+  return (
+    <>
+      <span className="select-none">{marker}</span>
+      <CodeText code={line.slice(1)} language={language} />
+    </>
+  );
 }
 
 type AgentState = 'working' | 'done' | 'waiting' | 'leading' | null;
@@ -71,7 +87,7 @@ export function RightPanel({
         <pre className="min-h-0 flex-1 overflow-auto bg-code py-2 font-mono text-[12px] leading-[1.6]">
           {change.diff.split('\n').map((line, i) => (
             <div key={i} className={cn('px-3 whitespace-pre', lineClass(line))}>
-              {line || ' '}
+              <DiffLine line={line} language={languageForPath(change.path)} />
             </div>
           ))}
         </pre>

@@ -29,6 +29,12 @@
   --bad: #c0392b;
   --bad-soft: #fbe3df;
   --code: #f7f6f2;
+  --syn-keyword: #6b4fd8;
+  --syn-string: #2f7d55;
+  --syn-number: #a8620b;
+  --syn-title: #1f6fb2;
+  --syn-type: #0e7c86;
+  --syn-comment: #8a877d;
   color-scheme: light;
 }
 
@@ -54,6 +60,12 @@
   --bad: #ff8a7a;
   --bad-soft: #43231f;
   --code: #1f1f1d;
+  --syn-keyword: #b3a6ff;
+  --syn-string: #8fd3a8;
+  --syn-number: #f2b45a;
+  --syn-title: #7cc4ff;
+  --syn-type: #6fd6dd;
+  --syn-comment: #8a877f;
   color-scheme: dark;
 }
 
@@ -143,4 +155,46 @@
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
   }
+}
+
+/* Syntax highlighting (highlight.js classes), in the Grafite palette. */
+.hljs-keyword,
+.hljs-built_in,
+.hljs-selector-tag,
+.hljs-meta .hljs-keyword,
+.hljs-literal {
+  color: var(--syn-keyword);
+}
+.hljs-string,
+.hljs-regexp,
+.hljs-addition,
+.hljs-template-tag,
+.hljs-selector-attr {
+  color: var(--syn-string);
+}
+.hljs-number,
+.hljs-symbol,
+.hljs-variable.constant_,
+.hljs-bullet {
+  color: var(--syn-number);
+}
+.hljs-title,
+.hljs-title.function_,
+.hljs-section,
+.hljs-attr,
+.hljs-property {
+  color: var(--syn-title);
+}
+.hljs-type,
+.hljs-title.class_,
+.hljs-name,
+.hljs-tag,
+.hljs-selector-class {
+  color: var(--syn-type);
+}
+.hljs-comment,
+.hljs-quote,
+.hljs-meta {
+  color: var(--syn-comment);
+  font-style: italic;
 }

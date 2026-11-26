@@ -5,6 +5,7 @@ import type { ChatMessage } from '../domain/types.ts';
 import { useI18n } from '../i18n/I18n.tsx';
 import { AgentAvatar } from './AgentAvatar.tsx';
 import { Composer } from './Composer.tsx';
+import { MessageText } from './code/Code.tsx';
 import { Button, cn, IconButton } from './primitives.tsx';
 
 function Stage({ agent, lead }: { agent: AgentProfile; lead?: boolean }) {
@@ -146,14 +147,16 @@ export function AgentChatView({
                 <AgentAvatar agent={agent} />
                 <div className="min-w-0 pt-0.5">
                   <div className="text-[13px] font-semibold">{agent.name}</div>
-                  <div
-                    className={cn(
-                      'mt-1 text-[14px] leading-relaxed whitespace-pre-wrap',
-                      m.error ? 'text-bad' : 'text-ink-2',
-                    )}
-                  >
-                    {m.content}
-                  </div>
+                  {m.error ? (
+                    <div className="mt-1 text-[14px] leading-relaxed whitespace-pre-wrap text-bad">
+                      {m.content}
+                    </div>
+                  ) : (
+                    <MessageText
+                      content={m.content}
+                      className="mt-1 text-[14px] leading-relaxed text-ink-2"
+                    />
+                  )}
                 </div>
               </div>
             ),
@@ -163,8 +166,8 @@ export function AgentChatView({
               <AgentAvatar agent={agent} working />
               <div className="min-w-0 pt-0.5">
                 <div className="text-[13px] font-semibold">{agent.name}</div>
-                <div className="mt-1 text-[14px] leading-relaxed whitespace-pre-wrap text-ink-2">
-                  {liveText}
+                <div className="mt-1 text-[14px] leading-relaxed text-ink-2">
+                  <MessageText content={liveText} className="inline" />
                   <span className="ml-0.5 inline-block h-3.5 w-1.5 animate-pulse bg-accent align-middle" />
                 </div>
               </div>
