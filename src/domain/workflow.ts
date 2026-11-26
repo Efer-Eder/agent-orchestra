@@ -307,6 +307,37 @@ export function approveFinal(session: Session, deps?: WorkflowDeps): Session {
   ]);
 }
 
+/**
+ * Records what was written to disk. Only after the final approval, and only for
+ * the files the person ticked; the session stays completed.
+ */
+export function recordApply(
+  session: Session,
+  results: { path: string; status: 'applied' | 'failed'; reason?: string | null }[],
+  deps?: WorkflowDeps,
+): Session {
+  if (session.status !== 'completed') {
+    throw new WorkflowError('invalid_transition', 'Só dá para gravar depois da aprovação final.');
+  }
+  const d = resolve(deps);
+  const at = d.clock().toISOString();
+  const applied = { ...session.applied };
+  for (const r of results) {
+    applied[r.path] = { status: r.status, at, ...(r.reason ? { reason: r.reason } : {}) };
+  }
+  const ok = results.filter((r) => r.status === 'applied').length;
+  return {
+    ...session,
+    applied,
+    events: [
+      ...session.events,
+      event(d, 'apply', `${ok} de ${results.length} arquivo(s) gravado(s) no disco.`, undefined, {
+        detail: `${ok}/${results.length}`,
+      }),
+    ],
+  };
+}
+
 /** Rejects the plan (before execution) or the reviewed proposal (at the end). */
 export function rejectPlan(session: Session, reason: string, deps?: WorkflowDeps): Session {
   const d = resolve(deps);

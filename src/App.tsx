@@ -90,6 +90,9 @@ export default function App() {
         onToggleRight={() => setRightOpen((v) => !v)}
         onApprove={() => o.approve(session)}
         onApproveFinal={() => o.acceptFinal(session)}
+        canApply={o.filesAvailable && Boolean(project?.rootLabel.trim())}
+        applyRoot={project?.rootLabel ?? ''}
+        onApply={(paths) => o.applyChanges(session, paths)}
         onReject={(r) => o.reject(session, r)}
         onAdjust={(note) => o.requestAdjustment(session, note)}
         onCancel={() => o.cancel(session)}

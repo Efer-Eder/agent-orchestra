@@ -1,7 +1,7 @@
 {
   "$schema": "../gen/schemas/desktop-schema.json",
   "identifier": "default",
-  "description": "Core window permissions, saving or deleting the API key (never loading it back), read-only inspection of the authorized project folder and the provider calls made from Rust. No fs, shell, http or other plugins.",
+  "description": "Core window permissions, saving or deleting the API key (never loading it back), read-only inspection of the authorized project folder, writing changes approved file by file inside it and the provider calls made from Rust. No fs, shell, http or other plugins.",
   "windows": ["main"],
   "permissions": [
     "core:default",
@@ -10,6 +10,7 @@
     "allow-project-check-root",
     "allow-project-list-files",
     "allow-project-inspect-files",
+    "allow-project-apply-changes",
     "allow-provider-set-key",
     "allow-provider-key-status",
     "allow-provider-complete",

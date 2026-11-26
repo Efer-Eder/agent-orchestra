@@ -34,6 +34,10 @@ interface Props {
   onToggleRight: () => void;
   onApprove: () => void;
   onApproveFinal: () => void;
+  /** Desktop with an authorized folder: approved changes can be written. */
+  canApply: boolean;
+  applyRoot: string;
+  onApply: (paths: string[]) => Promise<string | null>;
   onReject: (reason: string) => void;
   onAdjust: (note: string) => string | null;
   onCancel: () => void;
@@ -332,6 +336,137 @@ function LiveTail({ text }: { text: string }) {
   );
 }
 
+/** Writing to disk: the person ticks each file, then confirms. */
+function ApplyCard({
+  session,
+  root,
+  onApply,
+}: {
+  session: Session;
+  root: string;
+  onApply: (paths: string[]) => Promise<string | null>;
+}) {
+  const { t } = useI18n();
+  const [chosen, setChosen] = useState<string[]>([]);
+  const [confirming, setConfirming] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const changes = session.changes ?? [];
+  const pending = changes.filter((c) => session.applied?.[c.path]?.status !== 'applied');
+  if (!changes.length) return null;
+  const toggle = (path: string) =>
+    setChosen((prev) => (prev.includes(path) ? prev.filter((p) => p !== path) : [...prev, path]));
+  const run = async () => {
+    setBusy(true);
+    setError(null);
+    const problem = await onApply(chosen);
+    setBusy(false);
+    setConfirming(false);
+    setChosen([]);
+    if (problem) setError(problem);
+  };
+  return (
+    <div
+      role="region"
+      aria-label={t.apply.aria}
+      className="ml-[46px] animate-fade-up overflow-hidden rounded-xl border border-line bg-surface"
+    >
+      <div className="px-4 py-3">
+        <p className="text-[14px] font-semibold text-ink">{t.apply.title}</p>
+        <p className="mt-1 text-[12.5px] leading-relaxed text-ink-3">{t.apply.hint}</p>
+      </div>
+      <ul className="grid gap-0.5 border-t border-line px-2 py-2">
+        {changes.map((c) => {
+          const done = session.applied?.[c.path];
+          const { added, removed } = diffStats(c.diff);
+          return (
+            <li key={c.path}>
+              <label
+                className={cn(
+                  'flex min-w-0 items-center gap-2.5 rounded-md px-2 py-1.5 text-[12.5px]',
+                  done?.status === 'applied' ? 'opacity-70' : 'cursor-pointer hover:bg-surface-2',
+                )}
+              >
+                <input
+                  type="checkbox"
+                  className="accent-[var(--accent)]"
+                  disabled={done?.status === 'applied' || busy}
+                  checked={done?.status === 'applied' || chosen.includes(c.path)}
+                  onChange={() => toggle(c.path)}
+                />
+                <span
+                  className={cn(
+                    'shrink-0 rounded px-1.5 py-0.5 text-[11px] font-semibold',
+                    c.kind === 'delete' ? 'bg-bad-soft text-bad' : 'bg-surface-3 text-ink-2',
+                  )}
+                >
+                  {t.apply.kind[c.kind]}
+                </span>
+                <code className="min-w-0 flex-1 truncate font-mono text-[12px] text-ink-2">
+                  {c.path}
+                </code>
+                {added > 0 && <span className="text-ok">+{added}</span>}
+                {removed > 0 && <span className="text-bad">−{removed}</span>}
+                {done && (
+                  <span
+                    className={cn(
+                      'shrink-0 text-[11.5px]',
+                      done.status === 'applied' ? 'text-ok' : 'text-bad',
+                    )}
+                  >
+                    {done.status === 'applied'
+                      ? t.apply.done
+                      : (t.apply.reasons[done.reason as keyof typeof t.apply.reasons] ??
+                        done.reason)}
+                  </span>
+                )}
+              </label>
+            </li>
+          );
+        })}
+      </ul>
+      {pending.length > 0 && (
+        <div className="border-t border-line bg-surface-2 px-3 py-2.5">
+          {confirming ? (
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="min-w-0 flex-1 text-[12.5px] text-warn">
+                {t.apply.confirm(chosen.length, root)}
+              </span>
+              <Button
+                size="sm"
+                variant="ghost"
+                disabled={busy}
+                onClick={() => setConfirming(false)}
+              >
+                {t.common.back}
+              </Button>
+              <Button size="sm" variant="primary" disabled={busy} onClick={() => void run()}>
+                {busy ? t.apply.writing : t.apply.write}
+              </Button>
+            </div>
+          ) : (
+            <div className="flex flex-wrap items-center justify-end gap-2">
+              <Button
+                size="sm"
+                variant="primary"
+                disabled={!chosen.length}
+                onClick={() => setConfirming(true)}
+              >
+                {t.apply.button(chosen.length)}
+              </Button>
+            </div>
+          )}
+          {error && (
+            <p role="alert" className="mt-2 text-[12.5px] text-bad">
+              {error}
+            </p>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
 function renderEvent(ev: TimelineEvent, props: Props, t: Messages, time: (iso: string) => string) {
   const { session } = props;
   const run = runForEvent(session, ev);
@@ -427,6 +562,14 @@ function renderEvent(ev: TimelineEvent, props: Props, t: Messages, time: (iso: s
           )}
         </AgentTurn>
       );
+    case 'apply': {
+      const [ok = '0', total = '0'] = (ev.detail ?? '').split('/');
+      return (
+        <SystemLine key={ev.id} icon={<CircleCheck size={14} className="text-ok" />}>
+          {t.apply.event(Number(ok), Number(total))} · {time(ev.at)}
+        </SystemLine>
+      );
+    }
     case 'final_approval':
       return (
         <SystemLine key={ev.id} icon={<CircleCheck size={14} className="text-ok" />}>
@@ -510,6 +653,9 @@ export function SessionView(props: Props) {
             {t.session.orchestraIntro}
           </AgentTurn>
           {session.events.slice(1).map((ev) => renderEvent(ev, props, t, time))}
+          {session.status === 'completed' && props.canApply && (
+            <ApplyCard session={session} root={props.applyRoot} onApply={props.onApply} />
+          )}
           {awaitingFinal && !busy && (
             <FinalCard
               session={session}

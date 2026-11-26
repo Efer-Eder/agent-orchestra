@@ -10,10 +10,13 @@ describe('project files bridge', () => {
     await files.list('C:/p');
     await files.inspect('C:/p', ['a.ts']);
     await files.checkRoot('C:/p');
+    const change = { path: 'a.ts', kind: 'modify' as const, diff: '@@ -1 +1 @@\n-a\n+b' };
+    await files.apply('C:/p', [change]);
     expect((invoke as ReturnType<typeof vi.fn>).mock.calls).toEqual([
       ['project_list_files', { root: 'C:/p' }],
       ['project_inspect_files', { root: 'C:/p', paths: ['a.ts'] }],
       ['project_check_root', { root: 'C:/p' }],
+      ['project_apply_changes', { root: 'C:/p', changes: [change] }],
     ]);
   });
 

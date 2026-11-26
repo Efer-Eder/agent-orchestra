@@ -10,6 +10,7 @@ import {
   cancelSession,
   createProject,
   createSession,
+  recordApply,
   rejectPlan,
   MAX_REQUEST_LENGTH,
   runExecution,
@@ -272,6 +273,24 @@ export function useOrchestra(locale: Locale, t: Messages) {
 
   const acceptFinal = useCallback((session: Session) => save(approveFinal(session)), [save]);
 
+  /** Writes the ticked changes to disk (desktop, authorized folder only). */
+  const applyChanges = useCallback(
+    async (session: Session, paths: string[]): Promise<string | null> => {
+      const root = projectRoot(session.projectId);
+      if (!root) return t.apply.noFolder;
+      const chosen = (session.changes ?? []).filter((c) => paths.includes(c.path));
+      if (!chosen.length) return null;
+      try {
+        const results = await projectFiles.apply(root, chosen);
+        save(recordApply(session, results));
+        return null;
+      } catch (e) {
+        return errorText(e, t);
+      }
+    },
+    [projectRoot, projectFiles, save, t],
+  );
+
   const reject = useCallback(
     (session: Session, reason: string) => save(rejectPlan(session, reason)),
     [save],
@@ -450,6 +469,7 @@ export function useOrchestra(locale: Locale, t: Messages) {
     startSession,
     approve,
     acceptFinal,
+    applyChanges,
     reject,
     requestAdjustment,
     cancel,

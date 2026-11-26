@@ -8,6 +8,7 @@ fn main() {
             "project_check_root",
             "project_list_files",
             "project_inspect_files",
+            "project_apply_changes",
             "provider_set_key",
             "provider_key_status",
             "provider_complete",

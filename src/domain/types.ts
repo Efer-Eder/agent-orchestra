@@ -119,6 +119,14 @@ export interface AgentRun {
   error?: string;
 }
 
+/** Result of writing one approved change to disk. */
+export interface AppliedFile {
+  status: 'applied' | 'failed';
+  /** Why it failed: outside, denied, symlink, exists, missing, conflict, bad_diff, too_big, io. */
+  reason?: string;
+  at: string;
+}
+
 export type TimelineEventKind =
   | 'request'
   | 'plan'
@@ -127,6 +135,7 @@ export type TimelineEventKind =
   | 'execution'
   | 'review'
   | 'final_approval'
+  | 'apply'
   | 'cancelled'
   | 'error';
 
@@ -156,6 +165,8 @@ export interface Session {
   usage: Usage[];
   /** One record per agent step. Optional so data saved before it still loads. */
   runs?: AgentRun[];
+  /** Files written to disk after the final approval, by path. */
+  applied?: Record<string, AppliedFile>;
   events: TimelineEvent[];
   error?: string;
 }

@@ -12,6 +12,7 @@ import {
   createSession,
   MAX_REQUEST_LENGTH,
   recoverInterrupted,
+  recordApply,
   rejectPlan,
   runExecution,
   runPlanning,
@@ -433,5 +434,34 @@ describe('files by reference and streaming', () => {
     expect(JSON.stringify(seen.files)).not.toContain('content');
     expect(deltas).toEqual(['{']);
     expect(done.changes?.[0]?.diff).toContain('@@ -0,0 +1 @@');
+  });
+});
+
+describe('writing approved changes', () => {
+  it('records results only after the final approval', async () => {
+    const provider = createMockProvider();
+    const approved = approvePlan(await runPlanning(newSession(), provider, deps()), deps());
+    const reviewed = await runReview(
+      await runExecution(approved, provider, deps()),
+      provider,
+      deps(),
+    );
+    const path = reviewed.changes![0]!.path;
+    expect(() => recordApply(reviewed, [{ path, status: 'applied' }], deps())).toThrow(
+      WorkflowError,
+    );
+    const done = approveFinal(reviewed, deps());
+    const written = recordApply(
+      done,
+      [
+        { path, status: 'applied', reason: null },
+        { path: 'x.ts', status: 'failed', reason: 'conflict' },
+      ],
+      deps(),
+    );
+    expect(written.status).toBe('completed');
+    expect(written.applied?.[path]?.status).toBe('applied');
+    expect(written.applied?.['x.ts']).toMatchObject({ status: 'failed', reason: 'conflict' });
+    expect(written.events.at(-1)).toMatchObject({ kind: 'apply', detail: '1/2' });
   });
 });

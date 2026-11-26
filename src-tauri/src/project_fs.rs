@@ -124,12 +124,12 @@ const DENIED_EXTENSIONS: &[&str] = &[
 /// `.env.example`-style templates are fine to read.
 const ALLOWED_ENV_TEMPLATES: &[&str] = &[".env.example", ".env.sample", ".env.template"];
 
-fn is_denied_dir(name: &str) -> bool {
+pub(crate) fn is_denied_dir(name: &str) -> bool {
     let lower = name.to_ascii_lowercase();
     DENIED_DIRS.contains(&lower.as_str()) || (lower.starts_with('.') && lower != ".github")
 }
 
-fn is_denied_file(name: &str) -> bool {
+pub(crate) fn is_denied_file(name: &str) -> bool {
     let lower = name.to_ascii_lowercase();
     if ALLOWED_ENV_TEMPLATES.contains(&lower.as_str()) {
         return false;
@@ -153,7 +153,7 @@ fn display(path: &Path) -> String {
     s.strip_prefix(r"\\?\").unwrap_or(&s).to_string()
 }
 
-fn same_or_inside(path: &Path, base: &Path) -> bool {
+pub(crate) fn same_or_inside(path: &Path, base: &Path) -> bool {
     path.starts_with(base)
 }
 

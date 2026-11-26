@@ -1,4 +1,4 @@
-import type { ContextFile } from '../domain/types.ts';
+import type { ContextFile, ProposedChange } from '../domain/types.ts';
 import { isDesktop } from './secrets.ts';
 
 /**
@@ -18,6 +18,12 @@ export class ProjectFsError extends Error {
     this.name = 'ProjectFsError';
     this.code = code;
   }
+}
+
+export interface ApplyResult {
+  path: string;
+  status: 'applied' | 'failed';
+  reason: string | null;
 }
 
 export interface FileList {
@@ -61,6 +67,12 @@ export function createProjectFiles(invoke: Invoke = defaultInvoke, desktop = isD
      */
     inspect: (root: string, paths: string[]) =>
       call<ContextFile[]>('project_inspect_files', { root, paths }),
+    /** Writes the approved changes inside the folder; each file succeeds or fails alone. */
+    apply: (root: string, changes: ProposedChange[]) =>
+      call<ApplyResult[]>('project_apply_changes', {
+        root,
+        changes: changes.map(({ path, kind, diff }) => ({ path, kind, diff })),
+      }),
   };
 }
 
