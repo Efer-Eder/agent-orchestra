@@ -84,6 +84,7 @@ export default function App() {
       <SessionView
         session={session}
         busy={o.busySessions.has(session.id)}
+        liveText={o.liveText[session.id]}
         providerLabel={providerLabel}
         rightOpen={rightOpen}
         onToggleRight={() => setRightOpen((v) => !v)}
@@ -108,6 +109,7 @@ export default function App() {
         agentId={view.id}
         messages={state.chats[view.id] ?? []}
         busy={o.busyAgents.has(view.id)}
+        liveText={o.liveText[`chat:${view.id}`]}
         providerLabel={providerLabel}
         onBack={() => o.setView({ name: 'agents' })}
         onSend={(text) => o.sendChat(view.id, text)}

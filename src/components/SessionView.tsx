@@ -27,6 +27,8 @@ import { Button, cn, IconButton } from './primitives.tsx';
 interface Props {
   session: Session;
   busy: boolean;
+  /** Model text streaming in for the current step, if any. */
+  liveText?: string | undefined;
   providerLabel: string;
   rightOpen: boolean;
   onToggleRight: () => void;
@@ -313,6 +315,23 @@ function FinalCard({
   );
 }
 
+/**
+ * The end of the answer as it streams in. The structured reply (JSON) is only
+ * shown in full once validated; here it is just a sign of progress.
+ */
+function LiveTail({ text }: { text: string }) {
+  const tail = text.length > 600 ? `…${text.slice(-600)}` : text;
+  return (
+    <pre
+      aria-hidden="true"
+      className="mt-1 max-h-40 overflow-hidden rounded-lg border border-line bg-code px-3 py-2 font-mono text-[11.5px] leading-[1.55] whitespace-pre-wrap text-ink-3"
+    >
+      {tail}
+      <span className="ml-0.5 inline-block h-3 w-1.5 animate-pulse bg-accent align-middle" />
+    </pre>
+  );
+}
+
 function renderEvent(ev: TimelineEvent, props: Props, t: Messages, time: (iso: string) => string) {
   const { session } = props;
   const run = runForEvent(session, ev);
@@ -448,10 +467,11 @@ export function SessionView(props: Props) {
   const time = (iso: string) =>
     new Date(iso).toLocaleTimeString(t.meta.dateLocale, { hour: '2-digit', minute: '2-digit' });
 
+  const streaming = Boolean(props.liveText);
   useEffect(() => {
     const el = feedRef.current;
     if (el) el.scrollTo({ top: el.scrollHeight, behavior: 'smooth' });
-  }, [session.events.length, busy]);
+  }, [session.events.length, busy, streaming]);
 
   const awaitingFinal = session.status === 'awaiting_final_approval';
   const awaiting = session.status === 'awaiting_approval' || awaitingFinal;
@@ -498,11 +518,23 @@ export function SessionView(props: Props) {
             />
           )}
           {working && (
-            <AgentTurn agentId={working} meta={t.session.working} working>
-              <div className="grid gap-2 pt-1" aria-label={t.common.loading}>
-                <span className="h-3 w-3/4 animate-pulse rounded bg-surface-3" />
-                <span className="h-3 w-1/2 animate-pulse rounded bg-surface-3" />
-              </div>
+            <AgentTurn
+              agentId={working}
+              meta={
+                props.liveText
+                  ? t.session.receiving(props.liveText.length.toLocaleString(t.meta.dateLocale))
+                  : t.session.working
+              }
+              working
+            >
+              {props.liveText ? (
+                <LiveTail text={props.liveText} />
+              ) : (
+                <div className="grid gap-2 pt-1" aria-label={t.common.loading}>
+                  <span className="h-3 w-3/4 animate-pulse rounded bg-surface-3" />
+                  <span className="h-3 w-1/2 animate-pulse rounded bg-surface-3" />
+                </div>
+              )}
             </AgentTurn>
           )}
         </div>

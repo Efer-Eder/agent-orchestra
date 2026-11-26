@@ -110,6 +110,7 @@ const pt = {
         : `${n} alterações propostas, não aplicadas ao disco.`,
     reviewApproved: 'Aprovado pelo Reviewer',
     reviewChanges: 'Pede ajustes',
+    receiving: (chars: string) => `recebendo resposta · ${chars} caracteres`,
     finalAria: 'Aprovação final',
     finalTitle: 'Revisão concluída. Aceitar a proposta?',
     finalHint:
@@ -400,6 +401,7 @@ const en: Shape<Messages> = {
         : `${n} proposed changes, not applied to disk.`,
     reviewApproved: 'Approved by the Reviewer',
     reviewChanges: 'Asks for changes',
+    receiving: (chars: string) => `receiving answer · ${chars} characters`,
     finalAria: 'Final approval',
     finalTitle: 'Review done. Accept the proposal?',
     finalHint:

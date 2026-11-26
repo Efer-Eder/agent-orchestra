@@ -82,6 +82,7 @@ export function AgentChatView({
   agentId,
   messages,
   busy,
+  liveText,
   providerLabel,
   onBack,
   onSend,
@@ -91,6 +92,8 @@ export function AgentChatView({
   agentId: AgentId;
   messages: ChatMessage[];
   busy: boolean;
+  /** Reply streaming in, while busy. */
+  liveText?: string | undefined;
   providerLabel: string;
   onBack: () => void;
   onSend: (text: string) => Promise<void>;
@@ -102,7 +105,7 @@ export function AgentChatView({
   const feedRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
     feedRef.current?.scrollTo({ top: feedRef.current.scrollHeight, behavior: 'smooth' });
-  }, [messages.length, busy]);
+  }, [messages.length, busy, liveText]);
 
   return (
     <div className="flex h-full min-h-0 flex-col">
@@ -155,14 +158,27 @@ export function AgentChatView({
               </div>
             ),
           )}
-          {busy && (
+          {busy && liveText ? (
             <div className="grid grid-cols-[34px_minmax(0,1fr)] gap-3">
               <AgentAvatar agent={agent} working />
-              <div className="grid gap-2 pt-2" aria-label={t.common.loading}>
-                <span className="h-3 w-2/3 animate-pulse rounded bg-surface-3" />
-                <span className="h-3 w-1/3 animate-pulse rounded bg-surface-3" />
+              <div className="min-w-0 pt-0.5">
+                <div className="text-[13px] font-semibold">{agent.name}</div>
+                <div className="mt-1 text-[14px] leading-relaxed whitespace-pre-wrap text-ink-2">
+                  {liveText}
+                  <span className="ml-0.5 inline-block h-3.5 w-1.5 animate-pulse bg-accent align-middle" />
+                </div>
               </div>
             </div>
+          ) : (
+            busy && (
+              <div className="grid grid-cols-[34px_minmax(0,1fr)] gap-3">
+                <AgentAvatar agent={agent} working />
+                <div className="grid gap-2 pt-2" aria-label={t.common.loading}>
+                  <span className="h-3 w-2/3 animate-pulse rounded bg-surface-3" />
+                  <span className="h-3 w-1/3 animate-pulse rounded bg-surface-3" />
+                </div>
+              </div>
+            )
           )}
         </div>
       </div>
