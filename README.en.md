@@ -37,17 +37,17 @@ Agent Orchestra is a **local-first** desktop app for coordinating AI agents in y
 
 ## Features
 
-|                         |                                                                                                                                                                                                             |
-| ----------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Approval flow**       | Request → plan → approval → execution → review → final approval, with rejection, adjustment requests and cancellation at any time.                                                                          |
-| **Reads your code**     | In the desktop app, the Planner picks files from the authorized folder and the Builder reads them after your approval. `.env`, keys and `node_modules` are never read; secrets in code become `[REDACTED]`. |
-| **Diffs, not writes**   | The Builder only proposes changes, which you open in the side panel. Paths outside the project (`../`, absolute, `C:\`, `~`) are rejected.                                                                  |
-| **Real provider**       | OpenAI, OpenRouter, Groq, Ollama, LM Studio and friends, with a model per agent, a connection test, retries on transient failures and clear messages for 401, 429, timeouts and network errors.             |
-| **What each agent did** | Every step records model, duration, tokens and files read. Demo-mode tokens are marked as synthetic; cost only as an estimate, from prices you enter.                                                       |
-| **Agents with a face**  | **Octo** conducts the orchestra and changes mood with the session; Planner, Builder and Reviewer come alive while they work. Chat with each one directly.                                                   |
-| **Two languages**       | UI, demo mode and model answers in **English (US)** or **Portuguese (Brazil)**.                                                                                                                             |
-| **Light and dark**      | Light, dark or system theme, in the Grafite look described in [DESIGN.md](DESIGN.md).                                                                                                                       |
-| **Local-first**         | Projects, sessions and chats are saved on your device. Interrupted sessions come back marked, nothing stays "running" forever.                                                                              |
+|                                     |                                                                                                                                                                                                                                                                     |
+| ----------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Approval flow**                   | Request → plan → approval → execution → review → final approval, with rejection, adjustment requests and cancellation at any time.                                                                                                                                  |
+| **Reads your code**                 | In the desktop app, the Planner picks files from the authorized folder and the Builder reads them after your approval. `.env`, keys and `node_modules` are never read; secrets in code become `[REDACTED]`.                                                         |
+| **Reviewed diffs, approved writes** | The Builder proposes diffs, which you open in the side panel with syntax highlighting. After the final approval you tick, file by file, what to write; Rust applies it only inside the authorized folder, never through links and only if the file has not changed. |
+| **Real provider**                   | OpenAI, OpenRouter, Groq, Ollama, LM Studio and friends, with streamed answers, a model per agent, a connection test, retries on transient failures and clear messages for 401, 429, timeouts and network errors.                                                   |
+| **What each agent did**             | Every step records model, duration, tokens and files read. Demo-mode tokens are marked as synthetic; cost only as an estimate, from prices you enter.                                                                                                               |
+| **Agents with a face**              | **Octo** conducts the orchestra and changes mood with the session; Planner, Builder and Reviewer come alive while they work. Chat with each one directly.                                                                                                           |
+| **Two languages**                   | UI, demo mode and model answers in **English (US)** or **Portuguese (Brazil)**.                                                                                                                                                                                     |
+| **Light and dark**                  | Light, dark or system theme, in the Grafite look described in [DESIGN.md](DESIGN.md).                                                                                                                                                                               |
+| **Local-first**                     | Projects, sessions and chats are saved on your device. Interrupted sessions come back marked, nothing stays "running" forever.                                                                                                                                      |
 
 ## How it works
 
@@ -158,9 +158,10 @@ The language follows your system the first time, can be changed in Settings and 
 ## Security
 
 - No telemetry. The network is only used when you configure a provider, and only for that address.
-- The key never goes into app files, logs or error messages.
-- The Tauri shell has no file system, shell or HTTP plugins. It has six commands (three for the key, three to read the project), each with an explicit permission, plus a strict CSP.
-- Files are only read inside the authorized folder: paths are canonicalized (symlinks and junctions included), with a deny list, size limits and secret redaction. Details in [ADR 0009](docs/adr/0009-leitura-de-arquivos-do-projeto.md) (Portuguese).
+- The key never goes into app files, logs or error messages. In the desktop app, provider calls are made from Rust: the key stays in Rust (memory or the Credential Manager) and no command returns it to the UI ([ADR 0010](docs/adr/0010-chamadas-ao-provedor-pelo-rust.md), Portuguese).
+- The Tauri shell has no file system, shell or HTTP plugins. It has eleven commands, each with an explicit permission, and the CSP keeps the UI off the network.
+- Files are only read inside the authorized folder: paths are canonicalized (symlinks and junctions included), with a deny list, size limits and secret redaction. Rust reads the contents and puts them in the prompt, without going through the UI ([ADR 0009](docs/adr/0009-leitura-de-arquivos-do-projeto.md), Portuguese).
+- Writes only after the final approval, file by file, with the same path rules, never through links, checking the current content and atomically ([ADR 0011](docs/adr/0011-gravar-alteracoes-aprovadas.md), Portuguese).
 - **There is no sandbox.** Command execution stays out until isolation is demonstrated.
 
 Read the [threat model](docs/threat-model.md) and the [security policy](SECURITY.md) (Portuguese). For vulnerabilities, use GitHub private reporting, not a public issue.
@@ -169,11 +170,10 @@ Read the [threat model](docs/threat-model.md) and the [security policy](SECURITY
 
 This is an alpha. What does not exist yet or has not been validated:
 
-- **Nothing is written to disk.** The Builder only proposes diffs; applying changes does not exist yet.
+- **Writing has no "undo" in the app.** Use git to roll back a written change.
 - **No command execution and no sandbox.** Tests, builds and project scripts do not run from the app.
 - **Real providers validated by contract.** Tests run a local HTTP server compatible with the API; a recorded run with a real key and model for each provider does not exist yet.
-- **No streaming.** The answer shows up whole when the model finishes.
-- **The key goes through JavaScript** at call time. Moving HTTP calls to the Rust side is on the roadmap.
+- **The key goes through JavaScript once**, when it is typed in Settings. After that it stays in Rust only.
 - **Data in `localStorage`**, not SQLite. Clearing the app data deletes projects and sessions.
 - **Unsigned Windows installer.** SmartScreen warns on first run; see [docs/instalacao-windows.md](docs/instalacao-windows.md) (Portuguese).
 - **Only Windows** was tested for the desktop app. The web version runs in a modern browser, without file reading.
@@ -199,8 +199,8 @@ The domain is pure TypeScript with no I/O, with an injectable clock and ids for 
 - [x] Windows desktop app with the key in the Credential Manager
 - [x] Mascots, light and dark themes, Portuguese and English
 - [x] Read project files as context, with an authorized folder, deny list and redaction
-- [ ] Apply approved diffs to disk, with per-file approval
-- [ ] HTTP calls from the Rust side, so the key never touches JavaScript
+- [x] Provider calls from Rust, with streaming and the key kept out of the UI
+- [x] Apply approved diffs to disk, with per-file approval
 - [ ] SQLite, session export and a published installer
 
 Full list in [ROADMAP.md](ROADMAP.md) and history in [PROGRESS.md](PROGRESS.md) (Portuguese).

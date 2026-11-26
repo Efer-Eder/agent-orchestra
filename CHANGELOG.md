@@ -4,6 +4,21 @@ Todas as mudanças relevantes serão registradas aqui. O formato segue [Keep a C
 
 ## [Não lançado]
 
+### Adicionado
+
+- **Chamadas ao provedor pelo Rust** no app desktop: a chave fica no Rust (memória ou Gerenciador de Credenciais) e nenhum comando a devolve para a interface; o conteúdo dos arquivos é lido e posto no prompt pelo Rust. Timeout, novas tentativas, 401/429 e cancelamento continuam, agora testados também em Rust ([ADR 0010](docs/adr/0010-chamadas-ao-provedor-pelo-rust.md)).
+- **Streaming** das respostas (SSE) quando o servidor suporta, com volta automática para resposta normal; o chat mostra o texto chegando e a sessão mostra o progresso da etapa. Dá para parar no meio.
+- **Syntax highlighting** nos diffs e nos blocos de código dos chats (highlight.js com 13 linguagens, carregado só quando há código: +3 kB no pacote inicial, 71 kB num arquivo separado).
+- **Gravar no disco** as alterações aprovadas, arquivo por arquivo, depois da aprovação final, só dentro da pasta autorizada, sem passar por links e só se o arquivo não mudou ([ADR 0011](docs/adr/0011-gravar-alteracoes-aprovadas.md)).
+- Botão **Usar chave** em Configurações no desktop; o teste de conexão também passa pelo Rust.
+
+### Alterado
+
+- A CSP do desktop não permite mais nenhuma requisição de rede pela interface.
+- `secret_load` e `project_read_files` foram removidos; `project_inspect_files` devolve só metadados.
+- O modo demonstração propõe a alteração de arquivo sem precisar do conteúdo dele.
+- Servidores locais (Ollama, LM Studio) funcionam sem chave.
+
 ## [0.1.0-alpha.1] - 2026-11-21
 
 Primeira versão alpha. Ainda não publicada como release.

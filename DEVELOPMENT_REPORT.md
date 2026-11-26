@@ -1,6 +1,6 @@
 # Relatório de desenvolvimento
 
-Versão: `0.1.0-alpha.1` (local, não publicada). Data: 2026-11-21.
+Versão: `0.1.0-alpha.1` (não publicada como release). Primeira rodada: 2026-11-21. Segunda rodada: 2026-11-26 (seção 9).
 
 Este relatório registra o diagnóstico da Fase 0, o que mudou na Fase 2 e o que ainda falta. Cada item diz se está **Implementado** (o código existe), **Testado** (validado por teste executado), **Preparado** (configurado, depende de etapa externa) ou **Pendente**.
 
@@ -41,9 +41,10 @@ Estado encontrado no início da Fase 2, item a item, com a evidência usada.
 | P2         | Estados do Octo incompletos frente à especificação            | Implementado; "downloading" preparado                                      |
 | P2         | Versão `0.0.0`, instalador sem guia e sem aviso de assinatura | Implementado (versão alpha, guia, build)                                   |
 | P2         | Sem templates de issue e PR; README sem limitações            | Implementado                                                               |
-| P2         | Chave e conteúdo dos arquivos passam pelo JavaScript          | Pendente (chamadas HTTP no Rust)                                           |
-| P2         | Sem streaming                                                 | Pendente                                                                   |
-| P3         | Sem syntax highlighting nos diffs e no código                 | Pendente                                                                   |
+| P2         | Chave e conteúdo dos arquivos passam pelo JavaScript          | Implementado e testado em 2026-11-26 (ADR 0010)                            |
+| P2         | Sem streaming                                                 | Implementado e testado em 2026-11-26                                       |
+| P3         | Sem syntax highlighting nos diffs e no código                 | Implementado e testado em 2026-11-26                                       |
+| P2         | Diffs aprovados não podiam ser gravados                       | Implementado e testado em 2026-11-26 (ADR 0011)                            |
 | P3         | Sem anexos no composer                                        | Pendente                                                                   |
 | P3         | `localStorage` em vez de SQLite                               | Pendente                                                                   |
 | P3         | Leitura de arquivos não cancelável no meio                    | Pendente                                                                   |
@@ -100,12 +101,13 @@ Testes novos nesta fase: aprovação final (3), nova tentativa (7), `parseRetryA
 ## 6. Pendências e próximos passos
 
 1. Rodada registrada com provedor real (chave e modelo de verdade), anotando modelo, tokens e tempos.
-2. Mover as chamadas HTTP para o Rust, para a chave e o conteúdo dos arquivos não passarem pelo JavaScript.
-3. Streaming das respostas quando o provedor suportar.
-4. Syntax highlighting nos diffs.
-5. Aplicar diffs aprovados no disco, com aprovação por arquivo, dentro da pasta autorizada.
+2. ~~Chamadas HTTP pelo Rust~~ (feito em 2026-11-26).
+3. ~~Streaming~~ (feito em 2026-11-26).
+4. ~~Syntax highlighting~~ (feito em 2026-11-26).
+5. ~~Gravar diffs aprovados~~ (feito em 2026-11-26).
 6. SQLite e exportação de sessão sem segredos.
 7. Assinatura de código do instalador.
+8. "Desfazer" uma gravação pelo app (hoje: git) e prévia do arquivo inteiro depois da mudança.
 
 ## 7. Bloqueios externos
 
@@ -116,6 +118,43 @@ Testes novos nesta fase: aprovação final (3), nova tentativa (7), `parseRetryA
 ## 8. Riscos conhecidos
 
 - **Prompt injection pelo conteúdo do projeto:** mitigado (conteúdo marcado como não confiável, saídas validadas, nada é executado ou gravado), não eliminado. Um modelo pode propor diffs ruins; a revisão e as duas aprovações humanas são a barreira.
-- **Chave no processo da interface** durante a chamada (ver pendência 2).
+- **Chave digitada passa uma vez pelo JavaScript** ao ser colada em Configurações; depois disso fica só no Rust.
+- **Gravação no disco:** protegida por aprovação final, marcação por arquivo, confirmação, regras de caminho e conferência de contexto; não há desfazer no app.
 - **Dados em `localStorage`:** limpar os dados do WebView apaga o histórico.
 - **Instalador sem assinatura:** o SmartScreen avisa; o guia explica como conferir o SHA-256.
+
+## 9. Segunda rodada (2026-11-26)
+
+### Implementado e testado
+
+| Item                                                                                          | Commit               | Evidência                                                                                                                                                                                                                 |
+| --------------------------------------------------------------------------------------------- | -------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Chamadas ao provedor pelo Rust; chave e conteúdo dos arquivos fora da interface; CSP sem rede | `4d10c78`            | 12 testes Rust contra servidor HTTP local; 6 testes do transporte Tauri; teste de que nenhum comando carrega a chave de volta                                                                                             |
+| Streaming (SSE) com fallback e cancelamento no meio                                           | `4d10c78`, `bf42f51` | Testes Rust e de contrato HTTP em TS (stream, fallback 400, cancelamento)                                                                                                                                                 |
+| Syntax highlighting (diff e blocos de código)                                                 | `736b1ef`            | 3 testes (linguagem, escape de HTML, cercas); pacote inicial de 355,78 kB para 358,89 kB (110,19 para 111,32 kB gzip); `highlighter` separado, 71,27 kB (23,71 kB gzip), baixado só quando há código                      |
+| Gravar diffs aprovados, por arquivo                                                           | `08ac9f8`            | 9 testes Rust (traversal, absoluto, UNC, negados, junction real, conflito, CRLF, trecho deslocado, criação sem sobrescrever, exclusão parcial recusada, sem temporários); teste de domínio (só depois da aprovação final) |
+
+### Validação manual no app desktop (`tauri dev`, Windows)
+
+Contra um servidor OpenAI-compatível falso em `127.0.0.1`, com uma pasta de exemplo:
+
+- O teste de conexão e as três etapas chegaram ao servidor com `Authorization` enviado pelo Rust.
+- O Builder recebeu os blocos de arquivo montados no Rust. O `.env` foi negado e a chave falsa `sk-proj-…` do exemplo foi ocultada.
+- As respostas vieram em streaming, com uso real nas execuções.
+- Aceitar a proposta, marcar um arquivo e confirmar gravou a linha no arquivo certo. A sessão registrou "Gravou 1 de 1 arquivo(s)".
+
+### Números finais
+
+| Verificação                                                        | Resultado                                                                                                                         |
+| ------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------- |
+| `npx vitest run`                                                   | 15 arquivos, 130 testes passando                                                                                                  |
+| `cargo test`                                                       | 31 passando, 1 ignorado (cofre real, manual)                                                                                      |
+| lint, typecheck, prettier, `cargo fmt`, `cargo clippy -D warnings` | limpos                                                                                                                            |
+| `npm audit`                                                        | 0 vulnerabilidades                                                                                                                |
+| `npx tauri build`                                                  | ok em 93 s; instalador `0.1.0-alpha.1` com 4,10 MiB (era 2,52); executável 15,8 MB (era 10,9), por causa do `reqwest` e do rustls |
+| Executável de release sem servidor de desenvolvimento              | abriu com o título e a interface                                                                                                  |
+
+### Não validado
+
+- Provedor real com chave de verdade: segue sem chave neste ambiente; o contrato é testado com servidores locais.
+- Instalação do NSIS nesta máquina: altera o sistema, depende de aprovação.

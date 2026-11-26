@@ -37,17 +37,17 @@ Agent Orchestra é um app desktop **local-first** para coordenar agentes de IA n
 
 ## Recursos
 
-|                           |                                                                                                                                                                                                |
-| ------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Fluxo com aprovação**   | Solicitação → plano → aprovação → execução → revisão → aprovação final, com rejeição, pedido de ajuste e cancelamento a qualquer momento.                                                      |
-| **Lê o seu código**       | No app desktop, o Planner escolhe arquivos da pasta autorizada e o Builder lê depois da sua aprovação. `.env`, chaves e `node_modules` nunca são lidos; segredos no código viram `[REDACTED]`. |
-| **Diffs, não escrita**    | O Builder só propõe alterações, que você abre no painel lateral. Caminhos fora do projeto (`../`, absolutos, `C:\`, `~`) são recusados.                                                        |
-| **Provedor real**         | OpenAI, OpenRouter, Groq, Ollama, LM Studio e afins, com modelo por agente, teste de conexão, nova tentativa em falhas passageiras e mensagens claras para 401, 429, timeout e rede.           |
-| **O que cada agente fez** | Cada passo registra modelo, duração, tokens e arquivos lidos. Tokens do modo demonstração aparecem como sintéticos; custo só como estimativa, com os preços que você informa.                  |
-| **Agentes com rosto**     | O **Octo** conduz a orquestra e muda de humor com a sessão; Planner, Builder e Reviewer se animam enquanto trabalham. Converse direto com cada um.                                             |
-| **Dois idiomas**          | Interface, modo demonstração e respostas dos modelos em **português (Brasil)** ou **inglês (EUA)**.                                                                                            |
-| **Claro e escuro**        | Tema claro, escuro ou do sistema, no visual Grafite descrito em [DESIGN.md](DESIGN.md).                                                                                                        |
-| **Local-first**           | Projetos, sessões e conversas salvos no dispositivo. Sessões interrompidas voltam marcadas, nada fica "rodando" para sempre.                                                                   |
+|                                        |                                                                                                                                                                                                                                                 |
+| -------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Fluxo com aprovação**                | Solicitação → plano → aprovação → execução → revisão → aprovação final, com rejeição, pedido de ajuste e cancelamento a qualquer momento.                                                                                                       |
+| **Lê o seu código**                    | No app desktop, o Planner escolhe arquivos da pasta autorizada e o Builder lê depois da sua aprovação. `.env`, chaves e `node_modules` nunca são lidos; segredos no código viram `[REDACTED]`.                                                  |
+| **Diffs revisados, gravação aprovada** | O Builder propõe diffs, que você abre no painel com syntax highlighting. Depois da aprovação final, você marca arquivo por arquivo o que gravar; o Rust só aplica dentro da pasta autorizada, sem passar por links e só se o arquivo não mudou. |
+| **Provedor real**                      | OpenAI, OpenRouter, Groq, Ollama, LM Studio e afins, com respostas em streaming, modelo por agente, teste de conexão, nova tentativa em falhas passageiras e mensagens claras para 401, 429, timeout e rede.                                    |
+| **O que cada agente fez**              | Cada passo registra modelo, duração, tokens e arquivos lidos. Tokens do modo demonstração aparecem como sintéticos; custo só como estimativa, com os preços que você informa.                                                                   |
+| **Agentes com rosto**                  | O **Octo** conduz a orquestra e muda de humor com a sessão; Planner, Builder e Reviewer se animam enquanto trabalham. Converse direto com cada um.                                                                                              |
+| **Dois idiomas**                       | Interface, modo demonstração e respostas dos modelos em **português (Brasil)** ou **inglês (EUA)**.                                                                                                                                             |
+| **Claro e escuro**                     | Tema claro, escuro ou do sistema, no visual Grafite descrito em [DESIGN.md](DESIGN.md).                                                                                                                                                         |
+| **Local-first**                        | Projetos, sessões e conversas salvos no dispositivo. Sessões interrompidas voltam marcadas, nada fica "rodando" para sempre.                                                                                                                    |
 
 ## Como funciona
 
@@ -158,9 +158,10 @@ O idioma segue o do sistema na primeira vez, pode ser trocado em Configurações
 ## Segurança
 
 - Sem telemetria. A rede só é usada quando você configura um provedor, e só para o endereço informado.
-- A chave nunca vai para arquivos do app, logs ou mensagens de erro.
-- O shell Tauri não tem plugins de sistema de arquivos, shell ou HTTP. São seis comandos (três para a chave, três de leitura do projeto), cada um com permissão explícita, e uma CSP restritiva.
-- Leitura de arquivos só dentro da pasta autorizada: caminhos são canonicalizados (symlinks e junctions incluídos), há lista de negação, limites de tamanho e redação de segredos. Detalhes no [ADR 0009](docs/adr/0009-leitura-de-arquivos-do-projeto.md).
+- A chave nunca vai para arquivos do app, logs ou mensagens de erro. No app desktop, as chamadas ao provedor saem do Rust: a chave fica no Rust (memória ou Gerenciador de Credenciais) e nenhum comando a devolve para a interface ([ADR 0010](docs/adr/0010-chamadas-ao-provedor-pelo-rust.md)).
+- O shell Tauri não tem plugins de sistema de arquivos, shell ou HTTP. São onze comandos, cada um com permissão explícita, e a CSP não deixa a interface acessar a rede.
+- Leitura de arquivos só dentro da pasta autorizada: caminhos são canonicalizados (symlinks e junctions incluídos), há lista de negação, limites de tamanho e redação de segredos. O conteúdo é lido e posto no prompt pelo Rust, sem passar pela interface ([ADR 0009](docs/adr/0009-leitura-de-arquivos-do-projeto.md)).
+- Gravação só depois da aprovação final, arquivo por arquivo, com as mesmas regras de caminho, sem passar por links, conferindo o conteúdo atual e de forma atômica ([ADR 0011](docs/adr/0011-gravar-alteracoes-aprovadas.md)).
 - **Não há sandbox.** Execução de comandos fica fora até existir isolamento demonstrado.
 
 Leia o [modelo de ameaças](docs/threat-model.md) e a [política de segurança](SECURITY.md). Vulnerabilidade: use o relato privado do GitHub, não issue pública.
@@ -169,11 +170,10 @@ Leia o [modelo de ameaças](docs/threat-model.md) e a [política de segurança](
 
 Isto é uma versão alpha. O que ainda não existe ou não foi validado:
 
-- **Nada é gravado no disco.** O Builder só propõe diffs; aplicar alterações ainda não existe.
+- **Gravar não tem "desfazer" no app.** Use o git para voltar uma alteração gravada.
 - **Sem execução de comandos e sem sandbox.** Testes, builds e scripts do projeto não rodam pelo app.
 - **Provedor real validado por contrato.** Os testes sobem um servidor HTTP local compatível com a API; uma rodada registrada com chave e modelo reais de cada provedor ainda não existe.
-- **Sem streaming.** A resposta aparece inteira quando o modelo termina.
-- **A chave passa pelo JavaScript** na hora da chamada. Mover as chamadas HTTP para o lado Rust está no roadmap.
+- **A chave passa uma vez pelo JavaScript**, quando é digitada em Configurações. Depois fica só no Rust.
 - **Dados em `localStorage`**, não em SQLite. Limpar os dados do app apaga projetos e sessões.
 - **Instalador Windows sem assinatura de código.** O SmartScreen avisa na primeira execução; veja [docs/instalacao-windows.md](docs/instalacao-windows.md).
 - **Só Windows** foi testado no app desktop. A versão web roda em navegador moderno, sem leitura de arquivos.
@@ -187,8 +187,8 @@ src/
   app/         estado, persistência local, ponte com o cofre do Windows
   i18n/        dicionários pt-BR e en-US, detecção de idioma
   components/  interface (sidebar, sessão, agentes, mascotes, configurações)
-src-tauri/     shell desktop em Rust (cofre de chaves, leitura do projeto)
-docs/          arquitetura, modelo de ameaças, ADRs 0001 a 0009
+src-tauri/     shell desktop em Rust (chave, chamadas ao provedor, leitura e gravação no projeto)
+docs/          arquitetura, modelo de ameaças, ADRs 0001 a 0011
 ```
 
 O domínio é TypeScript puro, sem I/O, com relógio e ids injetáveis para testes determinísticos. Decisões estão em [docs/adr](docs/adr/).
@@ -199,8 +199,8 @@ O domínio é TypeScript puro, sem I/O, com relógio e ids injetáveis para test
 - [x] App desktop no Windows com a chave no Gerenciador de Credenciais
 - [x] Mascotes, temas claro e escuro, português e inglês
 - [x] Ler arquivos do projeto como contexto, com pasta autorizada, lista de negação e redação
-- [ ] Aplicar diffs aprovados no disco, com aprovação por arquivo
-- [ ] Chamadas HTTP pelo lado Rust, para a chave não passar pelo JavaScript
+- [x] Chamadas ao provedor pelo Rust, com streaming e a chave fora da interface
+- [x] Aplicar diffs aprovados no disco, com aprovação por arquivo
 - [ ] SQLite, exportação de sessão e instalador publicado
 
 Lista completa em [ROADMAP.md](ROADMAP.md) e histórico em [PROGRESS.md](PROGRESS.md).

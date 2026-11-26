@@ -26,7 +26,7 @@ Nada aqui está pronto, exceto o que estiver marcado. Itens podem mudar de ordem
 ## Próximo
 
 - [x] Chave de API no Gerenciador de Credenciais do Windows (comando Rust)
-- [ ] Fazer as chamadas HTTP pelo lado Rust para a chave não passar pelo JS
+- [x] Fazer as chamadas HTTP pelo lado Rust para a chave não passar pelo JS (ADR 0010), com streaming
 - [x] Ler arquivos do projeto autorizado como contexto do Builder (pasta autorizada, negação de `.env`/chaves, limites, redação)
 - [x] Mascotes dos agentes e do Orchestra (Octo)
 - [x] Interface em português e inglês
@@ -38,7 +38,8 @@ Nada aqui está pronto, exceto o que estiver marcado. Itens podem mudar de ordem
 - [x] App abre no Windows e permite criar projeto/sessão (em memória)
 - [x] Histórico sobrevive a reinício (localStorage do WebView; SQLite depois)
 - [x] Pasta autorizada no lado Rust, com testes de `..`, caminhos absolutos, symlinks e junctions (leitura; ADR 0009)
-- [ ] Aplicar diffs aprovados apenas dentro do diretório autorizado (aprovação por alteração)
+- [x] Aplicar diffs aprovados apenas dentro do diretório autorizado (aprovação por alteração; ADR 0011)
+- [x] Syntax highlighting nos diffs e nos blocos de código
 - [x] Provedor OpenAI-compatible opcional com tratamento de 401, 429, timeout e rede, nova tentativa em falhas passageiras e chave no cofre do Windows
 - [x] Uso real do provedor separado de estimativa de custo, com preços configuráveis (moeda, unidade, data)
 - [x] Registro de cada passo dos agentes (modelo, duração, tokens, ferramentas) e modelo por agente

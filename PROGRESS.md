@@ -2,6 +2,22 @@
 
 Registro das etapas de desenvolvimento, da mais recente para a mais antiga.
 
+## 2026-11-26 — Etapa 9: provedor pelo Rust, streaming, highlighting e gravação
+
+**Status:** concluída e enviada ao GitHub. Detalhes na seção 9 do [DEVELOPMENT_REPORT.md](DEVELOPMENT_REPORT.md).
+
+- No desktop, as chamadas ao provedor saem do Rust. A chave fica no Rust e nenhum comando a devolve. O conteúdo dos arquivos é lido e posto no prompt pelo Rust. A CSP não deixa a interface acessar a rede ([ADR 0010](docs/adr/0010-chamadas-ao-provedor-pelo-rust.md)).
+- Streaming (SSE) com fallback e cancelamento no meio, no chat e no progresso das etapas.
+- Syntax highlighting nos diffs e nos blocos de código, com highlight.js num arquivo separado: o pacote inicial cresceu cerca de 3 kB.
+- Gravação no disco dos diffs aprovados, arquivo por arquivo, depois da aprovação final ([ADR 0011](docs/adr/0011-gravar-alteracoes-aprovadas.md)).
+- Testes: 130 em TypeScript, 31 em Rust.
+- Validado no app desktop contra um servidor compatível falso: chave enviada pelo Rust, `.env` negado, segredo ocultado, streaming e gravação de um arquivo.
+- `tauri build`: instalador de 4,1 MiB.
+
+### Próximo passo objetivo
+
+Rodada registrada com um provedor real e, depois, SQLite com exportação de sessão.
+
 ## 2026-11-21 — Etapa 8: auditoria e alpha 0.1.0-alpha.1
 
 **Status:** concluída localmente, sem envio ao GitHub. Detalhes em [DEVELOPMENT_REPORT.md](DEVELOPMENT_REPORT.md).
